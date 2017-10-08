@@ -12,17 +12,18 @@ A main loop is supplied that can repeatedly call a user function with a series o
 In order to utilise this, you can write your `app.py` as follows:
 
 ```python
-from fdk.http import worker
+import fdk
+
 from fdk.http import response
 
 
-def app(context, **kwargs):
+def handler(context, **kwargs):
     body = kwargs.get('data')
     return response.RawResponse(context.version, 200, "OK", body.readall())
 
 
 if __name__ == "__main__":
-    worker.run(app)
+    fdk.handle(handler)
 
 ```
 
@@ -33,11 +34,10 @@ Decorators are provided that will attempt to coerce input values to Python types
 Some attempt is made to coerce return values from these functions also:
 
 ```python
-from fdk.http import worker
+import fdk
 
-
-@worker.coerce_input_to_content_type
-def app(context, **kwargs):
+@fdk.coerce_input_to_content_type
+def handler(context, **kwargs):
     """
     body is a request body, it's type depends on content type
     """
@@ -45,7 +45,7 @@ def app(context, **kwargs):
 
 
 if __name__ == "__main__":
-    worker.run(app)
+    fdk.handle(handler)
 
 ```
 
@@ -54,15 +54,14 @@ Working with async automatic input coercions
 
 Latest version (from 0.0.6) supports async coroutines as a request body processors:
 ```python
-
 import asyncio
+import fdk
 
-from fdk.http import worker
 from fdk.http import response
 
 
-@worker.coerce_input_to_content_type
-async def app(context, **kwargs):
+@fdk.coerce_input_to_content_type
+async def handler(context, **kwargs):
     headers = {
         "Content-Type": "plain/text",
     }
@@ -74,7 +73,7 @@ async def app(context, **kwargs):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    worker.run(app, loop=loop)
+    fdk.handle(handler, loop=loop)
 
 ```
 As you can see `app` function is no longer callable, because its type: coroutine, so we need to bypass event loop inside 
