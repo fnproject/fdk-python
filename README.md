@@ -19,7 +19,12 @@ from fdk.http import response
 
 def handler(context, **kwargs):
     body = kwargs.get('data')
-    return response.RawResponse(context.version, 200, "OK", body.readall())
+    return response.RawResponse(
+        http_proto_version=context.version,
+        status_code=200, 
+        headers={}, 
+        response_data=body.readall()
+    )
 
 
 if __name__ == "__main__":
@@ -66,9 +71,11 @@ async def handler(context, **kwargs):
         "Content-Type": "plain/text",
     }
     return response.RawResponse(
-        context.version, 200, "OK",
-        http_headers=headers,
-        response_data="OK")
+        http_proto_version=context.version,
+        status_code=200,
+        headers=headers,
+        response_data="OK"
+    )
 
 
 if __name__ == "__main__":
@@ -134,3 +141,10 @@ if __name__ == "__main__":
 
 ```
 In this case function will determine which format is relevant at this moment.
+
+TODOs
+-----
+
+ - generic response class
+ - generic handler/dispatcher
+ 

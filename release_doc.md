@@ -52,14 +52,14 @@ Steps::
     PBR_VERSION=X.X.X python setup.py sdist bdist_wheel
 
 
-Check install capability for the whell
+Check install capability for the wheel
 --------------------------------------
 
 Steps::
 
-    virtualenv .test_venv
+    virtualenv .test_venv -ppython3.6
     source .test_venv/bin/activate
-        pip install dist/fdk-python-X.X.X-py2.py3-none-any.whl
+    pip install dist/fdk-python-X.X.X-py2.py3-none-any.whl
 
 
 Submit release to PYPI
@@ -69,8 +69,11 @@ Steps::
 
     twine upload build/fdk-python-X.X.X-py2.py3-none-any.whl
 
+Verify install capability for the wheel
+---------------------------------------
 
-Modify plugin dependencies
---------------------------
+Steps::
 
-In each AIOrchestra plugin bump version of aiorchestra lib to a new version.
+    virtualenv .new_venv -ppython3.6
+    source .new_venv/bin/activate
+    pip install fdk-python --upgrade

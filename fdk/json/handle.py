@@ -79,12 +79,14 @@ def normal_dispatch(app, context, data=None, loop=None):
         elif isinstance(rs, types.CoroutineType):
             return loop.run_until_complete(rs)
         elif isinstance(rs, str):
-            return response.RawResponse(rs)
+            hs = headers.GoLikeHeaders({})
+            hs.set('content-type', 'text/plain')
+            return response.RawResponse(response_data=rs)
         elif isinstance(rs, bytes):
             hs = headers.GoLikeHeaders({})
             hs.set('content-type', 'application/octet-stream')
             return response.RawResponse(
-                rs.decode("utf8"),
+                response_data=rs.decode("utf8"),
                 headers=hs,
                 status_code=200
             )

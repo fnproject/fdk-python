@@ -12,31 +12,31 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from fdk import statuses
+
 
 class RawResponse(object):
     PATTERN = ("HTTP/{proto_major}.{proto_minor} "
                "{int_status} {verbose_status}\r\n"
                "{headers}")
 
-    def __init__(self, http_proto_version, status_code, verbose_status,
-                 http_headers=None, response_data=None):
+    def __init__(self, http_proto_version=(1, 1), status_code=200,
+                 headers=None, response_data=None):
         """Sets up raw response
         :param http_proto_version: HTTP protocol version
         :type http_proto_version: tuple
         :param status_code: HTTP response code
         :type status_code: int
-        :param verbose_status: HTTP response status
-        :type verbose_status: str
-        :param http_headers: HTTP response headers
-        :type http_headers: dict
+        :param headers: HTTP response headers
+        :type headers: dict
         :param response_data: string representation of data
         :type response_data: str
         """
 
-        http_headers = http_headers if http_headers else {}
+        http_headers = headers if headers else {}
         self.http_proto = http_proto_version
         self.int_status = status_code
-        self.verbose_status = verbose_status
+        self.verbose_status = statuses.from_code(status_code)
         self.response_data, content_len = self.__encode_data(response_data)
         if self.response_data:
             if not http_headers.get("Content-Type"):

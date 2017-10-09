@@ -17,7 +17,6 @@ from fdk.http import response as http_response
 from fdk.json import response as json_response
 
 
-# TODO(denismakogon): add HTTP version, headers, etc.
 class HTTPDispatchException(Exception):
 
     def __init__(self, status, message):
@@ -30,8 +29,9 @@ class HTTPDispatchException(Exception):
         self.message = message
 
     def response(self):
-        return http_response.RawResponse(
-            (1, 1), self.status, 'ERROR', {}, self.message)
+        return http_response.RawResponse(status_code=self.status,
+                                         headers={},
+                                         response_data=self.message)
 
 
 class JSONDispatchException(Exception):
@@ -48,8 +48,10 @@ class JSONDispatchException(Exception):
     def response(self):
         resp_headers = headers.GoLikeHeaders({})
         resp_headers.set("content-type", "application/json; charset=utf-8")
-        return json_response.RawResponse({
-            "error": {
-                "message": self.message,
-            }
-        }, headers=resp_headers, status_code=500)
+        return json_response.RawResponse(
+            response_data={
+                "error": {
+                    "message": self.message,
+                }
+            },
+            headers=resp_headers, status_code=500)

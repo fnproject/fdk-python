@@ -26,7 +26,7 @@ coerce_http_input_to_content_type = http_handler.coerce_input_to_content_type
 def handle(handler, loop=None):
     """
     Generic format handler based on FN_FORMAT
-    
+
     :param handler: a function or coroutine
     :param loop: asyncio event loop
     :type loop: asyncio.AbstractEventLoop

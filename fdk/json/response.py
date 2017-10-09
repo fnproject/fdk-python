@@ -20,15 +20,23 @@ from fdk import headers as http_headers
 
 class RawResponse(object):
 
-    def __init__(self, data, headers=None, status_code=200):
+    def __init__(self, response_data=None, headers=None, status_code=200):
         """
         JSON response object
-        :param data: JSON response data
+        :param response_data: JSON response data (dict, str)
+        :type response_data: object
         :param headers: JSON response HTTP headers
+        :type headers: fdk.headers.GoLikeHeaders
         :param status_code: JSON response HTTP status code
+        :type status_code: int
         """
         self.status_code = status_code
-        self.body = data
+
+        if isinstance(response_data, dict):
+            self.body = response_data if response_data else {}
+        if isinstance(response_data, str):
+            self.body = response_data if response_data else ""
+
         if headers:
             if not isinstance(headers, http_headers.GoLikeHeaders):
                 raise TypeError("headers should be of "

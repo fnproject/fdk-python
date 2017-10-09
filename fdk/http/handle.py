@@ -57,8 +57,8 @@ def run(app, loop=None):
                     except Exception as ex:
                         traceback.print_exc(file=sys.stderr)
                         response.RawResponse(
-                            (1, 1), 500, "Internal Server Error",
-                            {}, str(ex)).dump(stdout)
+                            status_code=500, headers={},
+                            response_data=str(ex)).dump(stdout)
 
 
 def normal_dispatch(app, context, data=None, loop=None):
@@ -82,21 +82,30 @@ def normal_dispatch(app, context, data=None, loop=None):
         elif isinstance(rs, types.CoroutineType):
             return loop.run_until_complete(rs)
         elif isinstance(rs, str):
-            return response.RawResponse(context.version, 200, 'OK', {}, rs)
+            return response.RawResponse(http_proto_version=context.version,
+                                        status_code=200,
+                                        headers={},
+                                        response_data=rs)
         elif isinstance(rs, bytes):
             return response.RawResponse(
-                context.version, 200, 'OK',
-                {'content-type': 'application/octet-stream'},
-                rs.decode("utf8"))
+                http_proto_version=context.version,
+                status_code=200,
+                headers={'content-type': 'application/octet-stream'},
+                response_data=rs.decode("utf8"))
         else:
             return response.RawResponse(
-                context.version, 200, 'OK',
-                {'content-type': 'application/json'}, json.dumps(rs))
+                http_proto_version=context.version,
+                status_code=200,
+                headers={'content-type': 'application/json'},
+                response_data=json.dumps(rs))
     except errors.HTTPDispatchException as e:
         return e.response()
     except Exception as e:
         return response.RawResponse(
-            context.version, 500, 'ERROR', {}, str(e))
+            http_proto_version=context.version,
+            status_code=500,
+            headers={},
+            response_data=str(e))
 
 
 def coerce_input_to_content_type(request_data_processor):
