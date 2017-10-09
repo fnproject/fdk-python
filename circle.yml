@@ -1,9 +1,8 @@
 version: 2
 jobs:
   build:
-    machine:
-      python:
-        version: 3.6.2
+    docker:
+      - image: circleci/python:3.6.2
     working_directory: ~/fdk-python
     steps:
       - checkout
@@ -11,7 +10,7 @@ jobs:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - run:
           command: |
-            python3.6 -m venv venv
+            python3 -m venv venv
             . venv/bin/activate
             pip install tox
             pip install -r requirements.txt
@@ -26,4 +25,4 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            tox -py3.6
+            tox -epy3.6
