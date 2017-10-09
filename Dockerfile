@@ -5,5 +5,5 @@ RUN mkdir /code
 ADD . /code/
 RUN pip install -e /code/
 
-WORKDIR /code/samples/hot
+WORKDIR /code/samples/hot/json
 ENTRYPOINT ["python3", "app.py"]
