@@ -12,19 +12,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import fdk
 from fdk.http import response
-from fdk.http import worker
 
 
-@worker.coerce_input_to_content_type
-def app(context, **kwargs):
+@fdk.coerce_http_input_to_content_type
+def app(context, data=None, loop=None):
     """
     This is just an echo function
     :param context: request context
     :type context: hotfn.http.request.RequestContext
-    :param kwargs: contains request body by `data` key,
-    in case of coroutine contains event loop by `loop` key
-    :type kwargs: dict
+    :param data: request body
+    :type data: object
+    :param loop: asyncio event loop
+    :type loop: asyncio.AbstractEventLoop
     :return: echo of request body
     :rtype: object
     """
@@ -39,4 +40,4 @@ def app(context, **kwargs):
 
 
 if __name__ == "__main__":
-    worker.run(app)
+    fdk.handle_http(app)

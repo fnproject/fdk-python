@@ -14,19 +14,20 @@
 
 import asyncio
 
+import fdk
 from fdk.http import response
-from fdk.http import worker
 
 
-@worker.coerce_input_to_content_type
-async def app(context, **kwargs):
+@fdk.coerce_http_input_to_content_type
+async def app(context, data=None, loop=None):
     """
     This is just an echo function
     :param context: request context
     :type context: hotfn.http.request.RequestContext
-    :param kwargs: contains request body by `data` key,
-    in case of coroutine contains event loop by `loop` key
-    :type kwargs: dict
+    :param data: request body
+    :type data: object
+    :param loop: asyncio event loop
+    :type loop: asyncio.AbstractEventLoop
     :return: echo of request body
     :rtype: object
     """
@@ -41,4 +42,4 @@ async def app(context, **kwargs):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    worker.run(app, loop=loop)
+    fdk.handle_http(app, loop=loop)
