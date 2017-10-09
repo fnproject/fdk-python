@@ -1,1 +1,1 @@
-fdk-python
+fdk==0.0.1
