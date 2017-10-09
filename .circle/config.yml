@@ -1,0 +1,7 @@
+version: 2
+jobs:
+  build:
+    machine:
+      pre:
+        - cat /etc/*release
+        - pyenv global 3.5.2 3.6.2
