@@ -99,3 +99,26 @@ ENV/
 
 # mypy
 .mypy_cache/
+*.pyc
+.testrepository
+.tox/*
+dist/*
+build/*
+html/*
+*.egg*
+cover/*
+.coverage
+rdserver.txt
+python-troveclient.iml
+
+# Files created by releasenotes build
+releasenotes/build
+.coverage.*
+*.json
+.cache
+*.log*
+*.csv
+venv
+.venv
+ChangeLog
+AUTHORS
