@@ -32,4 +32,4 @@ def app(context, data=None, loop=None):
 
 
 if __name__ == "__main__":
-    fdk.handle_http(app)
+    fdk.handle(app)

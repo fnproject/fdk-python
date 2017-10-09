@@ -29,9 +29,12 @@ class HTTPDispatchException(Exception):
         self.message = message
 
     def response(self):
-        return http_response.RawResponse(status_code=self.status,
-                                         headers={},
-                                         response_data=self.message)
+        return http_response.RawResponse(
+            status_code=self.status,
+            headers={
+                "content-type": "text/plain"
+            },
+            response_data=self.message)
 
 
 class JSONDispatchException(Exception):
@@ -47,7 +50,7 @@ class JSONDispatchException(Exception):
 
     def response(self):
         resp_headers = headers.GoLikeHeaders({})
-        resp_headers.set("content-type", "application/json; charset=utf-8")
+        resp_headers.set("content-type", "text/plain; charset=utf-8")
         return json_response.RawResponse(
             response_data={
                 "error": {

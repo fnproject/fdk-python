@@ -17,18 +17,17 @@ import fdk
 from fdk.http import response
 
 
-def handler(context, **kwargs):
-    body = kwargs.get('data')
+def handler(context, data=None, loop=None):
     return response.RawResponse(
         http_proto_version=context.version,
         status_code=200, 
         headers={}, 
-        response_data=body.readall()
+        response_data=data.readall()
     )
 
 
 if __name__ == "__main__":
-    fdk.handle_http(handler)
+    fdk.handle(handler)
 
 ```
 
@@ -42,15 +41,15 @@ Some attempt is made to coerce return values from these functions also:
 import fdk
 
 @fdk.coerce_http_input_to_content_type
-def handler(context, **kwargs):
+def handler(context, data=None, loop=None):
     """
     body is a request body, it's type depends on content type
     """
-    return kwargs.get('data')
+    return data
 
 
 if __name__ == "__main__":
-    fdk.handle_http(handler)
+    fdk.handle(handler)
 
 ```
 
@@ -66,9 +65,9 @@ from fdk.http import response
 
 
 @fdk.coerce_http_input_to_content_type
-async def handler(context, **kwargs):
+async def handler(context, data=None, loop=None):
     headers = {
-        "Content-Type": "plain/text",
+        "Content-Type": "text/plain",
     }
     return response.RawResponse(
         http_proto_version=context.version,
@@ -80,7 +79,7 @@ async def handler(context, **kwargs):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    fdk.handle_http(handler, loop=loop)
+    fdk.handle(handler, loop=loop)
 
 ```
 As you can see `app` function is no longer callable, because its type: coroutine, so we need to bypass event loop inside 
@@ -100,7 +99,7 @@ def handler(context, data=None, loop=None):
 
 
 if __name__ == "__main__":
-    fdk.handle_json(handler)
+    fdk.handle(handler)
 
 ```
 
@@ -120,31 +119,12 @@ async def handler(context, data=None, loop=None):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    fdk.handle_json(handler, loop=loop)
+    fdk.handle(handler, loop=loop)
 
 ```
-
-Working with unknown Hot format
--------------------------------
-
-It's possible to let function decided which specific format it handles
-```python
-import fdk
-
-
-def handler(context, data=None, loop=None):
-    return data
-
-
-if __name__ == "__main__":
-    fdk.handle(handler)
-
-```
-In this case function will determine which format is relevant at this moment.
 
 TODOs
 -----
 
  - generic response class
- - generic handler/dispatcher
- 
+ - use fdk.headers.GoLikeHeaders in http

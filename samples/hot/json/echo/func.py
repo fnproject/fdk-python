@@ -31,4 +31,4 @@ def handler(context, data=None, loop=None):
 
 
 if __name__ == "__main__":
-    fdk.handle_json(handler)
+    fdk.handle(handler)

@@ -169,7 +169,7 @@ class RawRequest(object):
 
             return context, self.body_stream
         except ValueError:
-            raise errors.DispatchException(500, "No request supplied")
+            raise errors.HTTPDispatchException(500, "No request supplied")
 
 
 def parse_query_params(url):

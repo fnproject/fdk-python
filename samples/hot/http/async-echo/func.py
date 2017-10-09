@@ -35,11 +35,12 @@ async def app(context, data=None, loop=None):
         "Content-Type": "plain/text",
     }
     return response.RawResponse(
-        context.version, 200, "OK",
-        http_headers=headers,
+        http_proto_version=context.version,
+        status_code=200,
+        headers=headers,
         response_data="OK")
 
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    fdk.handle_http(app, loop=loop)
+    fdk.handle(app, loop=loop)

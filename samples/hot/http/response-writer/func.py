@@ -33,11 +33,12 @@ def app(context, data=None, loop=None):
         "Content-Type": "plain/text",
     }
     rs = response.RawResponse(
-        context.version, 200, "OK",
-        http_headers=headers,
+        http_proto_version=context.version,
+        status_code=200,
+        headers=headers,
         response_data="OK")
     return rs
 
 
 if __name__ == "__main__":
-    fdk.handle_http(app)
+    fdk.handle(app)

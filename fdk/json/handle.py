@@ -12,50 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-import sys
-import traceback
 import types
 import ujson
 
 from fdk import errors
 from fdk import headers
-from fdk.json import request
 from fdk.json import response
-
-
-def run(app, loop=None):
-    """
-    Request handler app dispatcher entry point
-    :param app: request handler app
-    :type app: types.Callable
-    :param loop: asyncio event loop
-    :type loop: asyncio.AbstractEventLoop
-    :return: None
-    """
-    if not os.isatty(sys.stdin.fileno()):
-        with os.fdopen(sys.stdin.fileno(), 'r') as stdin:
-            with os.fdopen(sys.stdout.fileno(), 'w') as stdout:
-                rq = request.RawRequest(stdin)
-                while True:
-                    try:
-                        context, data = rq.parse_raw_request()
-                        rs = normal_dispatch(app, context,
-                                             data=data, loop=loop)
-                        rs.dump(stdout)
-                    except EOFError:
-                        # The Fn platform has closed stdin; there's no way to
-                        # get additional work.
-                        return
-                    except errors.JSONDispatchException as ex:
-                        # If the user's raised an error containing an explicit
-                        # response, use that
-                        ex.response().dump(stdout)
-                    except Exception as ex:
-                        traceback.print_exc(file=sys.stderr)
-                        resp = errors.JSONDispatchException(
-                            500, str(ex)).response()
-                        resp.dump(stdout)
 
 
 def normal_dispatch(app, context, data=None, loop=None):
