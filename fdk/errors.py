@@ -12,15 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from fdk.http import response
+from fdk import headers
+from fdk.http import response as http_response
+from fdk.json import response as json_response
 
 
 # TODO(denismakogon): add HTTP version, headers, etc.
-class DispatchException(Exception):
+class HTTPDispatchException(Exception):
 
     def __init__(self, status, message):
         """
-
+        HTTP response with error
         :param status: HTTP status code
         :param message: error message
         """
@@ -28,5 +30,26 @@ class DispatchException(Exception):
         self.message = message
 
     def response(self):
-        return response.RawResponse(
+        return http_response.RawResponse(
             (1, 1), self.status, 'ERROR', {}, self.message)
+
+
+class JSONDispatchException(Exception):
+
+    def __init__(self, status, message):
+        """
+        JSON response with error
+        :param status: HTTP status code
+        :param message: error message
+        """
+        self.status = status
+        self.message = message
+
+    def response(self):
+        resp_headers = headers.GoLikeHeaders({})
+        resp_headers.set("content-type", "application/json; charset=utf-8")
+        return json_response.RawResponse({
+            "error": {
+                "message": self.message,
+            }
+        }, headers=resp_headers, status_code=500)

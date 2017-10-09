@@ -14,7 +14,7 @@
 
 import urllib.parse
 
-from fdk.http import errors
+from fdk import errors
 
 
 class RequestContext(object):

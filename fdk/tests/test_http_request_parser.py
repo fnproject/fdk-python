@@ -20,17 +20,17 @@ from fdk.http import request
 from fdk.tests import data
 
 
-class TestRequestParser(testtools.TestCase):
+class TestHTTPRequestParser(testtools.TestCase):
 
     def setUp(self):
-        super(TestRequestParser, self).setUp()
+        super(TestHTTPRequestParser, self).setUp()
 
     def tearDown(self):
-        super(TestRequestParser, self).tearDown()
+        super(TestHTTPRequestParser, self).tearDown()
 
     def test_parse_no_data(self):
         req_parser = request.RawRequest(
-            io.BytesIO(data.request_no_data.encode("utf8")))
+            io.BytesIO(data.http_request_no_data.encode("utf8")))
         context, request_data = req_parser.parse_raw_request()
         self.assertEqual("GET", context.method)
         self.assertIn("host", context.headers)
@@ -42,7 +42,7 @@ class TestRequestParser(testtools.TestCase):
 
     def test_parse_no_query(self):
         req_parser = request.RawRequest(
-            io.BytesIO(data.request_no_query.encode("utf8")))
+            io.BytesIO(data.http_request_no_query.encode("utf8")))
         context, request_data = req_parser.parse_raw_request()
         self.assertEqual("GET", context.method)
         self.assertIn("host", context.headers)
@@ -54,7 +54,7 @@ class TestRequestParser(testtools.TestCase):
 
     def test_parse_data(self):
         req_parser = request.RawRequest(io.BytesIO(
-            data.request_with_query_and_data.encode("utf8")))
+            data.http_request_with_query_and_data.encode("utf8")))
         context, request_data = req_parser.parse_raw_request()
         self.assertEqual("GET", context.method)
         self.assertIn("host", context.headers)
@@ -68,7 +68,7 @@ class TestRequestParser(testtools.TestCase):
 
     def test_parse_data_with_fn_content_length(self):
         req_parser = request.RawRequest(io.BytesIO(
-            data.request_with_fn_content_headers.encode("utf8")))
+            data.http_request_with_fn_content_headers.encode("utf8")))
         context, request_data = req_parser.parse_raw_request()
         self.assertEqual(len(request_data.read()),
                          int(context.headers.get("content-length")))

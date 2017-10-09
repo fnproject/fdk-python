@@ -12,19 +12,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import functools
-import io
-import json
 import os
 import sys
-import types
-
 import traceback
-
+import types
+import ujson
 
 from fdk import errors
-from fdk.http import request
-from fdk.http import response
+from fdk import headers
+from fdk.json import request
+from fdk.json import response
 
 
 def run(app, loop=None):
@@ -37,8 +34,8 @@ def run(app, loop=None):
     :return: None
     """
     if not os.isatty(sys.stdin.fileno()):
-        with os.fdopen(sys.stdin.fileno(), 'rb') as stdin:
-            with os.fdopen(sys.stdout.fileno(), 'wb') as stdout:
+        with os.fdopen(sys.stdin.fileno(), 'r') as stdin:
+            with os.fdopen(sys.stdout.fileno(), 'w') as stdout:
                 rq = request.RawRequest(stdin)
                 while True:
                     try:
@@ -50,15 +47,15 @@ def run(app, loop=None):
                         # The Fn platform has closed stdin; there's no way to
                         # get additional work.
                         return
-                    except errors.HTTPDispatchException as ex:
+                    except errors.JSONDispatchException as ex:
                         # If the user's raised an error containing an explicit
                         # response, use that
                         ex.response().dump(stdout)
                     except Exception as ex:
                         traceback.print_exc(file=sys.stderr)
-                        response.RawResponse(
-                            (1, 1), 500, "Internal Server Error",
-                            {}, str(ex)).dump(stdout)
+                        resp = errors.JSONDispatchException(
+                            500, str(ex)).response()
+                        resp.dump(stdout)
 
 
 def normal_dispatch(app, context, data=None, loop=None):
@@ -82,55 +79,24 @@ def normal_dispatch(app, context, data=None, loop=None):
         elif isinstance(rs, types.CoroutineType):
             return loop.run_until_complete(rs)
         elif isinstance(rs, str):
-            return response.RawResponse(context.version, 200, 'OK', {}, rs)
+            return response.RawResponse(rs)
         elif isinstance(rs, bytes):
+            hs = headers.GoLikeHeaders({})
+            hs.set('content-type', 'application/octet-stream')
             return response.RawResponse(
-                context.version, 200, 'OK',
-                {'content-type': 'application/octet-stream'},
-                rs.decode("utf8"))
+                rs.decode("utf8"),
+                headers=hs,
+                status_code=200
+            )
         else:
+            hs = headers.GoLikeHeaders({})
+            hs.set('content-type', 'application/json')
             return response.RawResponse(
-                context.version, 200, 'OK',
-                {'content-type': 'application/json'}, json.dumps(rs))
-    except errors.HTTPDispatchException as e:
+                ujson.dumps(rs),
+                headers=hs,
+                status_code=200,
+            )
+    except errors.JSONDispatchException as e:
         return e.response()
-    except Exception as e:
-        return response.RawResponse(
-            context.version, 500, 'ERROR', {}, str(e))
-
-
-def coerce_input_to_content_type(request_data_processor):
-
-    @functools.wraps(request_data_processor)
-    def app(context, data=None, loop=None):
-        """
-        Request handler app dispatcher decorator
-        :param context: request context
-        :type context: request.RequestContext
-        :param data: request body
-        :type data: io.BufferedIOBase
-        :param loop: asyncio event loop
-        :type loop: asyncio.AbstractEventLoop
-        :return: raw response
-        :rtype: response.RawResponse
-        :return:
-        """
-        # TODO(jang): The content-type header has some internal structure;
-        # actually provide some parsing for that
-        content_type = context.headers.get("content-type")
-        try:
-            request_body = io.TextIOWrapper(data)
-            # TODO(denismakogon): XML type to add
-            if content_type == "application/json":
-                body = json.load(request_body)
-            elif content_type in ["text/plain"]:
-                body = request_body.read()
-            else:
-                body = request_body.read()
-        except Exception as ex:
-            raise errors.HTTPDispatchException(
-                500, "Unexpected error: {}".format(str(ex)))
-
-        return request_data_processor(context, data=body, loop=loop)
-
-    return app
+    except Exception as ex:
+        return errors.JSONDispatchException(500, str(ex)).response()

@@ -1,4 +1,4 @@
-name: test/hot-json-python
+name: denismakogon/hot-json-python:0.0.1
 version: 0.0.1
 runtime: docker
 type: sync

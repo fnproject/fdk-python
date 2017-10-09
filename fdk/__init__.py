@@ -13,7 +13,9 @@
 #    under the License.
 
 from fdk.http import handle as http_handler
+from fdk.json import handle as json_handler
 
 
-handle = http_handler.run
-coerce_input_to_content_type = http_handler.coerce_input_to_content_type
+handle_http = http_handler.run
+handle_json = json_handler.run
+coerce_http_input_to_content_type = http_handler.coerce_input_to_content_type
