@@ -35,7 +35,7 @@ class RawResponse(object):
 
         http_headers = headers if headers else {}
         self.http_proto = http_proto_version
-        self.int_status = status_code
+        self.status_code = status_code
         self.verbose_status = statuses.from_code(status_code)
         self.response_data, content_len = self.__encode_data(response_data)
         if self.response_data:
@@ -46,7 +46,7 @@ class RawResponse(object):
             http_headers.update({
                 "Content-Length": content_len,
             })
-        self.headers = self.__encode_headers(http_headers)
+        self.headers = http_headers
 
     def __encode_headers(self, headers):
         if headers:
@@ -62,13 +62,24 @@ class RawResponse(object):
         enc = str(data).encode('utf-8')
         return enc, len(enc)
 
+    def set_response_content(self, data):
+        self.response_data, content_len = self.__encode_data(data)
+        if self.response_data:
+            if not self.headers.get("Content-Type"):
+                self.headers.update({
+                    "Content-Type": "text/plain; charset=utf-8",
+                })
+            self.headers.update({
+                "Content-Length": content_len,
+            })
+
     def dump(self, stream, flush=True):
         format_map = {
             "proto_major": self.http_proto[0],
             "proto_minor": self.http_proto[1],
-            "int_status": self.int_status,
+            "int_status": self.status_code,
             "verbose_status": self.verbose_status,
-            "headers": self.headers,
+            "headers": self.__encode_headers(self.headers),
         }
         result = stream.write(
             self.PATTERN.format(**format_map).encode('utf-8') +
