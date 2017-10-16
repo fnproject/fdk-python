@@ -13,8 +13,8 @@
 #    under the License.
 
 import fdk
-import traceback
 import sys
+import traceback
 
 from fdk.http import response
 
