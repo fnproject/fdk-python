@@ -123,6 +123,33 @@ if __name__ == "__main__":
 
 ```
 
+Applications powered by Fn
+--------------------------
+
+FDK is not only about developing functions, but providing necessary API to build serverless applications 
+that look like nothing but classes with methods powered by Fn.
+
+```python
+from fdk.application import decorators
+
+
+@decorators.fn_app
+class Application(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @decorators.fn_route(fn_image="denismakogon/os.environ:latest")
+    def env(self, fn_data=None):
+        return fn_data
+
+    @decorators.fn_route(fn_image="denismakogon/py-traceback-test:0.0.1",
+                         fn_format="http")
+    def traceback(self, fn_data=None):
+        return fn_data
+
+```
+
 TODOs
 -----
 
