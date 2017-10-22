@@ -139,12 +139,12 @@ class Application(object):
     def __init__(self, *args, **kwargs):
         pass
 
-    @decorators.fn_route(fn_image="denismakogon/os.environ:latest")
+    @decorators.with_fn(fn_image="denismakogon/os.environ:latest")
     def env(self, fn_data=None):
         return fn_data
 
-    @decorators.fn_route(fn_image="denismakogon/py-traceback-test:0.0.1",
-                         fn_format="http")
+    @decorators.with_fn(fn_image="denismakogon/py-traceback-test:0.0.1",
+                        fn_format="http")
     def traceback(self, fn_data=None):
         return fn_data
 
@@ -191,8 +191,8 @@ Applications powered by Fn: working with function's result
 
 In order to work with result from function you just need to read key-value argument `fn_data`:
 ```python
-    @decorators.fn_route(fn_image="denismakogon/py-traceback-test:0.0.1",
-                         fn_format="http")
+    @decorators.with_fn(fn_image="denismakogon/py-traceback-test:0.0.1",
+                        fn_format="http")
     def traceback(self, fn_data=None):
         return fn_data
 ```
