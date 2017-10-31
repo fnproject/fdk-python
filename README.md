@@ -130,6 +130,8 @@ FDK is not only about developing functions, but providing necessary API to build
 that look like nothing but classes with methods powered by Fn.
 
 ```python
+import requests
+
 from fdk.application import decorators
 
 
@@ -139,14 +141,27 @@ class Application(object):
     def __init__(self, *args, **kwargs):
         pass
 
-    @decorators.fn_route(fn_image="denismakogon/os.environ:latest")
+    @decorators.with_fn(fn_image="denismakogon/os.environ:latest")
     def env(self, fn_data=None):
         return fn_data
 
-    @decorators.fn_route(fn_image="denismakogon/py-traceback-test:0.0.1",
-                         fn_format="http")
+    @decorators.with_fn(fn_image="denismakogon/py-traceback-test:0.0.1",
+                        fn_format="http")
     def traceback(self, fn_data=None):
         return fn_data
+
+    @decorators.fn(fn_type="sync")
+    def square(self, x, y, *args, **kwargs):
+        return x * y
+
+    @decorators.fn(fn_type="sync", dependencies={
+        "requests_get": requests.get
+    })
+    def request(self, *args, **kwargs):
+        requests_get = kwargs["dependencies"].get("requests_get")
+        r = requests_get('https://api.github.com/events')
+        r.raise_for_status()
+        return r.text
 
 if __name__ == "__main__":
     app = Application(config={})
@@ -157,6 +172,16 @@ if __name__ == "__main__":
     print(res)
 
     res, err = app.traceback()
+    if err:
+        raise err
+    print(res)
+
+    res, err = app.square(10, 20)
+    if err:
+        raise err
+    print(res)
+
+    res, err = app.request()
     if err:
         raise err
     print(res)
@@ -191,11 +216,44 @@ Applications powered by Fn: working with function's result
 
 In order to work with result from function you just need to read key-value argument `fn_data`:
 ```python
-    @decorators.fn_route(fn_image="denismakogon/py-traceback-test:0.0.1",
-                         fn_format="http")
+    @decorators.with_fn(fn_image="denismakogon/py-traceback-test:0.0.1",
+                        fn_format="http")
     def traceback(self, fn_data=None):
         return fn_data
 ```
+
+Applications powered by Fn: advanced serverless functions
+---------------------------------------------------------
+
+Since release v0.0.3 developer can consume new API to build truly serverless functions 
+without taking care of Docker images, application, etc.
+
+```python
+    @decorators.fn(fn_type="sync")
+    def square(self, x, y, *args, **kwargs):
+        return x * y
+
+    @decorators.fn(fn_type="sync", dependencies={
+        "requests_get": requests.get
+    })
+    def request(self, *args, **kwargs):
+        requests_get = kwargs["dependencies"].get("requests_get")
+        r = requests_get('https://api.github.com/events')
+        r.raise_for_status()
+        return r.text
+```
+
+Each function decorated with `@decorator.fn` will become truly serverless and distributed.
+So, how it works?
+
+    * A developer writes function
+    * FDK (Fn-powered app) creates a recursive Pickle v4.0 with 3rd-party dependencies
+    * FDK (Fn-powered app) transfers pickled object to a function based on Python3 GPI (general purpose image)
+    * FDK unpickles function and its 3rd-party dependencies and runs it
+    * Function sends response back to Fn-powered application function caller
+
+So, each CPU-intensive functions can be sent to Fn with the only load on networking (given example creates 7kB of traffic between app's host and Fn).
+
 
 Applications powered by Fn: exceptions
 --------------------------------------
