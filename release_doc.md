@@ -67,7 +67,7 @@ Submit release to PYPI
 
 Steps::
 
-    twine upload build/fdk-python-X.X.X-py2.py3-none-any.whl
+    twine upload dist/fdk-X.X.X*
 
 Verify install capability for the wheel
 ---------------------------------------
