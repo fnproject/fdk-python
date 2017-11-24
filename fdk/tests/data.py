@@ -44,14 +44,22 @@ Fn_header_user_agent: curl/7.54.0\r
 \r\n{"media_url": "http://localhost:8080/img.png"}
 """
 
-json_request_with_data = ('{"body":"{\\"a\\":\\"a\\"}\n"\n'
-                          ',"headers":{"Content-Type":["application/json"],'
-                          '"Host":["localhost:8080"],'
-                          '"User-Agent":["curl/7.51.0"]}'
-                          '\n}')
+json_request_with_data = (
+    '{\n"call_id":"some_id"\n,'
+    '"content_type":"application/json"\n'
+    ',"body":"{\\"a\\":\\"a\\"}\n"\n'
+    ',"protocol":{"type":"json"\n'
+    ',"request_url":"/v1/apps?something=something&etc=etc"\n'
+    ',"headers":{"Content-Type":["application/json"],'
+    '"Host":["localhost:8080"],"User-Agent":["curl/7.51.0"]}\n'
+    '\n}\n\n')
 
-json_request_without_data = ('{"body":""\n'
-                             ',"headers":{"Content-Type":["application/json"],'
-                             '"Host":["localhost:8080"],'
-                             '"User-Agent":["curl/7.51.0"]}'
-                             '\n}')
+json_request_without_data = (
+    '{\n"call_id":"some_id"\n,'
+    '"content_type":"application/json"\n'
+    ',"body":""\n'
+    ',"protocol":{"type":"json"\n'
+    ',"request_url":"/v1/apps?something=something&etc=etc"\n'
+    ',"headers":{"Content-Type":["application/json"],'
+    '"Host":["localhost:8080"],"User-Agent":["curl/7.51.0"]}\n'
+    '\n}\n\n')
