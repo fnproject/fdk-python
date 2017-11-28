@@ -47,6 +47,9 @@ def readline(stream):
         elif c == "}" and ret:
             line += c
             s = line.replace('\n"\n,', '",').replace("\n}", "}")
+            # due to weird padding we omit last 4 bytes: \n}\n\n
+            stream.read(4)
+            s += "}"
             print("Before JSON parsing: {}".format(s),
                   file=sys.stderr, flush=True)
             return ujson.loads(s)
