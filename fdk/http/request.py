@@ -12,36 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import urllib.parse
 
+from fdk import context
 from fdk import errors
-
-
-class RequestContext(object):
-
-    def __init__(self, method=None, url=None,
-                 query_parameters=None, headers=None,
-                 version=None):
-        """
-        Request context here to be a placeholder
-        for request-specific attributes
-        :param method: HTTP request method
-        :type method: str
-        :param url: HTTP request URL
-        :type url: str
-        :param query_parameters: HTTP request query parameters
-        :type query_parameters: dict
-        :param headers: HTTP request headers
-        :type headers: dict
-        :param version: HTTP proto version
-        :type version: tuple
-        """
-        # TODO(xxx): app name, path, memory, type, config
-        self.method = method
-        self.url = url
-        self.query_parameters = query_parameters
-        self.headers = headers
-        self.version = version
 
 
 def readline(stream):
@@ -160,14 +135,18 @@ class RawRequest(object):
                 self.body_stream = self.stream
                 self.stream = None
 
-            context = RequestContext(
+            ctx = context.HTTPContext(
+                os.environ.get("FN_APP_NAME"),
+                os.environ.get("FN_PATH"),
+                headers.get('fn_call_id'),
+                config=os.environ,
                 method=method,
                 url=path,
                 query_parameters=params,
                 headers=headers,
                 version=(major, minor))
 
-            return context, self.body_stream
+            return ctx, self.body_stream
         except ValueError:
             raise errors.HTTPDispatchException(500, "No request supplied")
 

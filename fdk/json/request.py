@@ -81,14 +81,13 @@ class RawRequest(object):
             incoming_json = readline(self.stream)
             print("After JSON parsing: {}".format(incoming_json),
                   file=sys.stderr, flush=True)
-            request_context = context.RequestContext(
-                method=os.environ.get("FN_METHOD"),
-                url=os.environ.get("FN_REQUEST_URL"),
-                query_parameters={},
-                headers=headers.GoLikeHeaders(
-                    incoming_json.get('headers', {}))
-            )
-            return request_context, incoming_json.get('body')
+            json_headers = headers.GoLikeHeaders(
+                incoming_json.get('protocol', {"headers": {}}))
+            ctx = context.JSONContext(os.environ.get("FN_APP_NAME"),
+                                      os.environ.get("FN_PATH"),
+                                      incoming_json.get("call_id"),
+                                      config=os.environ, headers=json_headers)
+            return ctx, incoming_json.get('body')
         except Exception as ex:
             print("Error while parsing JSON: {}".format(str(ex)),
                   file=sys.stderr, flush=True)

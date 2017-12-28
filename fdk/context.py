@@ -15,26 +15,58 @@
 
 class RequestContext(object):
 
-    def __init__(self, method=None, url=None,
-                 query_parameters=None, headers=None,
-                 version=None):
+    def __init__(self, app_name, route, call_id, config=None, headers=None):
         """
         Request context here to be a placeholder
         for request-specific attributes
-        :param method: HTTP request method
-        :type method: str
-        :param url: HTTP request URL
-        :type url: str
-        :param query_parameters: HTTP request query parameters
-        :type query_parameters: dict
-        :param headers: HTTP request headers
-        :type headers: object
-        :param version: HTTP proto version
-        :type version: tuple
         """
-        # TODO(xxx): app name, path, memory, type, config
-        self.method = method
-        self.url = url
-        self.query_parameters = query_parameters
-        self.headers = headers
-        self.version = version
+        self.__app_name = app_name
+        self.__app_route = route
+        self.__call_id = call_id
+        self.__config = config if config else {}
+        self.__headers = headers if headers else {}
+        self.__arguments = {}
+
+    def AppName(self):
+        return self.__app_name
+
+    def Route(self):
+        return self.__app_route
+
+    def CallID(self):
+        return self.__call_id
+
+    def Config(self):
+        return self.__config
+
+    def Headers(self):
+        return self.__headers
+
+    def Arguments(self):
+        return self.__arguments
+
+
+class HTTPContext(RequestContext):
+
+    def __init__(self, app_name, route, call_id,
+                 config=None, headers=None,
+                 method=None, url=None,
+                 query_parameters=None,
+                 version=None):
+
+        super(HTTPContext, self).__init__(
+            app_name, route, call_id, config=config, headers=headers)
+
+        self.__arguments = {
+            "method": method,
+            "URL": url,
+            "query": query_parameters,
+            "http_version": version
+        }
+
+
+class JSONContext(RequestContext):
+
+    def __init__(self, app_name, route, call_id, config=None, headers=None):
+        super(JSONContext, self).__init__(
+            app_name, route, call_id, config=config, headers=headers)
