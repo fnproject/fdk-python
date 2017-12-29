@@ -74,7 +74,7 @@ def generic_handle(handler, loop=None):
 def timeout(request, write_stream):
 
     def handler(*_):
-        raise TimeoutError()
+        raise TimeoutError("Function timed out")
 
     fn_format = os.environ.get("FN_FORMAT")
     ctx = context.fromType(fn_format,
@@ -96,17 +96,14 @@ def timeout(request, write_stream):
     except EOFError:
         # pipe closed from the other side by Fn
         return
-    except TimeoutError:
+    except (TimeoutError, Exception) as ex:
         signal.alarm(0)
         traceback.print_exc(file=sys.stderr)
-        (ctx.DispatchError(ctx, 502, "Function timed out").
-         response().dump(write_stream))
-        return
-    except Exception as ex:
-        signal.alarm(0)
-        traceback.print_exc(file=sys.stderr)
-        (ctx.DispatchError(ctx, 500, str(ex)).
-         response().dump(write_stream))
+        err = ctx.DispatchError(
+            ctx, 502 if isinstance(
+                ex, TimeoutError) else 500, str(ex))
+        resp = err.response()
+        resp.dump(write_stream)
         return
     except ctx.DispatchError as ex:
         signal.alarm(0)

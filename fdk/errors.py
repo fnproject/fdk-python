@@ -60,4 +60,5 @@ class JSONDispatchException(Exception):
                     "message": self.message,
                 }
             },
-            headers=resp_headers, status_code=500)
+            headers=resp_headers,
+            status_code=self.status)

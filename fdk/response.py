@@ -37,6 +37,7 @@ class RawResponse(object):
                 status_code=status_code)
         if context.Type() == "http":
             self.response = hr.HTTPResponse(
+                status_code=status_code,
                 response_data=str(response_data),
                 headers=headers,
                 http_proto_version=context.Arguments().get(

@@ -75,7 +75,7 @@ class TestDispatcher(testtools.TestCase):
 
     def test_json_timeout_by_deadline(self):
         raw = self.run_json_func(sleeper, 10)
-        self.assertIn('"status_code":500', raw)
+        self.assertIn('"status_code":502', raw)
         self.assertIn('Function timed out', raw)
 
     def run_http_func(self, func, deadile_is_seconds):
@@ -88,10 +88,13 @@ class TestDispatcher(testtools.TestCase):
         write_stream = io.BytesIO(bytes())
         runner.proceed_with_streams(
             func, req, write_stream, hh.normal_dispatch)
-        return write_stream.getvalue()
+        return write_stream.getvalue().decode("utf-8")
 
     def test_http_with_deadline(self):
-        self.run_http_func(handle, 30)
+        raw = self.run_http_func(handle, 30)
+        self.assertIn("200 OK", raw)
 
     def test_http_timeout_by_deadline(self):
-        self.run_http_func(sleeper, 10)
+        raw = self.run_http_func(sleeper, 10)
+        self.assertIn("502 Bad Gateway", raw)
+        self.assertIn("Function timed out", raw)

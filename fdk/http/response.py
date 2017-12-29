@@ -36,7 +36,6 @@ class HTTPResponse(object):
         http_headers = headers if headers else {}
         self.http_proto = http_proto_version
         self.status_code = status_code
-        self.verbose_status = statuses.from_code(status_code)
         self.response_data, content_len = self.__encode_data(response_data)
         if self.response_data:
             if not http_headers.get("Content-Type"):
@@ -78,7 +77,7 @@ class HTTPResponse(object):
             "proto_major": self.http_proto[0],
             "proto_minor": self.http_proto[1],
             "int_status": self.status_code,
-            "verbose_status": self.verbose_status,
+            "verbose_status": statuses.from_code(self.status_code),
             "headers": self.__encode_headers(self.headers),
         }
         result = stream.write(
