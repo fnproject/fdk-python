@@ -15,7 +15,7 @@
 from fdk import statuses
 
 
-class RawResponse(object):
+class HTTPResponse(object):
     PATTERN = ("HTTP/{proto_major}.{proto_minor} "
                "{int_status} {verbose_status}\r\n"
                "{headers}")

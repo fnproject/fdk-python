@@ -16,7 +16,7 @@ import fdk
 import sys
 import traceback
 
-from fdk.http import response
+from fdk import response
 
 
 def exception_to_string(err):
@@ -27,11 +27,12 @@ def exception_to_string(err):
             '\n  {} {}'.format(err.__class__, err))
 
 
+@fdk.coerce_input_to_content_type
 def handler(context, data=None, loop=None):
     """
     This is just an echo function
     :param context: request context
-    :type context: hotfn.http.request.RequestContext
+    :type context: fdk.context.RequestContext
     :param data: request body
     :type data: object
     :param loop: asyncio event loop
@@ -39,22 +40,17 @@ def handler(context, data=None, loop=None):
     :return: echo of request body
     :rtype: object
     """
-    headers = {
-        "Content-Type": "text/plain",
-    }
-    rs = response.RawResponse(
-        http_proto_version=context.version,
-        status_code=200,
-        headers=headers,
-        response_data="OK"
-    )
     print("response created", file=sys.stderr, flush=True)
     try:
         raise Exception("test-exception")
     except Exception as ex:
         print("exception raised", file=sys.stderr, flush=True)
-        rs.status_code = 500
-        rs.set_response_content(exception_to_string(ex))
+        rs = response.RawResponse(
+            context,
+            status_code=500,
+            headers={"Content-Type": "text/plain"},
+            response_data=exception_to_string(ex)
+        )
 
     return rs
 

@@ -91,4 +91,8 @@ class RawRequest(object):
         except Exception as ex:
             print("Error while parsing JSON: {}".format(str(ex)),
                   file=sys.stderr, flush=True)
-            raise errors.JSONDispatchException(500, str(ex))
+            ctx = context.JSONContext(
+                os.environ.get("FN_APP_NAME"),
+                os.environ.get("FN_PATH"), "",
+            )
+            raise errors.JSONDispatchException(ctx, 500, str(ex))

@@ -148,7 +148,11 @@ class RawRequest(object):
 
             return ctx, self.body_stream
         except ValueError:
-            raise errors.HTTPDispatchException(500, "No request supplied")
+            ctx = context.HTTPContext(
+                os.environ.get("FN_APP_NAME"),
+                os.environ.get("FN_PATH"), "",
+            )
+            raise errors.HTTPDispatchException(ctx, 500, "No request supplied")
 
 
 def parse_query_params(url):

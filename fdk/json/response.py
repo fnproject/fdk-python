@@ -15,10 +15,10 @@
 import sys
 import ujson
 
-from fdk import headers as http_headers
+from fdk import headers as rh
 
 
-class RawResponse(object):
+class JSONResponse(object):
 
     def __init__(self, response_data=None, headers=None, status_code=200):
         """
@@ -37,13 +37,9 @@ class RawResponse(object):
         if isinstance(response_data, str):
             self.body = response_data if response_data else ""
 
-        if headers:
-            if not isinstance(headers, http_headers.GoLikeHeaders):
-                raise TypeError("headers should be of "
-                                "`hotfn.headers.GoLikeHeaders` type!")
-            self.headers = headers
-        else:
-            self.headers = http_headers.GoLikeHeaders({})
+        if not isinstance(headers, dict):
+            raise TypeError("headers of unknown type")
+        self.headers = rh.GoLikeHeaders(headers)
 
     def dump(self, stream, flush=True):
         """

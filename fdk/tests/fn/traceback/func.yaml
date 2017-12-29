@@ -1,0 +1,5 @@
+name: fnproject/fdk-traceback-test
+version: 0.0.1
+runtime: docker
+type: sync
+format: json

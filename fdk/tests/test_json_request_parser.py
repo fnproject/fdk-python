@@ -36,7 +36,7 @@ class TestJSONRequestParser(testtools.TestCase):
         self.assertIsNotNone(context)
         self.assertIsNotNone(request_data)
         self.assertIsInstance(request_data, str)
-        self.assertIsInstance(context.headers, headers.GoLikeHeaders)
+        self.assertIsInstance(context.Headers(), headers.GoLikeHeaders)
 
     def test_parse_request_without_data(self):
         req_parser = request.RawRequest(

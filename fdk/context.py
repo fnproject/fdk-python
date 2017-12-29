@@ -12,10 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from fdk import errors
+
 
 class RequestContext(object):
 
-    def __init__(self, app_name, route, call_id, config=None, headers=None):
+    def __init__(self, app_name, route, call_id,
+                 fntype, config=None, headers=None, arguments=None):
         """
         Request context here to be a placeholder
         for request-specific attributes
@@ -25,7 +28,8 @@ class RequestContext(object):
         self.__call_id = call_id
         self.__config = config if config else {}
         self.__headers = headers if headers else {}
-        self.__arguments = {}
+        self.__arguments = {} if not arguments else arguments
+        self.__type = fntype
 
     def AppName(self):
         return self.__app_name
@@ -45,28 +49,41 @@ class RequestContext(object):
     def Arguments(self):
         return self.__arguments
 
+    def Type(self):
+        return self.__type
+
 
 class HTTPContext(RequestContext):
 
-    def __init__(self, app_name, route, call_id,
+    def __init__(self, app_name, route,
+                 call_id, fntype="http",
                  config=None, headers=None,
                  method=None, url=None,
                  query_parameters=None,
                  version=None):
-
-        super(HTTPContext, self).__init__(
-            app_name, route, call_id, config=config, headers=headers)
-
-        self.__arguments = {
+        arguments = {
             "method": method,
             "URL": url,
             "query": query_parameters,
             "http_version": version
         }
+        self.DispatchError = errors.HTTPDispatchException
+        super(HTTPContext, self).__init__(
+            app_name, route, call_id, fntype,
+            config=config, headers=headers, arguments=arguments)
 
 
 class JSONContext(RequestContext):
 
-    def __init__(self, app_name, route, call_id, config=None, headers=None):
+    def __init__(self, app_name, route, call_id,
+                 fntype="json", config=None, headers=None):
+        self.DispatchError = errors.JSONDispatchException
         super(JSONContext, self).__init__(
-            app_name, route, call_id, config=config, headers=headers)
+            app_name, route, call_id, fntype, config=config, headers=headers)
+
+
+def fromType(fntype, *args, **kwargs):
+    if fntype == "json":
+        return JSONContext(*args, **kwargs)
+    if fntype == "http":
+        return HTTPContext(*args, **kwargs)

@@ -15,9 +15,8 @@
 import types
 import ujson
 
-from fdk import errors
 from fdk import headers
-from fdk.json import response
+from fdk import response
 
 
 def normal_dispatch(app, context, data=None, loop=None):
@@ -43,11 +42,12 @@ def normal_dispatch(app, context, data=None, loop=None):
         elif isinstance(rs, str):
             hs = headers.GoLikeHeaders({})
             hs.set('content-type', 'text/plain')
-            return response.RawResponse(response_data=rs)
+            return response.RawResponse(context, response_data=rs)
         elif isinstance(rs, bytes):
             hs = headers.GoLikeHeaders({})
             hs.set('content-type', 'application/octet-stream')
             return response.RawResponse(
+                context,
                 response_data=rs.decode("utf8"),
                 headers=hs,
                 status_code=200
@@ -56,11 +56,12 @@ def normal_dispatch(app, context, data=None, loop=None):
             hs = headers.GoLikeHeaders({})
             hs.set('content-type', 'application/json')
             return response.RawResponse(
-                ujson.dumps(rs),
+                context,
+                response_data=ujson.dumps(rs),
                 headers=hs,
                 status_code=200,
             )
-    except errors.JSONDispatchException as e:
+    except context.DispatchError as e:
         return e.response()
     except Exception as ex:
-        return errors.JSONDispatchException(500, str(ex)).response()
+        return context.DispatchError(context, 500, str(ex)).response()

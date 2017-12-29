@@ -14,12 +14,12 @@ In order to utilise this, you can write your `app.py` as follows:
 ```python
 import fdk
 
-from fdk.http import response
+from fdk import response
 
 
 def handler(context, data=None, loop=None):
     return response.RawResponse(
-        http_proto_version=context.version,
+        context,
         status_code=200, 
         headers={}, 
         response_data=data.readall()
@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
 ```
 
-Automatic HTTP input coercions
+Automatic input coercions
 ------------------------------
 
 Decorators are provided that will attempt to coerce input values to Python types.
@@ -40,7 +40,7 @@ Some attempt is made to coerce return values from these functions also:
 ```python
 import fdk
 
-@fdk.coerce_http_input_to_content_type
+@fdk.coerce_input_to_content_type
 def handler(context, data=None, loop=None):
     """
     body is a request body, it's type depends on content type
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
 ```
 
-Working with async automatic HTTP input coercions
+Working with async automatic input coercions
 -------------------------------------------------
 
 Latest version supports async coroutines as a request body processors:
@@ -61,16 +61,16 @@ Latest version supports async coroutines as a request body processors:
 import asyncio
 import fdk
 
-from fdk.http import response
+from fdk import response
 
 
-@fdk.coerce_http_input_to_content_type
+@fdk.coerce_input_to_content_type
 async def handler(context, data=None, loop=None):
     headers = {
         "Content-Type": "text/plain",
     }
     return response.RawResponse(
-        http_proto_version=context.version,
+        context,
         status_code=200,
         headers=headers,
         response_data="OK"

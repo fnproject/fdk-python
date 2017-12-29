@@ -28,10 +28,11 @@ class GoLikeHeaders(object):
             headers[k.lower().replace("fn_header_", "").replace('_', '-')] = v
         self.__headers = headers
 
-    def get(self, key):
+    def get(self, key, default=None):
         """
 
         :param key:
+        :param default:
         :return:
         """
         if key in self.__headers:
@@ -39,7 +40,7 @@ class GoLikeHeaders(object):
                     if len(self.__headers[key]) == 1
                     else self.__headers[key])
         else:
-            raise KeyError("Missing key: {}".format(key))
+            return default
 
     def set(self, key, value):
         """
