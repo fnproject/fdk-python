@@ -1,5 +1,5 @@
 FN development kit for Python
-== == == == == == == == == == == == == == =
+=============================
 
 Purpose of this library to provide simple interface to parse HTTP 1.1 requests represented as string
 

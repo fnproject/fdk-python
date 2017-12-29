@@ -6,17 +6,7 @@ Run tests on target brunch
 
 Steps:
 
-    tox -epep8
-    tox -epy3.5
-    tox -epy3.6
-
-
-Declare package version
------------------------
-
-In setup.py bump version to the next::
-
-    version='X.X.X'  to version='X.X.Y'
+    tox
 
 Cut off stable branch
 ---------------------
@@ -33,7 +23,7 @@ Create GitHub tag
 Steps:
 
     Releases ---> Draft New Release
-    Name: HotFn version X.X.X stable release
+    Name: FDK-Python version X.X.X stable release
 
 
 Collect changes from previous version
