@@ -317,6 +317,7 @@ class ChunkedStream(object):
     chunk is a regular chunk, with the exception that
     its length is zero.
     """
+
     def __init__(self, base_stream):
         """
         Chunked stream reader

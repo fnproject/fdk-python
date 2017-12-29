@@ -12,7 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+import datetime as dt
+import iso8601
 import os
+import signal
 import sys
 import traceback
 
@@ -21,8 +25,6 @@ from fdk.http import handle as http_handle
 from fdk.http import request as http_request
 from fdk.json import handle as json_handle
 from fdk.json import request as json_request
-
-fn_format = os.environ.get("FN_FORMAT")
 
 
 def generic_handle(handler, loop=None):
@@ -34,6 +36,7 @@ def generic_handle(handler, loop=None):
     :type loop: asyncio.AbstractEventLoop
     :return: None
     """
+    fn_format = os.environ.get("FN_FORMAT")
     (request_class,
      stream_reader_mode, stream_writer_mode, dispatcher) = (
         None, "rb", "wb", None)
@@ -67,6 +70,50 @@ def generic_handle(handler, loop=None):
                                          dispatcher, loop=loop)
 
 
+@contextlib.contextmanager
+def timeout(request, write_stream):
+
+    def handler(*_):
+        raise TimeoutError()
+
+    fn_format = os.environ.get("FN_FORMAT")
+    ctx = context.fromType(fn_format,
+                           os.environ.get("FN_APP_NAME"),
+                           os.environ.get("FN_PATH"), "",)
+
+    try:
+        ctx, data = request.parse_raw_request()
+
+        deadline = ctx.Headers().get("fn_deadline")
+        alarm_after = iso8601.parse_date(deadline)
+        now = dt.datetime.now(dt.timezone.utc).astimezone()
+        delta = alarm_after - now
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(int(delta.total_seconds()))
+
+        yield (ctx, data)
+
+    except EOFError:
+        # pipe closed from the other side by Fn
+        return
+    except TimeoutError:
+        signal.alarm(0)
+        traceback.print_exc(file=sys.stderr)
+        (ctx.DispatchError(ctx, 502, "Function timed out").
+         response().dump(write_stream))
+        return
+    except Exception as ex:
+        signal.alarm(0)
+        traceback.print_exc(file=sys.stderr)
+        (ctx.DispatchError(ctx, 500, str(ex)).
+         response().dump(write_stream))
+        return
+    except ctx.DispatchError as ex:
+        signal.alarm(0)
+        ex.response().dump(write_stream)
+        return
+
+
 def proceed_with_streams(handler, request, write_stream,
                          dispatcher, loop=None):
     """
@@ -78,19 +125,8 @@ def proceed_with_streams(handler, request, write_stream,
     :param loop: asyncio event loop
     :return:
     """
-    ctx = context.fromType(fn_format,
-                           os.environ.get("FN_APP_NAME"),
-                           os.environ.get("FN_PATH"), "",)
-    try:
-        ctx, data = request.parse_raw_request()
+
+    with timeout(request, write_stream) as (ctx, data):
         rs = dispatcher(handler, ctx,
                         data=data, loop=loop)
         rs.dump(write_stream)
-    except EOFError:
-        # pipe closed from the other side by Fn
-        return
-    except ctx.DispatchError as ex:
-        ex.response().dump(write_stream)
-    except Exception as ex:
-        traceback.print_exc(file=sys.stderr)
-        ctx.DispatchError(ctx, 500, str(ex)).response().dump(write_stream)

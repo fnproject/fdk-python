@@ -1,5 +1,5 @@
 FN development kit for Python
-=============================
+== == == == == == == == == == == == == == =
 
 Purpose of this library to provide simple interface to parse HTTP 1.1 requests represented as string
 
@@ -20,8 +20,8 @@ from fdk import response
 def handler(context, data=None, loop=None):
     return response.RawResponse(
         context,
-        status_code=200, 
-        headers={}, 
+        status_code=200,
+        headers={},
         response_data=data.readall()
     )
 
@@ -39,6 +39,7 @@ Some attempt is made to coerce return values from these functions also:
 
 ```python
 import fdk
+
 
 @fdk.coerce_input_to_content_type
 def handler(context, data=None, loop=None):
@@ -82,7 +83,7 @@ if __name__ == "__main__":
     fdk.handle(handler, loop=loop)
 
 ```
-As you can see `app` function is no longer callable, because its type: coroutine, so we need to bypass event loop inside 
+As you can see `app` function is no longer callable, because its type: coroutine, so we need to bypass event loop inside
 
 Handling Hot JSON Functions
 ---------------------------
@@ -126,7 +127,7 @@ if __name__ == "__main__":
 Applications powered by Fn: Concept
 -----------------------------------
 
-FDK is not only about developing functions, but providing necessary API to build serverless applications 
+FDK is not only about developing functions, but providing necessary API to build serverless applications
 that look like nothing but classes with methods powered by Fn.
 
 ```python
@@ -163,6 +164,7 @@ class Application(object):
         r.raise_for_status()
         return r.text
 
+
 if __name__ == "__main__":
     app = Application(config={})
 
@@ -190,7 +192,7 @@ if __name__ == "__main__":
 In order to identify to which Fn instance code needs to talk set following env var:
 
 ```bash
-    export API_URL=http://localhost:8080
+    export API_URL = http: // localhost: 8080
 ```
 with respect to IP address or domain name where Fn lives.
 
@@ -198,7 +200,7 @@ with respect to IP address or domain name where Fn lives.
 Applications powered by Fn: supply data to a function
 -----------------------------------------------------
 
-At this moment those helper-decorators let developers interact with Fn-powered functions as with regular class methods.
+At this moment those helper - decorators let developers interact with Fn - powered functions as with regular class methods.
 In order to pass necessary data into a function developer just needs to do following
 ```python
 
@@ -208,13 +210,13 @@ if __name__ == "__main__":
     app.env(keyone="blah", keytwo="blah", somethingelse=3)
 
 ```
-Key-value args will be turned into JSON instance and will be sent to a function as payload body.
+Key - value args will be turned into JSON instance and will be sent to a function as payload body.
 
 
 Applications powered by Fn: working with function's result
 ----------------------------------------------------------
 
-In order to work with result from function you just need to read key-value argument `fn_data`:
+In order to work with result from function you just need to read key - value argument `fn_data`:
 ```python
     @decorators.with_fn(fn_image="denismakogon/py-traceback-test:0.0.1",
                         fn_format="http")
@@ -225,7 +227,7 @@ In order to work with result from function you just need to read key-value argum
 Applications powered by Fn: advanced serverless functions
 ---------------------------------------------------------
 
-Since release v0.0.3 developer can consume new API to build truly serverless functions 
+Since release v0.0.3 developer can consume new API to build truly serverless functions
 without taking care of Docker images, application, etc.
 
 ```python
@@ -247,18 +249,18 @@ Each function decorated with `@decorator.fn` will become truly serverless and di
 So, how it works?
 
     * A developer writes function
-    * FDK (Fn-powered app) creates a recursive Pickle v4.0 with 3rd-party dependencies
-    * FDK (Fn-powered app) transfers pickled object to a function based on Python3 GPI (general purpose image)
-    * FDK unpickles function and its 3rd-party dependencies and runs it
-    * Function sends response back to Fn-powered application function caller
+    * FDK(Fn - powered app) creates a recursive Pickle v4.0 with 3rd - party dependencies
+    * FDK(Fn - powered app) transfers pickled object to a function based on Python3 GPI(general purpose image)
+    * FDK unpickles function and its 3rd - party dependencies and runs it
+    * Function sends response back to Fn - powered application function caller
 
-So, each CPU-intensive functions can be sent to Fn with the only load on networking (given example creates 7kB of traffic between app's host and Fn).
+So, each CPU - intensive functions can be sent to Fn with the only load on networking(given example creates 7kB of traffic between app's host and Fn).
 
 
 Applications powered by Fn: exceptions
 --------------------------------------
 
-Applications powered by Fn are following Go-like errors concept. It gives you full control on errors whether raise them or not.
+Applications powered by Fn are following Go - like errors concept. It gives you full control on errors whether raise them or not.
 ```python
     res, err = app.env()
     if err:
@@ -266,10 +268,10 @@ Applications powered by Fn are following Go-like errors concept. It gives you fu
     print(res)
 
 ```
-Each error is an instance fn `FnError` that encapsulates certain logic that makes hides HTTP errors and turns them into regular Python-like exceptions.
+Each error is an instance fn `FnError` that encapsulates certain logic that makes hides HTTP errors and turns them into regular Python - like exceptions.
 
 TODOs
 -----
 
- - generic response class
- - use fdk.headers.GoLikeHeaders in http
+    - generic response class
+    - use fdk.headers.GoLikeHeaders in http

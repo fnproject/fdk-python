@@ -42,5 +42,8 @@ class RawResponse(object):
                 http_proto_version=context.Arguments().get(
                     "http_version"))
 
+    def status(self):
+        return self.response.status_code
+
     def dump(self, stream, flush=True):
         return self.response.dump(stream, flush=flush)

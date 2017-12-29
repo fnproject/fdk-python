@@ -25,7 +25,7 @@ class GoLikeHeaders(object):
                             .format(type(headers)))
         for k, v in headers.copy().items():
             del headers[k]
-            headers[k.lower().replace("fn_header_", "").replace('_', '-')] = v
+            headers[k.lower().replace("fn_header_", "")] = v
         self.__headers = headers
 
     def get(self, key, default=None):

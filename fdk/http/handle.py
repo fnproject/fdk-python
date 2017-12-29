@@ -32,35 +32,26 @@ def normal_dispatch(app, context, data=None, loop=None):
     :return: raw response
     :rtype: response.RawResponse
     """
-    try:
-        rs = app(context, data=data, loop=loop)
-        if isinstance(rs, response.RawResponse):
-            return rs
-        elif isinstance(rs, types.CoroutineType):
-            return loop.run_until_complete(rs)
-        elif isinstance(rs, str):
-            return response.RawResponse(
-                context,
-                status_code=200,
-                headers={},
-                response_data=rs)
-        elif isinstance(rs, bytes):
-            return response.RawResponse(
-                context,
-                status_code=200,
-                headers={'content-type': 'application/octet-stream'},
-                response_data=rs.decode("utf8"))
-        else:
-            return response.RawResponse(
-                context,
-                status_code=200,
-                headers={'content-type': 'application/json'},
-                response_data=ujson.dumps(rs))
-    except context.DispatchError as e:
-        return e.response()
-    except Exception as e:
+    rs = app(context, data=data, loop=loop)
+    if isinstance(rs, response.RawResponse):
+        return rs
+    elif isinstance(rs, types.CoroutineType):
+        return loop.run_until_complete(rs)
+    elif isinstance(rs, str):
         return response.RawResponse(
             context,
-            status_code=500,
+            status_code=200,
             headers={},
-            response_data=str(e))
+            response_data=rs)
+    elif isinstance(rs, bytes):
+        return response.RawResponse(
+            context,
+            status_code=200,
+            headers={'content-type': 'application/octet-stream'},
+            response_data=rs.decode("utf8"))
+    else:
+        return response.RawResponse(
+            context,
+            status_code=200,
+            headers={'content-type': 'application/json'},
+            response_data=ujson.dumps(rs))

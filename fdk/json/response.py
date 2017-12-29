@@ -37,9 +37,11 @@ class JSONResponse(object):
         if isinstance(response_data, str):
             self.body = response_data if response_data else ""
 
-        if not isinstance(headers, dict):
-            raise TypeError("headers of unknown type")
-        self.headers = rh.GoLikeHeaders(headers)
+        self.headers = rh.GoLikeHeaders({})
+        if isinstance(headers, dict):
+            self.headers = rh.GoLikeHeaders(headers)
+        if isinstance(headers, rh.GoLikeHeaders):
+            self.headers = headers
 
     def dump(self, stream, flush=True):
         """

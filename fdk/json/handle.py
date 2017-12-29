@@ -33,35 +33,30 @@ def normal_dispatch(app, context, data=None, loop=None):
     :return: raw response
     :rtype: response.RawResponse
     """
-    try:
-        rs = app(context, data=data, loop=loop)
-        if isinstance(rs, response.RawResponse):
-            return rs
-        elif isinstance(rs, types.CoroutineType):
-            return loop.run_until_complete(rs)
-        elif isinstance(rs, str):
-            hs = headers.GoLikeHeaders({})
-            hs.set('content-type', 'text/plain')
-            return response.RawResponse(context, response_data=rs)
-        elif isinstance(rs, bytes):
-            hs = headers.GoLikeHeaders({})
-            hs.set('content-type', 'application/octet-stream')
-            return response.RawResponse(
-                context,
-                response_data=rs.decode("utf8"),
-                headers=hs,
-                status_code=200
-            )
-        else:
-            hs = headers.GoLikeHeaders({})
-            hs.set('content-type', 'application/json')
-            return response.RawResponse(
-                context,
-                response_data=ujson.dumps(rs),
-                headers=hs,
-                status_code=200,
-            )
-    except context.DispatchError as e:
-        return e.response()
-    except Exception as ex:
-        return context.DispatchError(context, 500, str(ex)).response()
+    rs = app(context, data=data, loop=loop)
+    if isinstance(rs, response.RawResponse):
+        return rs
+    elif isinstance(rs, types.CoroutineType):
+        return loop.run_until_complete(rs)
+    elif isinstance(rs, str):
+        hs = headers.GoLikeHeaders({})
+        hs.set('content-type', 'text/plain')
+        return response.RawResponse(context, response_data=rs)
+    elif isinstance(rs, bytes):
+        hs = headers.GoLikeHeaders({})
+        hs.set('content-type', 'application/octet-stream')
+        return response.RawResponse(
+            context,
+            response_data=rs.decode("utf8"),
+            headers=hs,
+            status_code=200
+        )
+    else:
+        hs = headers.GoLikeHeaders({})
+        hs.set('content-type', 'application/json')
+        return response.RawResponse(
+            context,
+            response_data=ujson.dumps(rs),
+            headers=hs,
+            status_code=200,
+        )
