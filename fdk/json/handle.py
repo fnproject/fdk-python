@@ -19,6 +19,7 @@ from fdk import headers
 from fdk import response
 
 
+@response.safe
 def normal_dispatch(app, context, data=None, loop=None):
     """
     Request handler app dispatcher

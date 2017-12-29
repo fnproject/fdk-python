@@ -12,8 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+import traceback
+import sys
+
 from fdk.http import response as hr
 from fdk.json import response as jr
+
+
+def safe(dispatcher):
+
+    @functools.wraps(dispatcher)
+    def wrapper(app, context, data=None, loop=None):
+        try:
+            return dispatcher(app, context, data=data, loop=loop)
+        except (Exception, TimeoutError) as ex:
+            traceback.print_exc(file=sys.stderr)
+            status = 502 if isinstance(ex, TimeoutError) else 500
+            return context.DispatchError(context, status, str(ex)).response()
+
+    return wrapper
 
 
 class RawResponse(object):
@@ -45,6 +63,9 @@ class RawResponse(object):
 
     def status(self):
         return self.response.status_code
+
+    def body(self):
+        return self.response.response_data
 
     def dump(self, stream, flush=True):
         return self.response.dump(stream, flush=flush)

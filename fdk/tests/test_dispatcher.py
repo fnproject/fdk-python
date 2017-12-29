@@ -47,39 +47,66 @@ def custom_response(ctx, **kwargs):
     )
 
 
-class TestDispatcher(testtools.TestCase):
+def error(ctx, **kwargs):
+    raise Exception("custom error, should be handled")
+
+
+class TestJSONDispatcher(testtools.TestCase):
 
     def setUp(self):
-        super(TestDispatcher, self).setUp()
+        super(TestJSONDispatcher, self).setUp()
 
     def tearDown(self):
-        super(TestDispatcher, self).tearDown()
+        super(TestJSONDispatcher, self).tearDown()
 
-    def test_http_normal_dispatch(self):
-        req = hr.RawRequest(io.BytesIO(
-            data.http_request_with_query_and_data.encode("utf8")))
-        ctx, body = req.parse_raw_request()
-        resp = hh.normal_dispatch(handle, ctx, data=body)
-        self.assertEqual(200, resp.status())
-
-    def test_json_normal_dispatch(self):
+    def run_json_func(self, func):
         req = jr.RawRequest(io.StringIO(data.json_request_with_data))
         ctx, body = req.parse_raw_request()
-        resp = jh.normal_dispatch(handle, ctx, data=body)
+        return jh.normal_dispatch(func, ctx, data=body)
+
+    def test_json_normal_dispatch(self):
+        resp = self.run_json_func(handle)
         self.assertEqual(200, resp.status())
 
     def test_json_custom_response(self):
-        req = jr.RawRequest(io.StringIO(data.json_request_with_data))
-        ctx, body = req.parse_raw_request()
-        resp = jh.normal_dispatch(custom_response, ctx, data=body)
+        resp = self.run_json_func(custom_response)
         self.assertEqual(403, resp.status())
 
-    def test_http_custom_response(self):
+    def test_json_custom_error(self):
+        resp = self.run_json_func(error)
+        self.assertEqual(500, resp.status())
+        self.assertIn("custom error",
+                      resp.body().get(
+                          "error", {"message": ""}).get(
+                          "message"))
+
+
+class TestHTTPDispatcher(testtools.TestCase):
+
+    def setUp(self):
+        super(TestHTTPDispatcher, self).setUp()
+
+    def tearDown(self):
+        super(TestHTTPDispatcher, self).tearDown()
+
+    def run_http_func(self, func):
         req = hr.RawRequest(io.BytesIO(
             data.http_request_with_query_and_data.encode("utf8")))
         ctx, body = req.parse_raw_request()
-        resp = hh.normal_dispatch(custom_response, ctx, data=body)
+        return hh.normal_dispatch(func, ctx, data=body)
+
+    def test_http_normal_dispatch(self):
+        resp = self.run_http_func(handle)
+        self.assertEqual(200, resp.status())
+
+    def test_http_custom_response(self):
+        resp = self.run_http_func(custom_response)
         self.assertEqual(403, resp.status())
+
+    def test_http_custom_error(self):
+        resp = self.run_http_func(error)
+        self.assertEqual(500, resp.status())
+        self.assertIn(b"custom error, should be handled", resp.body())
 
 
 class TestJSONDeadline(testtools.TestCase):

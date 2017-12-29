@@ -18,7 +18,7 @@ import iso8601
 import os
 import signal
 import sys
-import traceback
+# import traceback
 
 from fdk import context
 from fdk.http import handle as http_handle
@@ -96,15 +96,15 @@ def timeout(request, write_stream):
     except EOFError:
         # pipe closed from the other side by Fn
         return
-    except (TimeoutError, Exception) as ex:
-        signal.alarm(0)
-        traceback.print_exc(file=sys.stderr)
-        err = ctx.DispatchError(
-            ctx, 502 if isinstance(
-                ex, TimeoutError) else 500, str(ex))
-        resp = err.response()
-        resp.dump(write_stream)
-        return
+    # except (TimeoutError, Exception) as ex:
+    #     signal.alarm(0)
+    #     traceback.print_exc(file=sys.stderr)
+    #     err = ctx.DispatchError(
+    #         ctx, 502 if isinstance(
+    #             ex, TimeoutError) else 500, str(ex))
+    #     resp = err.response()
+    #     resp.dump(write_stream)
+    #     return
     except ctx.DispatchError as ex:
         signal.alarm(0)
         ex.response().dump(write_stream)

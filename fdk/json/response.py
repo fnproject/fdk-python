@@ -33,9 +33,9 @@ class JSONResponse(object):
         self.status_code = status_code
 
         if isinstance(response_data, dict):
-            self.body = response_data if response_data else {}
+            self.response_data = response_data if response_data else {}
         if isinstance(response_data, str):
-            self.body = response_data if response_data else ""
+            self.response_data = response_data if response_data else ""
 
         self.headers = rh.GoLikeHeaders({})
         if isinstance(headers, dict):
@@ -50,7 +50,7 @@ class JSONResponse(object):
         :param flush: whether flush data on write or not
         :return: result of dumping
         """
-        raw_body = ujson.dumps(self.body)
+        raw_body = ujson.dumps(self.response_data)
         self.headers.set("content-length", len(raw_body))
         resp = ujson.dumps({
             "body": raw_body,
