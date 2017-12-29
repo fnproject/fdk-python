@@ -23,16 +23,28 @@ from fdk.http import request as hr
 from fdk.json import handle as jh
 from fdk.http import handle as hh
 from fdk.json import request as jr
+from fdk import response
 from fdk import runner
 from fdk.tests import data
 
 
-def handle(ctx, data=None, loop=None):
+def handle(ctx, **kwargs):
     pass
 
 
 def sleeper(ctx, **kwargs):
     time.sleep(12)
+
+
+def custom_response(ctx, **kwargs):
+    return response.RawResponse(
+        ctx,
+        status_code=403,
+        headers={
+            "Content-Type": "text/plain",
+        },
+        response_data="Forbidden. Bad credentials.",
+    )
 
 
 class TestDispatcher(testtools.TestCase):
@@ -56,6 +68,28 @@ class TestDispatcher(testtools.TestCase):
         resp = jh.normal_dispatch(handle, ctx, data=body)
         self.assertEqual(200, resp.status())
 
+    def test_json_custom_response(self):
+        req = jr.RawRequest(io.StringIO(data.json_request_with_data))
+        ctx, body = req.parse_raw_request()
+        resp = jh.normal_dispatch(custom_response, ctx, data=body)
+        self.assertEqual(403, resp.status())
+
+    def test_http_custom_response(self):
+        req = hr.RawRequest(io.BytesIO(
+            data.http_request_with_query_and_data.encode("utf8")))
+        ctx, body = req.parse_raw_request()
+        resp = hh.normal_dispatch(custom_response, ctx, data=body)
+        self.assertEqual(403, resp.status())
+
+
+class TestJSONDeadline(testtools.TestCase):
+
+    def setUp(self):
+        super(TestJSONDeadline, self).setUp()
+
+    def tearDown(self):
+        super(TestJSONDeadline, self).tearDown()
+
     def run_json_func(self, func, deadile_is_seconds):
         os.environ.setdefault("FN_FORMAT", "json")
         now = dt.datetime.now(dt.timezone.utc).astimezone()
@@ -77,6 +111,14 @@ class TestDispatcher(testtools.TestCase):
         raw = self.run_json_func(sleeper, 10)
         self.assertIn('"status_code":502', raw)
         self.assertIn('Function timed out', raw)
+
+
+class TestHTTPDeadline(testtools.TestCase):
+    def setUp(self):
+        super(TestHTTPDeadline, self).setUp()
+
+    def tearDown(self):
+        super(TestHTTPDeadline, self).tearDown()
 
     def run_http_func(self, func, deadile_is_seconds):
         os.environ.setdefault("FN_FORMAT", "http")
