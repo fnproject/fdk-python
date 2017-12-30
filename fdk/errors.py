@@ -13,13 +13,12 @@
 #    under the License.
 
 from fdk import headers
-from fdk.http import response as http_response
-from fdk.json import response as json_response
+from fdk import response
 
 
 class HTTPDispatchException(Exception):
 
-    def __init__(self, status, message):
+    def __init__(self, context, status, message):
         """
         HTTP response with error
         :param status: HTTP status code
@@ -27,9 +26,11 @@ class HTTPDispatchException(Exception):
         """
         self.status = status
         self.message = message
+        self.context = context
 
     def response(self):
-        return http_response.RawResponse(
+        return response.RawResponse(
+            self.context,
             status_code=self.status,
             headers={
                 "content-type": "text/plain"
@@ -39,7 +40,7 @@ class HTTPDispatchException(Exception):
 
 class JSONDispatchException(Exception):
 
-    def __init__(self, status, message):
+    def __init__(self, context, status, message):
         """
         JSON response with error
         :param status: HTTP status code
@@ -47,14 +48,17 @@ class JSONDispatchException(Exception):
         """
         self.status = status
         self.message = message
+        self.context = context
 
     def response(self):
         resp_headers = headers.GoLikeHeaders({})
         resp_headers.set("content-type", "text/plain; charset=utf-8")
-        return json_response.RawResponse(
+        return response.RawResponse(
+            self.context,
             response_data={
                 "error": {
                     "message": self.message,
                 }
             },
-            headers=resp_headers, status_code=500)
+            headers=resp_headers,
+            status_code=self.status)

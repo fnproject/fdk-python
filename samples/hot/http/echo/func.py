@@ -15,7 +15,7 @@
 import fdk
 
 
-@fdk.coerce_http_input_to_content_type
+@fdk.coerce_input_to_content_type
 def app(context, data=None, loop=None):
     """
     This is just an echo function

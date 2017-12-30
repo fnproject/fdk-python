@@ -12,14 +12,57 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from fdk.http import handle as http_handler
+import functools
+import io
+import ujson
+
 from fdk import runner
 
-
-coerce_http_input_to_content_type = http_handler.coerce_input_to_content_type
 handle = runner.generic_handle
 
+
+def coerce_input_to_content_type(request_data_processor):
+
+    @functools.wraps(request_data_processor)
+    def app(context, data=None, loop=None):
+        """
+        Request handler app dispatcher decorator
+        :param context: request context
+        :type context: request.RequestContext
+        :param data: request body
+        :type data: io.BufferedIOBase
+        :param loop: asyncio event loop
+        :type loop: asyncio.AbstractEventLoop
+        :return: raw response
+        :rtype: response.RawResponse
+        :return:
+        """
+        body = data
+        content_type = context.Headers().get("content-type")
+        try:
+
+            if hasattr(data, "readable"):
+                request_body = io.TextIOWrapper(data)
+            else:
+                request_body = data
+
+            if content_type == "application/json":
+                if isinstance(request_body, str):
+                    body = ujson.loads(request_body)
+                else:
+                    body = ujson.load(request_body)
+            elif content_type in ["text/plain"]:
+                body = request_body.read()
+
+        except Exception as ex:
+            raise context.DispatchError(
+                context, 500, "Unexpected error: {}".format(str(ex)))
+
+        return request_data_processor(context, data=body, loop=loop)
+
+    return app
+
+
 __all__ = [
-    'coerce_http_input_to_content_type',
     'handle'
 ]

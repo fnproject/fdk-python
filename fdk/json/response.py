@@ -15,10 +15,10 @@
 import sys
 import ujson
 
-from fdk import headers as http_headers
+from fdk import headers as rh
 
 
-class RawResponse(object):
+class JSONResponse(object):
 
     def __init__(self, response_data=None, headers=None, status_code=200):
         """
@@ -31,19 +31,12 @@ class RawResponse(object):
         :type status_code: int
         """
         self.status_code = status_code
-
-        if isinstance(response_data, dict):
-            self.body = response_data if response_data else {}
-        if isinstance(response_data, str):
-            self.body = response_data if response_data else ""
-
-        if headers:
-            if not isinstance(headers, http_headers.GoLikeHeaders):
-                raise TypeError("headers should be of "
-                                "`hotfn.headers.GoLikeHeaders` type!")
+        self.response_data = ujson.dumps(response_data)
+        self.headers = rh.GoLikeHeaders({})
+        if isinstance(headers, dict):
+            self.headers = rh.GoLikeHeaders(headers)
+        if isinstance(headers, rh.GoLikeHeaders):
             self.headers = headers
-        else:
-            self.headers = http_headers.GoLikeHeaders({})
 
     def dump(self, stream, flush=True):
         """
@@ -52,10 +45,9 @@ class RawResponse(object):
         :param flush: whether flush data on write or not
         :return: result of dumping
         """
-        raw_body = ujson.dumps(self.body)
-        self.headers.set("content-length", len(raw_body))
+        self.headers.set("content-length", len(self.response_data))
         resp = ujson.dumps({
-            "body": raw_body,
+            "body": self.response_data,
             "status_code": self.status_code,
             "headers": self.headers.for_dump()
         })

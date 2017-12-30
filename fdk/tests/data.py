@@ -35,13 +35,34 @@ User-Agent: curl/7.51.0\r
 Accept: */*\r
 """
 
+http_coerce = """POST /r/emokognition/detect HTTP/1.1\r
+Host: localhost:9000\r
+Fn_header_accept: */*\r
+Fn_header_content_length: 46\r
+Fn_header_content_type: application/json\r
+Fn_header_user_agent: curl/7.54.0\r
+\r
+{"media_url": "http://localhost:8080/img.png"}
+"""
+
 http_request_with_fn_content_headers = """POST /r/emokognition/detect HTTP/1.1\r
 Host: localhost:9000\r
 Fn_header_accept: */*\r
 Fn_header_content_length: 46\r
 Fn_header_content_type: application/x-www-form-urlencoded\r
 Fn_header_user_agent: curl/7.54.0\r
-\r\n{"media_url": "http://localhost:8080/img.png"}
+\r
+{"media_url": "http://localhost:8080/img.png"}
+"""
+
+http_with_deadline = """GET /v1/apps?something=something&etc=etc HTTP/1.1\r
+Host: localhost:8080\r
+Content-Length: 11\r
+Content-Type: application/x-www-form-urlencoded\r
+User-Agent: curl/7.51.0\r
+Fn_deadline: {}\r
+\r
+hello:hello
 """
 
 json_request_with_data = (
@@ -52,7 +73,7 @@ json_request_with_data = (
     ',"request_url":"/v1/apps?something=something&etc=etc"\n'
     ',"headers":{"Content-Type":["application/json"],'
     '"Host":["localhost:8080"],"User-Agent":["curl/7.51.0"]}\n'
-    '\n}\n\n')
+    '\n}\n}\n\n')
 
 json_request_without_data = (
     '{\n"call_id":"some_id"\n,'
@@ -62,4 +83,14 @@ json_request_without_data = (
     ',"request_url":"/v1/apps?something=something&etc=etc"\n'
     ',"headers":{"Content-Type":["application/json"],'
     '"Host":["localhost:8080"],"User-Agent":["curl/7.51.0"]}\n'
-    '\n}\n\n')
+    '\n}\n}\n\n')
+
+json_with_deadline = (
+    '{\n"call_id":"some_id"\n,'
+    '"content_type":"application/json"\n'
+    ',"body":"{\\"a\\":\\"a\\"}\n"\n'
+    ',"protocol":{"type":"json"\n'
+    ',"request_url":"/v1/apps?something=something&etc=etc"\n'
+    ',"headers":{"Content-Type":["application/json"],'
+    '"Host":["localhost:8080"],'
+    '"User-Agent":["curl/7.51.0"],')

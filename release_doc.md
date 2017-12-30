@@ -4,24 +4,14 @@ Release process
 Run tests on target brunch
 --------------------------
 
-Steps::
+Steps:
 
-    tox -epep8
-    tox -epy3.5
-    tox -epy3.6
-
-
-Declare package version
------------------------
-
-In setup.py bump version to the next::
-
-    version='X.X.X'  to version='X.X.Y'
+    tox
 
 Cut off stable branch
 ---------------------
 
-Steps::
+Steps:
 
     git checkout -b vX.X.X-stable
     git push origin vX.X.X-stable
@@ -30,16 +20,16 @@ Steps::
 Create GitHub tag
 -----------------
 
-Steps::
+Steps:
 
     Releases ---> Draft New Release
-    Name: HotFn version X.X.X stable release
+    Name: FDK-Python version X.X.X stable release
 
 
 Collect changes from previous version
 -------------------------------------
 
-Steps::
+Steps:
 
     git log --oneline --decorate
 
@@ -47,7 +37,7 @@ Steps::
 Build distribution package
 --------------------------
 
-Steps::
+Steps:
 
     PBR_VERSION=X.X.X python setup.py sdist bdist_wheel
 
@@ -55,7 +45,7 @@ Steps::
 Check install capability for the wheel
 --------------------------------------
 
-Steps::
+Steps:
 
     virtualenv .test_venv -ppython3.6
     source .test_venv/bin/activate
@@ -65,14 +55,14 @@ Steps::
 Submit release to PYPI
 ----------------------
 
-Steps::
+Steps:
 
     twine upload dist/fdk-X.X.X*
 
 Verify install capability for the wheel
 ---------------------------------------
 
-Steps::
+Steps:
 
     virtualenv .new_venv -ppython3.6
     source .new_venv/bin/activate

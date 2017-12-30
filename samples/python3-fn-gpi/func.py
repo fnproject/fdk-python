@@ -15,12 +15,12 @@
 import asyncio
 import dill
 import fdk
-import json
 import sys
 
-from fdk.http import response
+from fdk import response
 
 
+@fdk.coerce_input_to_content_type
 async def handler(context, data=None, loop=None):
     """
     General purpose Python3 function processor
@@ -41,20 +41,19 @@ async def handler(context, data=None, loop=None):
     :param context: request context
     :type context: fdk.context.RequestContext
     :param data: request data
-    :type data: fdk.http.request.ContentLengthStream
+    :type data: dict
     :param loop: asyncio event loop
     :type loop: asyncio.AbstractEventLoop
     :return: resulting object of distributed function
     :rtype: object
     """
-    action_dict = json.loads(data.read())
     (is_coroutine, self_in_bytes,
      action_in_bytes, action_args, action_kwargs) = (
-        action_dict['is_coroutine'],
-        action_dict['self'],
-        action_dict['action'],
-        action_dict['args'],
-        action_dict['kwargs'])
+        data['is_coroutine'],
+        data['self'],
+        data['action'],
+        data['args'],
+        data['kwargs'])
 
     print("Got {} bytes of class instance".format(len(self_in_bytes)),
           file=sys.stderr, flush=True)
@@ -89,7 +88,7 @@ async def handler(context, data=None, loop=None):
     except Exception as ex:
         print("call failed", file=sys.stderr, flush=True)
         return response.RawResponse(
-            http_proto_version=context.version,
+            context,
             status_code=500,
             headers={
                 "Content-Type": "text/plain",
@@ -102,7 +101,7 @@ async def handler(context, data=None, loop=None):
         res = await res
 
     return response.RawResponse(
-        http_proto_version=context.version,
+        context,
         status_code=200,
         headers={
             "Content-Type": "text/plain",
