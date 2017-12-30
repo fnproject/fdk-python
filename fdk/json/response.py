@@ -32,11 +32,6 @@ class JSONResponse(object):
         """
         self.status_code = status_code
         self.response_data = ujson.dumps(response_data)
-        # if isinstance(response_data, dict):
-        #     self.response_data = response_data if response_data else {}
-        # if isinstance(response_data, str):
-        #     self.response_data = response_data if response_data else ""
-
         self.headers = rh.GoLikeHeaders({})
         if isinstance(headers, dict):
             self.headers = rh.GoLikeHeaders(headers)
