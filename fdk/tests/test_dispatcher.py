@@ -13,6 +13,7 @@
 #    under the License.
 
 import datetime as dt
+import fdk
 import io
 import os
 import time
@@ -51,6 +52,42 @@ def error(ctx, **kwargs):
     raise Exception("custom error, should be handled")
 
 
+# TODO(denismakogon): FUCK, fix this!!!
+@fdk.coerce_input_to_content_type
+def validate(ctx, **kwargs):
+    return response.RawResponse(
+        ctx, response_data=isinstance(kwargs.get("data"), dict),
+        headers={
+            "Content-Type": "text/plain",
+        },
+        status_code=200,
+    )
+
+
+class TestRequestTypeCoercing(testtools.TestCase):
+
+    def setUp(self):
+        super(TestRequestTypeCoercing, self).setUp()
+
+    def tearDown(self):
+        super(TestRequestTypeCoercing, self).tearDown()
+
+    def test_http_data_coercing(self):
+        req = hr.RawRequest(io.BytesIO(
+            data.http_coerce.encode("utf8")))
+        ctx, body = req.parse_raw_request()
+        resp = hh.normal_dispatch(validate, ctx, data=body)
+        self.assertEqual(200, resp.status())
+        self.assertIn(b"True", resp.body())
+
+    def test_json_data_coercing(self):
+        req = jr.RawRequest(io.StringIO(data.json_request_with_data))
+        ctx, body = req.parse_raw_request()
+        resp = jh.normal_dispatch(validate, ctx, data=body)
+        self.assertEqual(200, resp.status())
+        self.assertIn("true", resp.body())
+
+
 class TestJSONDispatcher(testtools.TestCase):
 
     def setUp(self):
@@ -75,10 +112,7 @@ class TestJSONDispatcher(testtools.TestCase):
     def test_json_custom_error(self):
         resp = self.run_json_func(error)
         self.assertEqual(500, resp.status())
-        self.assertIn("custom error",
-                      resp.body().get(
-                          "error", {"message": ""}).get(
-                          "message"))
+        self.assertIn("custom error, should be handled", resp.body())
 
 
 class TestHTTPDispatcher(testtools.TestCase):

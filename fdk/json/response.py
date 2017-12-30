@@ -31,11 +31,11 @@ class JSONResponse(object):
         :type status_code: int
         """
         self.status_code = status_code
-
-        if isinstance(response_data, dict):
-            self.response_data = response_data if response_data else {}
-        if isinstance(response_data, str):
-            self.response_data = response_data if response_data else ""
+        self.response_data = ujson.dumps(response_data)
+        # if isinstance(response_data, dict):
+        #     self.response_data = response_data if response_data else {}
+        # if isinstance(response_data, str):
+        #     self.response_data = response_data if response_data else ""
 
         self.headers = rh.GoLikeHeaders({})
         if isinstance(headers, dict):
@@ -50,10 +50,9 @@ class JSONResponse(object):
         :param flush: whether flush data on write or not
         :return: result of dumping
         """
-        raw_body = ujson.dumps(self.response_data)
-        self.headers.set("content-length", len(raw_body))
+        self.headers.set("content-length", len(self.response_data))
         resp = ujson.dumps({
-            "body": raw_body,
+            "body": self.response_data,
             "status_code": self.status_code,
             "headers": self.headers.for_dump()
         })

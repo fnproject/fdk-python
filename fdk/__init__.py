@@ -40,14 +40,20 @@ def coerce_input_to_content_type(request_data_processor):
         body = data
         content_type = context.Headers().get("content-type")
         try:
+
             if hasattr(data, "readable"):
                 request_body = io.TextIOWrapper(data)
             else:
                 request_body = data
+
             if content_type == "application/json":
-                body = ujson.load(request_body)
+                if isinstance(request_body, str):
+                    body = ujson.loads(request_body)
+                else:
+                    body = ujson.load(request_body)
             elif content_type in ["text/plain"]:
                 body = request_body.read()
+
         except Exception as ex:
             raise context.DispatchError(
                 context, 500, "Unexpected error: {}".format(str(ex)))
