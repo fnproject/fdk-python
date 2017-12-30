@@ -1,4 +1,4 @@
-name: denismakogon/python3-fn-gpi:0.0.1
+name: fnproject/python3-fn-gpi:0.0.1
 version: 0.0.1
 runtime: docker
 type: sync

@@ -15,15 +15,15 @@
 import asyncio
 
 import fdk
-from fdk.http import response
+from fdk import response
 
 
-@fdk.coerce_http_input_to_content_type
+@fdk.coerce_input_to_content_type
 async def app(context, data=None, loop=None):
     """
     This is just an echo function
     :param context: request context
-    :type context: hotfn.http.request.RequestContext
+    :type context: fdk.context.RequestContext
     :param data: request body
     :type data: object
     :param loop: asyncio event loop
@@ -35,7 +35,7 @@ async def app(context, data=None, loop=None):
         "Content-Type": "plain/text",
     }
     return response.RawResponse(
-        http_proto_version=context.version,
+        context,
         status_code=200,
         headers=headers,
         response_data="OK")

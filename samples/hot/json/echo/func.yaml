@@ -1,4 +1,4 @@
-name: denismakogon/hot-json-python:0.0.1
+name: fnproject/hot-json-python:0.0.1
 version: 0.0.1
 runtime: docker
 type: sync

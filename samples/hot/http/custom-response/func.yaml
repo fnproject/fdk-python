@@ -1,0 +1,6 @@
+name: fnproject/fdk-python-custom-response:0.0.1
+version: 0.0.1
+runtime: python3
+format: http
+timeout: 100
+path: /custom_response
