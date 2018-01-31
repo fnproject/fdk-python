@@ -82,10 +82,13 @@ class RawRequest(object):
             print("After JSON parsing: {}".format(incoming_json),
                   file=sys.stderr, flush=True)
             json_headers = headers.GoLikeHeaders(
-                incoming_json.get('protocol', {"headers": {}}).get('headers'))
+                incoming_json.get('protocol', {"headers": {}}).get("headers"))
             ctx = context.JSONContext(os.environ.get("FN_APP_NAME"),
                                       os.environ.get("FN_PATH"),
                                       incoming_json.get("call_id"),
+                                      execution_type=incoming_json.get(
+                                          "type", "sync"),
+                                      deadline=incoming_json.get("deadline"),
                                       config=os.environ, headers=json_headers)
             return ctx, incoming_json.get('body')
         except Exception as ex:

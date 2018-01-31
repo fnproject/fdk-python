@@ -83,7 +83,7 @@ def timeout(request, write_stream):
     try:
         ctx, data = request.parse_raw_request()
 
-        deadline = ctx.Headers().get("fn_deadline")
+        deadline = ctx.Deadline()
         alarm_after = iso8601.parse_date(deadline)
         now = dt.datetime.now(dt.timezone.utc).astimezone()
         delta = alarm_after - now

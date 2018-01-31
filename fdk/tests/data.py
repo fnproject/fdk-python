@@ -68,8 +68,9 @@ hello:hello
 json_request_with_data = (
     '{\n"call_id":"some_id"\n,'
     '"content_type":"application/json"\n'
+    ',"type":"sync"\n'
     ',"body":"{\\"a\\":\\"a\\"}\n"\n'
-    ',"protocol":{"type":"json"\n'
+    ',"protocol":{"type":"http"\n'
     ',"request_url":"/v1/apps?something=something&etc=etc"\n'
     ',"headers":{"Content-Type":["application/json"],'
     '"Host":["localhost:8080"],"User-Agent":["curl/7.51.0"]}\n'
@@ -78,19 +79,22 @@ json_request_with_data = (
 json_request_without_data = (
     '{\n"call_id":"some_id"\n,'
     '"content_type":"application/json"\n'
+    ',"type":"sync"\n'
+    ',"deadline":"0001-01-01T00:00:00.000Z"\n'
     ',"body":""\n'
-    ',"protocol":{"type":"json"\n'
+    ',"protocol":{"type":"http"\n'
     ',"request_url":"/v1/apps?something=something&etc=etc"\n'
     ',"headers":{"Content-Type":["application/json"],'
     '"Host":["localhost:8080"],"User-Agent":["curl/7.51.0"]}\n'
     '\n}\n}\n\n')
 
-json_with_deadline = (
+json_with_deadline = [
     '{\n"call_id":"some_id"\n,'
     '"content_type":"application/json"\n'
+    ',"type":"sync"\n',
     ',"body":"{\\"a\\":\\"a\\"}\n"\n'
-    ',"protocol":{"type":"json"\n'
+    ',"protocol":{"type":"http"\n'
     ',"request_url":"/v1/apps?something=something&etc=etc"\n'
     ',"headers":{"Content-Type":["application/json"],'
-    '"Host":["localhost:8080"],'
-    '"User-Agent":["curl/7.51.0"],')
+    '"Host":["localhost:8080"],"User-Agent":["curl/7.51.0"]}\n'
+    '\n}\n}\n\n']
