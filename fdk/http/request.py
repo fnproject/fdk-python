@@ -139,6 +139,7 @@ class RawRequest(object):
                 os.environ.get("FN_APP_NAME"),
                 os.environ.get("FN_PATH"),
                 headers.get('fn_call_id'),
+                deadline=headers.get("fn_deadline"),
                 config=os.environ,
                 method=method,
                 url=path,

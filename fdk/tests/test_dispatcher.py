@@ -155,9 +155,9 @@ class TestJSONDeadline(testtools.TestCase):
         os.environ.setdefault("FN_FORMAT", "json")
         now = dt.datetime.now(dt.timezone.utc).astimezone()
         deadline = now + dt.timedelta(seconds=deadile_is_seconds)
-        r = (data.json_with_deadline +
-             '"Fn_deadline":["{}"]'.format(
-                 deadline.isoformat()) + '}\n' + '}\n}\n\n')
+        r = "".join((data.json_with_deadline[0],
+                     ',"deadline":"{}"\n'.format(deadline.isoformat()),
+                     data.json_with_deadline[1]))
         req = jr.RawRequest(io.StringIO(r))
         write_stream = io.StringIO()
         runner.proceed_with_streams(

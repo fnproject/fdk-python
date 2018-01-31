@@ -18,7 +18,8 @@ from fdk import errors
 class RequestContext(object):
 
     def __init__(self, app_name, route, call_id,
-                 fntype, config=None, headers=None, arguments=None):
+                 fntype, execution_type=None, deadline=None,
+                 config=None, headers=None, arguments=None):
         """
         Request context here to be a placeholder
         for request-specific attributes
@@ -30,6 +31,8 @@ class RequestContext(object):
         self.__headers = headers if headers else {}
         self.__arguments = {} if not arguments else arguments
         self.__type = fntype
+        self.__exec_type = execution_type
+        self.__deadline = deadline
 
     def AppName(self):
         return self.__app_name
@@ -52,11 +55,18 @@ class RequestContext(object):
     def Type(self):
         return self.__type
 
+    def Deadline(self):
+        return self.__deadline
+
+    def ExecutionType(self):
+        return self.__exec_type
+
 
 class HTTPContext(RequestContext):
 
     def __init__(self, app_name, route,
                  call_id, fntype="http",
+                 deadline=None, execution_type=None,
                  config=None, headers=None,
                  method=None, url=None,
                  query_parameters=None,
@@ -70,16 +80,21 @@ class HTTPContext(RequestContext):
         self.DispatchError = errors.HTTPDispatchException
         super(HTTPContext, self).__init__(
             app_name, route, call_id, fntype,
+            execution_type=execution_type, deadline=deadline,
             config=config, headers=headers, arguments=arguments)
 
 
 class JSONContext(RequestContext):
 
     def __init__(self, app_name, route, call_id,
-                 fntype="json", config=None, headers=None):
+                 fntype="json", deadline=None,
+                 execution_type=None, config=None,
+                 headers=None):
         self.DispatchError = errors.JSONDispatchException
         super(JSONContext, self).__init__(
-            app_name, route, call_id, fntype, config=config, headers=headers)
+            app_name, route, call_id, fntype,
+            execution_type=execution_type,
+            deadline=deadline, config=config, headers=headers)
 
 
 def fromType(fntype, *args, **kwargs):
