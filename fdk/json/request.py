@@ -40,7 +40,7 @@ def readline(stream):
             s = line.replace('\n"\n,', '",').replace("\n}", "}")
             print("Before JSON parsing: {}".format(s),
                   file=sys.stderr, flush=True)
-            return ujson.loads(s)
+            return ujson.loads(s) if len(s) > 0 else {}
         if c == "\n":
             line += c
             ret = True
