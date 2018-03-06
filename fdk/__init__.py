@@ -24,7 +24,7 @@ def handle(handle_func, loop=None):
             asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
             loop = asyncio.get_event_loop()
         try:
-            cls = runner.JSONProtocol.with_handler(handle_func)
+            cls = runner.JSONProtocol.with_handler(handle_func, loop=loop)
             stdin_pipe_reader = loop.connect_read_pipe(cls, stdin)
             loop.run_until_complete(stdin_pipe_reader)
             loop.run_forever()

@@ -12,8 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import asyncio
 import json
 import testtools
+import uvloop
 
 from fdk import runner
 from fdk import response
@@ -34,6 +36,10 @@ def custom_response(ctx, data=None, loop=None):
 
 def expectioner(ctx, data=None, loop=None):
     raise Exception("custom_error")
+
+
+async def coroutine_func(ctx, data=None, loop=None):
+    return "OK"
 
 
 class TestJSONRequestParser(testtools.TestCase):
@@ -69,3 +75,12 @@ class TestJSONRequestParser(testtools.TestCase):
         r = runner.handle_request(expectioner, in_bytes)
         self.assertIsNotNone(r)
         self.assertEqual(500, r.status())
+
+    def test_corotuine_func(self):
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        loop = asyncio.get_event_loop()
+        in_bytes = data.raw_request_without_body.encode('utf8')
+        r = runner.handle_request(coroutine_func, in_bytes, loop=loop)
+        self.assertIsNotNone(r)
+        self.assertEqual(200, r.status())
+        self.assertIn("OK", r.body())
