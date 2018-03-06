@@ -30,7 +30,6 @@ class GoLikeHeaders(object):
 
     def get(self, key, default=None):
         """
-
         :param key:
         :param default:
         :return:
@@ -44,7 +43,6 @@ class GoLikeHeaders(object):
 
     def set(self, key, value):
         """
-
         :param key:
         :param value:
         :return:
@@ -56,7 +54,6 @@ class GoLikeHeaders(object):
 
     def append(self, key, value):
         """
-
         :param key:
         :param value:
         :return:

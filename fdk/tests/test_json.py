@@ -12,13 +12,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import io
-
+import json
 import testtools
 
-from fdk import headers
-from fdk.json import request
+from fdk import runner
 from fdk.tests import data
+
+
+def dummy_func(ctx, data=None, loop=None):
+    body = json.loads(data) if len(data) > 0 else {"name": "World"}
+    return "Hello {0}".format(body.get("name"))
 
 
 class TestJSONRequestParser(testtools.TestCase):
@@ -29,17 +32,16 @@ class TestJSONRequestParser(testtools.TestCase):
     def tearDown(self):
         super(TestJSONRequestParser, self).tearDown()
 
-    def test_parse_request_with_data(self):
-        req_parser = request.RawRequest(
-            io.StringIO(data.json_request_with_data))
-        context, request_data = req_parser.parse_raw_request()
-        self.assertIsNotNone(context)
-        self.assertIsNotNone(request_data)
-        self.assertIsInstance(request_data, str)
-        self.assertIsInstance(context.Headers(), headers.GoLikeHeaders)
-
     def test_parse_request_without_data(self):
-        req_parser = request.RawRequest(
-            io.StringIO(data.json_request_without_data))
-        context, request_data = req_parser.parse_raw_request()
-        self.assertEqual("", request_data)
+        response = runner.from_request(
+            dummy_func, data.json_request_without_body)
+        self.assertIsNotNone(response)
+        self.assertIn("Hello World", response.body())
+        self.assertEqual(200, response.status())
+
+    def test_parse_request_with_data(self):
+        response = runner.from_request(
+            dummy_func, data.json_request_with_body)
+        self.assertIsNotNone(response)
+        self.assertIn("Hello John", response.body())
+        self.assertEqual(200, response.status())

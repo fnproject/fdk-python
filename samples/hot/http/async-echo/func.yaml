@@ -1,6 +1,0 @@
-name: fnproject/fdk-python-async-echo:0.0.1
-version: 0.0.1
-runtime: python3
-format: http
-timeout: 100
-path: /async-echo
