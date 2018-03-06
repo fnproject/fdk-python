@@ -32,6 +32,10 @@ def custom_response(ctx, data=None, loop=None):
         status_code=201)
 
 
+def expectioner(ctx, data=None, loop=None):
+    raise Exception("custom_error")
+
+
 class TestJSONRequestParser(testtools.TestCase):
 
     def setUp(self):
@@ -59,3 +63,9 @@ class TestJSONRequestParser(testtools.TestCase):
         self.assertIsNotNone(r)
         self.assertIn("Hello John", r.body())
         self.assertEqual(201, r.status())
+
+    def test_errored_func(self):
+        in_bytes = data.raw_request_without_body.encode('utf8')
+        r = runner.handle_request(expectioner, in_bytes)
+        self.assertIsNotNone(r)
+        self.assertEqual(500, r.status())
