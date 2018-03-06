@@ -16,12 +16,24 @@ import json
 import testtools
 
 from fdk import runner
+from fdk import response
 from fdk.tests import data
 
 
 def dummy_func(ctx, data=None, loop=None):
     body = json.loads(data) if len(data) > 0 else {"name": "World"}
     return "Hello {0}".format(body.get("name"))
+
+
+def custom_response(ctx, data=None, loop=None):
+    return response.RawResponse(
+        ctx,
+        response_data=dummy_func(ctx, data=data, loop=loop),
+        status_code=201)
+
+
+def expectioner(ctx, data=None, loop=None):
+    raise Exception("custom_error")
 
 
 class TestJSONRequestParser(testtools.TestCase):
@@ -33,15 +45,27 @@ class TestJSONRequestParser(testtools.TestCase):
         super(TestJSONRequestParser, self).tearDown()
 
     def test_parse_request_without_data(self):
-        response = runner.from_request(
+        r = runner.from_request(
             dummy_func, data.json_request_without_body)
-        self.assertIsNotNone(response)
-        self.assertIn("Hello World", response.body())
-        self.assertEqual(200, response.status())
+        self.assertIsNotNone(r)
+        self.assertIn("Hello World", r.body())
+        self.assertEqual(200, r.status())
 
     def test_parse_request_with_data(self):
-        response = runner.from_request(
+        r = runner.from_request(
             dummy_func, data.json_request_with_body)
-        self.assertIsNotNone(response)
-        self.assertIn("Hello John", response.body())
-        self.assertEqual(200, response.status())
+        self.assertIsNotNone(r)
+        self.assertIn("Hello John", r.body())
+        self.assertEqual(200, r.status())
+
+    def test_custom_response_object(self):
+        r = runner.from_request(custom_response, data.json_request_with_body)
+        self.assertIsNotNone(r)
+        self.assertIn("Hello John", r.body())
+        self.assertEqual(201, r.status())
+
+    def test_errored_func(self):
+        in_bytes = data.raw_request_without_body.encode('utf8')
+        r = runner.handle_request(expectioner, in_bytes)
+        self.assertIsNotNone(r)
+        self.assertEqual(500, r.status())
