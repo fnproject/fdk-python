@@ -12,108 +12,82 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-import datetime as dt
-import iso8601
-import os
-import signal
+import asyncio
 import sys
+import ujson
+import os
+import traceback
 
 from fdk import context
-from fdk.http import handle as http_handle
-from fdk.http import request as http_request
-from fdk.json import handle as json_handle
-from fdk.json import request as json_request
+from fdk import errors
+from fdk import headers
+from fdk import response
 
 
-def generic_handle(handler, loop=None):
-    """
-    Request handler app dispatcher entry point
-    :param handler: request handler app
-    :type handler: types.Callable
-    :param loop: asyncio event loop
-    :type loop: asyncio.AbstractEventLoop
-    :return: None
-    """
-    fn_format = os.environ.get("FN_FORMAT")
-    (request_class,
-     stream_reader_mode, stream_writer_mode, dispatcher) = (
-        None, "rb", "wb", None)
+def from_request(handle_func, incoming_request, loop=None):
+    print("request parsed", file=sys.stderr, flush=True)
+    json_headers = headers.GoLikeHeaders(
+        incoming_request.get('protocol', {"headers": {}}).get("headers"))
 
-    if fn_format in [None, "default"]:
-        exit(501)
+    print("headers parsed", file=sys.stderr, flush=True)
+    ctx = context.JSONContext(os.environ.get("FN_APP_NAME"),
+                              os.environ.get("FN_PATH"),
+                              incoming_request.get("call_id"),
+                              execution_type=incoming_request.get(
+                                  "type", "sync"),
+                              deadline=incoming_request.get("deadline"),
+                              config=os.environ, headers=json_headers)
 
-    if fn_format == "json":
-        (request_class,
-         stream_reader_mode,
-         stream_writer_mode, dispatcher) = (
-            json_request.RawRequest,
-            "r", "w",
-            json_handle.normal_dispatch)
+    print("context allocated", file=sys.stderr, flush=True)
 
-    if fn_format == "http":
-        (request_class,
-         stream_reader_mode,
-         stream_writer_mode, dispatcher) = (
-            http_request.RawRequest,
-            "rb", "wb",
-            http_handle.normal_dispatch)
-
-    if not os.isatty(sys.stdin.fileno()):
-        with os.fdopen(sys.stdin.fileno(), stream_reader_mode) as read_stream:
-            with os.fdopen(sys.stdout.fileno(),
-                           stream_writer_mode) as write_stream:
-                request = request_class(read_stream)
-                while True:
-                    proceed_with_streams(handler, request, write_stream,
-                                         dispatcher, loop=loop)
+    print("starting the function", file=sys.stderr, flush=True)
+    print(incoming_request.get("body"), file=sys.stderr, flush=True)
+    response_data = handle_func(
+        ctx, data=incoming_request.get("body"), loop=loop)
+    print("the function finished", file=sys.stderr, flush=True)
+    return response.RawResponse(
+        ctx, response_data=response_data, status_code=200)
 
 
-@contextlib.contextmanager
-def timeout(request, write_stream):
-
-    def handler(*_):
-        raise TimeoutError("Function timed out")
-
-    fn_format = os.environ.get("FN_FORMAT")
-    ctx = context.fromType(fn_format,
-                           os.environ.get("FN_APP_NAME"),
-                           os.environ.get("FN_PATH"), "",)
-
+def handle_request(handle_func, data, loop=None):
     try:
-        ctx, data = request.parse_raw_request()
+        print("entering handle_request", file=sys.stderr, flush=True)
+        incoming_json = ujson.loads(str(data.decode('utf8').replace("'", '"')))
 
-        deadline = ctx.Deadline()
-        alarm_after = iso8601.parse_date(deadline)
-        now = dt.datetime.now(dt.timezone.utc).astimezone()
-        delta = alarm_after - now
-        signal.signal(signal.SIGALRM, handler)
-        signal.alarm(int(delta.total_seconds()))
+        return from_request(handle_func, incoming_json, loop=loop)
 
-        yield (ctx, data)
-
-    except EOFError:
-        # pipe closed from the other side by Fn
-        return
-    except ctx.DispatchError as ex:
-        signal.alarm(0)
-        ex.response().dump(write_stream)
-        return
+    except (Exception, TimeoutError) as ex:
+        traceback.print_exc(file=sys.stderr)
+        status = 502 if isinstance(ex, TimeoutError) else 500
+        return errors.JSONDispatchException(
+            context, status, str(ex)).response()
 
 
-def proceed_with_streams(handler, request, write_stream,
-                         dispatcher, loop=None):
-    """
-    Handles both request parsing and dumping
-    :param handler: request body handler
-    :param request: incoming request
-    :param write_stream: write stream (usually STDOUT)
-    :param dispatcher: raw HTTP/JSON request dispatcher
-    :param loop: asyncio event loop
-    :return:
-    """
+class JSONProtocol(asyncio.Protocol):
 
-    with timeout(request, write_stream) as (ctx, data):
-        rs = dispatcher(handler, ctx,
-                        data=data, loop=loop)
-        rs.dump(write_stream)
+    handle_func = None
+    loop = None
+
+    @classmethod
+    def with_handler(cls, handler_func, loop=None):
+        cls.handle_func = handler_func
+        cls.loop = loop
+        return cls
+
+    def connection_made(self, transport):
+        print('pipe opened', file=sys.stderr, flush=True)
+        super(JSONProtocol, self).connection_made(transport=transport)
+
+    def data_received(self, data):
+        print('received: ', data.decode(), file=sys.stderr, flush=True)
+
+        rs = handle_request(
+            self.__class__.handle_func, data, loop=self.__class__.loop)
+        print("response created", file=sys.stderr, flush=True)
+        rs.dump()
+
+        super(JSONProtocol, self).data_received(data)
+
+    def connection_lost(self, exc):
+        print('pipe closed', file=sys.stderr, flush=True)
+        super(JSONProtocol, self).connection_lost(exc)

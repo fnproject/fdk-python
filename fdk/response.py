@@ -12,12 +12,48 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import ujson
 import functools
 import traceback
 import sys
 
-from fdk.http import response as hr
-from fdk.json import response as jr
+from fdk import headers as hrs
+
+
+class JSONResponse(object):
+
+    def __init__(self, response_data=None, headers=None, status_code=200):
+        """
+        JSON response object
+        :param response_data: JSON response data (dict, str)
+        :type response_data: object
+        :param headers: JSON response HTTP headers
+        :type headers: fdk.headers.GoLikeHeaders
+        :param status_code: JSON response HTTP status code
+        :type status_code: int
+        """
+        self.status_code = status_code
+        self.response_data = ujson.dumps(response_data)
+        self.headers = hrs.GoLikeHeaders({})
+        if isinstance(headers, dict):
+            self.headers = hrs.GoLikeHeaders(headers)
+        if isinstance(headers, hrs.GoLikeHeaders):
+            self.headers = headers
+
+    def dump(self):
+        """
+        Dumps raw JSON response to a stream
+        :return: result of dumping
+        """
+        self.headers.set("content-length", len(self.response_data))
+        resp = ujson.dumps({
+            "body": self.response_data,
+            "status_code": self.status_code,
+            "headers": self.headers.for_dump()
+        })
+        print("Prepared response: {}".format(resp),
+              file=sys.stderr, flush=True)
+        print(resp, file=sys.stdout, flush=True)
 
 
 def safe(dispatcher):
@@ -48,18 +84,10 @@ class RawResponse(object):
         :param status_code: status code
         :type status_code: int
         """
-        if context.Type() == "json":
-            self.response = jr.JSONResponse(
-                response_data=response_data,
-                headers=headers,
-                status_code=status_code)
-        if context.Type() == "http":
-            self.response = hr.HTTPResponse(
-                status_code=status_code,
-                response_data=str(response_data),
-                headers=headers,
-                http_proto_version=context.Arguments().get(
-                    "http_version"))
+        self.response = JSONResponse(
+            response_data=response_data,
+            headers=headers,
+            status_code=status_code)
 
     def status(self):
         return self.response.status_code
@@ -67,5 +95,5 @@ class RawResponse(object):
     def body(self):
         return self.response.response_data
 
-    def dump(self, stream, flush=True):
-        return self.response.dump(stream, flush=flush)
+    def dump(self):
+        return self.response.dump()

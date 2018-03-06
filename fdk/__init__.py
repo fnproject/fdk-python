@@ -12,60 +12,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import functools
-import io
-import ujson
+import asyncio
+import uvloop
 
 from fdk import runner
 
-handle = runner.generic_handle
 
-
-def coerce_input_to_content_type(request_data_processor):
-
-    @functools.wraps(request_data_processor)
-    def app(context, data=None, loop=None):
-        """
-        Request handler app dispatcher decorator
-        :param context: request context
-        :type context: request.RequestContext
-        :param data: request body
-        :type data: io.BufferedIOBase
-        :param loop: asyncio event loop
-        :type loop: asyncio.AbstractEventLoop
-        :return: raw response
-        :rtype: response.RawResponse
-        :return:
-        """
-        body = data
-        content_type = context.Headers().get("content-type")
+def handle(handle_func, loop=None):
+    with open("/dev/stdin", "rb", buffering=0) as stdin:
+        if loop is None:
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+            loop = asyncio.get_event_loop()
         try:
-
-            if hasattr(data, "readable"):
-                request_body = io.TextIOWrapper(data)
-            else:
-                request_body = data
-
-            if content_type == "application/json":
-                if isinstance(request_body, str):
-                    if len(request_body) > 0:
-                        body = ujson.loads(request_body)
-                    else:
-                        body = {}
-                else:
-                    body = ujson.load(request_body)
-            elif content_type in ["text/plain"]:
-                body = request_body.read()
-
-        except Exception as ex:
-            raise context.DispatchError(
-                context, 500, "Unexpected error: {}".format(str(ex)))
-
-        return request_data_processor(context, data=body, loop=loop)
-
-    return app
-
-
-__all__ = [
-    'handle'
-]
+            cls = runner.JSONProtocol.with_handler(handle_func)
+            stdin_pipe_reader = loop.connect_read_pipe(cls, stdin)
+            loop.run_until_complete(stdin_pipe_reader)
+            loop.run_forever()
+        finally:
+            loop.close()

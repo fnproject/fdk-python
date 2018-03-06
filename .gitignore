@@ -122,3 +122,4 @@ venv
 .venv
 ChangeLog
 AUTHORS
+.pytest_cache/

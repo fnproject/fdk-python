@@ -12,7 +12,35 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from fdk import headers
+from fdk import response
 from fdk import errors
+
+
+class JSONDispatchException(Exception):
+
+    def __init__(self, context, status, message):
+        """
+        JSON response with error
+        :param status: HTTP status code
+        :param message: error message
+        """
+        self.status = status
+        self.message = message
+        self.context = context
+
+    def response(self):
+        resp_headers = headers.GoLikeHeaders({})
+        resp_headers.set("content-type", "text/plain; charset=utf-8")
+        return response.RawResponse(
+            self.context,
+            response_data={
+                "error": {
+                    "message": self.message,
+                }
+            },
+            headers=resp_headers,
+            status_code=self.status)
 
 
 class RequestContext(object):
@@ -62,28 +90,6 @@ class RequestContext(object):
         return self.__exec_type
 
 
-class HTTPContext(RequestContext):
-
-    def __init__(self, app_name, route,
-                 call_id, fntype="http",
-                 deadline=None, execution_type=None,
-                 config=None, headers=None,
-                 method=None, url=None,
-                 query_parameters=None,
-                 version=None):
-        arguments = {
-            "method": method,
-            "URL": url,
-            "query": query_parameters,
-            "http_version": version
-        }
-        self.DispatchError = errors.HTTPDispatchException
-        super(HTTPContext, self).__init__(
-            app_name, route, call_id, fntype,
-            execution_type=execution_type, deadline=deadline,
-            config=config, headers=headers, arguments=arguments)
-
-
 class JSONContext(RequestContext):
 
     def __init__(self, app_name, route, call_id,
@@ -95,10 +101,3 @@ class JSONContext(RequestContext):
             app_name, route, call_id, fntype,
             execution_type=execution_type,
             deadline=deadline, config=config, headers=headers)
-
-
-def fromType(fntype, *args, **kwargs):
-    if fntype == "json":
-        return JSONContext(*args, **kwargs)
-    if fntype == "http":
-        return HTTPContext(*args, **kwargs)

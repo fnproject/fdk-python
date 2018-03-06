@@ -13,21 +13,12 @@
 #    under the License.
 
 import fdk
+import json
 
 
-def handler(context, data=None, loop=None):
-    """
-    This is just an echo function
-    :param context: request context
-    :type context: hotfn.http.request.RequestContext
-    :param data: request body
-    :type data: object
-    :param loop: asyncio event loop
-    :type loop: asyncio.AbstractEventLoop
-    :return: echo of request body
-    :rtype: object
-    """
-    return data
+def handler(ctx, data=None, loop=None):
+    body = json.loads(data) if len(data) > 0 else {"name": "World"}
+    return "Hello {0}".format(body.get("name"))
 
 
 if __name__ == "__main__":

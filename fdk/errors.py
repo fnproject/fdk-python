@@ -16,28 +16,6 @@ from fdk import headers
 from fdk import response
 
 
-class HTTPDispatchException(Exception):
-
-    def __init__(self, context, status, message):
-        """
-        HTTP response with error
-        :param status: HTTP status code
-        :param message: error message
-        """
-        self.status = status
-        self.message = message
-        self.context = context
-
-    def response(self):
-        return response.RawResponse(
-            self.context,
-            status_code=self.status,
-            headers={
-                "content-type": "text/plain"
-            },
-            response_data=self.message)
-
-
 class JSONDispatchException(Exception):
 
     def __init__(self, context, status, message):
