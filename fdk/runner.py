@@ -44,6 +44,10 @@ def from_request(handle_func, incoming_request, loop=None):
     print(incoming_request.get("body"), file=sys.stderr, flush=True)
     response_data = handle_func(
         ctx, data=incoming_request.get("body"), loop=loop)
+
+    if isinstance(response_data, response.RawResponse):
+        return response_data
+
     print("the function finished", file=sys.stderr, flush=True)
     return response.RawResponse(
         ctx, response_data=response_data, status_code=200)
