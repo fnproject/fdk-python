@@ -48,7 +48,10 @@ def coerce_input_to_content_type(request_data_processor):
 
             if content_type == "application/json":
                 if isinstance(request_body, str):
-                    body = ujson.loads(request_body)
+                    if len(request_body) > 0:
+                        body = ujson.loads(request_body)
+                    else:
+                        body = {}
                 else:
                     body = ujson.load(request_body)
             elif content_type in ["text/plain"]:
