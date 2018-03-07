@@ -32,7 +32,8 @@ def handle_callable(ctx, handle_func, data=None,
     if isinstance(r, types.CoroutineType):
         print("function appeared to be a coroutine, awaiting...",
               file=sys.stderr, flush=True)
-        return loop.run_until_complete(r)
+        while not loop.is_running():
+            return loop.run_until_complete(r)
 
     return r
 
@@ -107,3 +108,4 @@ class JSONProtocol(asyncio.Protocol):
     def connection_lost(self, exc):
         print('pipe closed', file=sys.stderr, flush=True)
         super(JSONProtocol, self).connection_lost(exc)
+        sys.exit(0)
