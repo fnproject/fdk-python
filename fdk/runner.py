@@ -25,8 +25,8 @@ from fdk import headers
 from fdk import response
 
 
-def handle_callable(ctx, handle_func, data=None,
-                    loop: asyncio.AbstractEventLoop=None):
+def handle_callable(ctx, handle_func, data=None):
+    loop = asyncio.new_event_loop()
     r = handle_func(ctx, data=data, loop=loop)
 
     if isinstance(r, types.CoroutineType):
@@ -34,17 +34,12 @@ def handle_callable(ctx, handle_func, data=None,
               file=sys.stderr, flush=True)
         print("loop is running: ", str(loop.is_running()),
               file=sys.stderr, flush=True)
-        if loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(r, loop)
-            try:
-                return future.result(600)
-            except asyncio.TimeoutError:
-                print('The coroutine took too long, cancelling the task...',
-                      file=sys.stderr, flush=True)
-                future.cancel()
-                raise TimeoutError("function timed out")
-        else:
-            return loop.run_until_complete(r)
+        res = None
+        try:
+            res = loop.run_until_complete(r)
+        finally:
+            loop.close()
+            return res
 
     return r
 
@@ -67,7 +62,7 @@ def from_request(handle_func, incoming_request, loop=None):
     print("starting the function", file=sys.stderr, flush=True)
     print(incoming_request.get("body"), file=sys.stderr, flush=True)
     response_data = handle_callable(
-        ctx, handle_func, data=incoming_request.get("body"), loop=loop)
+        ctx, handle_func, data=incoming_request.get("body"))
 
     if isinstance(response_data, response.RawResponse):
         return response_data

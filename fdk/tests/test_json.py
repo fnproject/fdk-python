@@ -15,7 +15,6 @@
 import asyncio
 import json
 import testtools
-import uvloop
 
 from fdk import runner
 from fdk import response
