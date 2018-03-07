@@ -32,6 +32,8 @@ def handle_callable(ctx, handle_func, data=None,
     if isinstance(r, types.CoroutineType):
         print("function appeared to be a coroutine, awaiting...",
               file=sys.stderr, flush=True)
+        print("loop state: ", str(loop.is_running()),
+              file=sys.stderr, flush=True)
         while not loop.is_running():
             return loop.run_until_complete(r)
     else:
