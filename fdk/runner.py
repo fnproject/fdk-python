@@ -17,31 +17,11 @@ import sys
 import ujson
 import os
 import traceback
-import types
 
 from fdk import context
 from fdk import errors
 from fdk import headers
 from fdk import response
-
-
-def handle_callable(ctx, handle_func, data=None):
-    loop = asyncio.new_event_loop()
-    r = handle_func(ctx, data=data, loop=loop)
-
-    if isinstance(r, types.CoroutineType):
-        print("function appeared to be a coroutine, awaiting...",
-              file=sys.stderr, flush=True)
-        print("loop is running: ", str(loop.is_running()),
-              file=sys.stderr, flush=True)
-        res = None
-        try:
-            res = loop.run_until_complete(r)
-        finally:
-            loop.close()
-            return res
-
-    return r
 
 
 def from_request(handle_func, incoming_request, loop=None):
@@ -61,8 +41,8 @@ def from_request(handle_func, incoming_request, loop=None):
     print("context allocated", file=sys.stderr, flush=True)
     print("starting the function", file=sys.stderr, flush=True)
     print(incoming_request.get("body"), file=sys.stderr, flush=True)
-    response_data = handle_callable(
-        ctx, handle_func, data=incoming_request.get("body"))
+    response_data = handle_func(
+        ctx, data=incoming_request.get("body"))
 
     if isinstance(response_data, response.RawResponse):
         return response_data

@@ -37,10 +37,6 @@ def expectioner(ctx, data=None, loop=None):
     raise Exception("custom_error")
 
 
-async def coroutine_func(ctx, data=None, loop=None):
-    return "OK"
-
-
 def none_func(ctx, data=None, loop=None):
     return
 
@@ -88,20 +84,3 @@ class TestJSONRequestParser(testtools.TestCase):
         self.assertIsNotNone(r)
         self.assertEqual(200, r.status())
         self.assertIn("", r.body())
-
-    def test_corotuine_func(self):
-        in_bytes = data.raw_request_without_body.encode('utf8')
-        r = runner.handle_request(coroutine_func, in_bytes, loop=self.loop)
-        self.assertIsNotNone(r)
-        self.assertEqual(200, r.status())
-        self.assertIn("OK", r.body())
-
-    def test_corotuine_func_multiple(self):
-        in_bytes = data.raw_request_without_body.encode('utf8')
-        # simulates two requests handled by the coroutines
-        r1 = runner.handle_request(coroutine_func, in_bytes, loop=self.loop)
-        r2 = runner.handle_request(coroutine_func, in_bytes, loop=self.loop)
-        for r in [r1, r2]:
-            self.assertIsNotNone(r)
-            self.assertEqual(200, r.status())
-            self.assertIn("OK", r.body())
