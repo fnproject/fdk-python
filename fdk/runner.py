@@ -34,14 +34,17 @@ def handle_callable(ctx, handle_func, data=None,
               file=sys.stderr, flush=True)
         print("loop is running: ", str(loop.is_running()),
               file=sys.stderr, flush=True)
-        future = asyncio.run_coroutine_threadsafe(r, loop)
-        try:
-            return future.result(600)
-        except asyncio.TimeoutError:
-            print('The coroutine took too long, cancelling the task...',
-                  file=sys.stderr, flush=True)
-            future.cancel()
-            raise TimeoutError("function timed out")
+        if loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(r, loop)
+            try:
+                return future.result(600)
+            except asyncio.TimeoutError:
+                print('The coroutine took too long, cancelling the task...',
+                      file=sys.stderr, flush=True)
+                future.cancel()
+                raise TimeoutError("function timed out")
+        else:
+            return loop.run_until_complete(r)
 
     return r
 
