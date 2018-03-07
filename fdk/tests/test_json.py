@@ -84,3 +84,15 @@ class TestJSONRequestParser(testtools.TestCase):
         self.assertIsNotNone(r)
         self.assertEqual(200, r.status())
         self.assertIn("OK", r.body())
+
+    def test_corotuine_func_multiple(self):
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        loop = asyncio.get_event_loop()
+        in_bytes = data.raw_request_without_body.encode('utf8')
+        # simulates two requests handled by the coroutines
+        r1 = runner.handle_request(coroutine_func, in_bytes, loop=loop)
+        r2 = runner.handle_request(coroutine_func, in_bytes, loop=loop)
+        for r in [r1, r2]:
+            self.assertIsNotNone(r)
+            self.assertEqual(200, r.status())
+            self.assertIn("OK", r.body())
