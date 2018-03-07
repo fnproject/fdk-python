@@ -26,14 +26,14 @@ class JSONResponse(object):
         """
         JSON response object
         :param response_data: JSON response data (dict, str)
-        :type response_data: object
+        :type response_data: str
         :param headers: JSON response HTTP headers
         :type headers: fdk.headers.GoLikeHeaders
         :param status_code: JSON response HTTP status code
         :type status_code: int
         """
         self.status_code = status_code
-        self.response_data = ujson.dumps(response_data)
+        self.response_data = response_data if response_data else ""
         self.headers = hrs.GoLikeHeaders({})
         if isinstance(headers, dict):
             self.headers = hrs.GoLikeHeaders(headers)
@@ -79,7 +79,7 @@ class RawResponse(object):
         :param context: request context
         :type context: fdk.context.RequestContext
         :param response_data: response data
-        :type response_data: object
+        :type response_data: str
         :param headers: response headers
         :param status_code: status code
         :type status_code: int

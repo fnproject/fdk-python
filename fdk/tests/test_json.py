@@ -42,6 +42,10 @@ async def coroutine_func(ctx, data=None, loop=None):
     return "OK"
 
 
+def none_func(ctx, data=None, loop=None):
+    return
+
+
 class TestJSONRequestParser(testtools.TestCase):
 
     def setUp(self):
@@ -96,3 +100,10 @@ class TestJSONRequestParser(testtools.TestCase):
             self.assertIsNotNone(r)
             self.assertEqual(200, r.status())
             self.assertIn("OK", r.body())
+
+    def test_none_func(self):
+        in_bytes = data.raw_request_without_body.encode('utf8')
+        r = runner.handle_request(none_func, in_bytes)
+        self.assertIsNotNone(r)
+        self.assertEqual(200, r.status())
+        self.assertIn("", r.body())
