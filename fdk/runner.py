@@ -34,8 +34,8 @@ def handle_callable(ctx, handle_func, data=None,
               file=sys.stderr, flush=True)
         while not loop.is_running():
             return loop.run_until_complete(r)
-
-    return r
+    else:
+        return r
 
 
 def from_request(handle_func, incoming_request, loop=None):
