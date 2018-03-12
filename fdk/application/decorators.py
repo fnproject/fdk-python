@@ -176,7 +176,13 @@ def fn(fn_type=None, fn_timeout=60,
                     resp.content)
 
             resp.close()
-            return dill.loads(resp.content), None
+            content_type = resp.headers.get("content-type")
+            if "text/plain" in content_type:
+                return resp.text, None
+            if "application/json" in content_type:
+                return resp.json(), None
+
+            return resp.content, None
 
         return inner_wrapper
 

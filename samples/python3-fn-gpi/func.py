@@ -87,9 +87,6 @@ def handler(context, data=None):
         return response.RawResponse(
             context,
             status_code=500,
-            headers={
-                "content-type": "text/plain",
-            },
             response_data=str(ex))
 
     print("call result: {}".format(res), file=sys.stderr, flush=True)
@@ -97,10 +94,7 @@ def handler(context, data=None):
     return response.RawResponse(
         context,
         status_code=200,
-        headers={
-            "content-type": "text/plain",
-        },
-        response_data=dill.dumps(res))
+        response_data=res)
 
 
 if __name__ == "__main__":
