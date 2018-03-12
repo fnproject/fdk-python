@@ -16,9 +16,10 @@ import dill
 import functools
 import os
 import requests
-import types
 
 from fdk.application import errors
+
+GPI_IMAGE = "denismakogon/python3-fn-gpi:0.0.2"
 
 
 def fn_app(fn_app_class):
@@ -32,7 +33,7 @@ def fn_app(fn_app_class):
             pass
 
         @fn_route(
-            fn_image="denismakogon/hot-json-python:0.0.1",
+            fn_image="denismakogon/fdk-python-echo:0.0.1",
             fn_type="sync",
             fn_memory=256,
             fn_format="json",
@@ -48,7 +49,7 @@ def fn_app(fn_app_class):
     @functools.wraps(fn_app_class)
     def wrapper(*args, **kwargs):
         app_name = fn_app_class.__name__
-        fn_api_url = os.environ.get("API_URL")
+        fn_api_url = os.environ.get("FN_API_URL")
         requests.get(fn_api_url).raise_for_status()
         fn_app_url = "{}/v1/apps/{}".format(
             fn_api_url, app_name.lower())
@@ -70,7 +71,8 @@ def fn_app(fn_app_class):
     return wrapper
 
 
-def fn(fn_type=None, fn_timeout=60, fn_idle_timeout=200, fn_memory=256,
+def fn(fn_type=None, fn_timeout=60,
+       fn_idle_timeout=200, fn_memory=256,
        dependencies=None):
     """
     Runs Python's function on general purpose Fn function
@@ -109,14 +111,12 @@ def fn(fn_type=None, fn_timeout=60, fn_idle_timeout=200, fn_memory=256,
     :return:
     """
     fn_method = "POST"
-    fn_image = "denismakogon/python3-fn-gpi:0.0.1"
-    fn_format = "http"
     dependencies = dependencies if dependencies else {}
 
     def ext_wrapper(action):
         @functools.wraps(action)
         def inner_wrapper(*f_args, **f_kwargs):
-            fn_api_url = os.environ.get("API_URL")
+            fn_api_url = os.environ.get("FN_API_URL")
             requests.get(fn_api_url).raise_for_status()
             self = f_args[0]
             fn_path = action.__name__.lower()
@@ -126,10 +126,10 @@ def fn(fn_type=None, fn_timeout=60, fn_idle_timeout=200, fn_memory=256,
                 resp = requests.post(fn_routes_url, json={
                     "route": {
                         "path": "/{}".format(fn_path),
-                        "image": fn_image,
+                        "image": GPI_IMAGE,
                         "memory": fn_memory if fn_memory else 256,
                         "type": fn_type if fn_type else "sync",
-                        "format": fn_format if fn_format else "default",
+                        "format": "json",
                         "timeout": fn_timeout if fn_timeout else 60,
                         "idle_timeout": (fn_idle_timeout if
                                          fn_idle_timeout else 120),
@@ -158,7 +158,6 @@ def fn(fn_type=None, fn_timeout=60, fn_idle_timeout=200, fn_memory=256,
             req = requests.Request(
                 method=fn_method, url=fn_exec_url,
                 json={
-                    "is_coroutine": isinstance(action, types.CoroutineType),
                     "action": list(action_in_bytes),
                     "self": list(self_in_bytes),
                     "args": f_args[1:],
@@ -185,9 +184,8 @@ def fn(fn_type=None, fn_timeout=60, fn_idle_timeout=200, fn_memory=256,
 
 
 def with_fn(fn_image=None, fn_type=None,
-            fn_memory=256, fn_format=None,
-            fn_timeout=60, fn_idle_timeout=200,
-            fn_method="GET"):
+            fn_memory=256, fn_timeout=60,
+            fn_idle_timeout=200, fn_method="POST"):
     """
     Sets up Fn app route based on parameters given above
     :param fn_image: Docker image
@@ -196,8 +194,6 @@ def with_fn(fn_image=None, fn_type=None,
     :type fn_type: str
     :param fn_memory: Fn RAM to allocate
     :type fn_memory: int
-    :param fn_format: Fn route format to accept
-    :type fn_format: str
     :param fn_timeout: Fn route call timeout
     :type fn_timeout: int
     :param fn_idle_timeout: Fn route idle timeout (timeout between calls)
@@ -210,7 +206,7 @@ def with_fn(fn_image=None, fn_type=None,
     def ext_wrapper(action):
         @functools.wraps(action)
         def inner_wrapper(*f_args, **f_kwargs):
-            fn_api_url = os.environ.get("API_URL")
+            fn_api_url = os.environ.get("FN_API_URL")
             requests.get(fn_api_url).raise_for_status()
             self = f_args[0]
             fn_path = action.__name__.lower()
@@ -226,7 +222,7 @@ def with_fn(fn_image=None, fn_type=None,
                         "image": fn_image,
                         "memory": fn_memory if fn_memory else 256,
                         "type": fn_type if fn_type else "sync",
-                        "format": fn_format if fn_format else "default",
+                        "format": "json",
                         "timeout": fn_timeout if fn_timeout else 60,
                         "idle_timeout": (fn_idle_timeout if
                                          fn_idle_timeout else 120),

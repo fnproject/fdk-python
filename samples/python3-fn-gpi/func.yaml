@@ -1,7 +1,7 @@
-name: fnproject/python3-fn-gpi:0.0.1
-version: 0.0.1
+name: fnproject/python3-fn-gpi
+version: 0.0.2
 runtime: docker
 type: sync
-memory: 256
-format: http
+memory: 512
+format: json
 path: /python3-fn-gpi

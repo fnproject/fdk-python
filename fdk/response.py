@@ -13,8 +13,6 @@
 #    under the License.
 
 import ujson
-import functools
-import traceback
 import sys
 
 from fdk import headers as hrs
@@ -25,8 +23,8 @@ class JSONResponse(object):
     def __init__(self, response_data=None, headers=None, status_code=200):
         """
         JSON response object
-        :param response_data: JSON response data (dict, str)
-        :type response_data: str
+        :param response_data: response data (any JSON-serializable object)
+        :type response_data: object
         :param headers: JSON response HTTP headers
         :type headers: fdk.headers.GoLikeHeaders
         :param status_code: JSON response HTTP status code
@@ -45,29 +43,19 @@ class JSONResponse(object):
         Dumps raw JSON response to a stream
         :return: result of dumping
         """
-        self.headers.set("content-length", len(self.response_data))
+        json_data = ujson.dumps(self.response_data)
+        self.headers.set("content-length", len(json_data))
         resp = ujson.dumps({
-            "body": self.response_data,
-            "status_code": self.status_code,
-            "headers": self.headers.for_dump()
+            "body": json_data,
+            "content_type": self.headers.get("content-type", "text/plain"),
+            "protocol": {
+                "status_code": self.status_code,
+                "headers": self.headers.for_dump()
+            },
         })
         print("Prepared response: {}".format(resp),
               file=sys.stderr, flush=True)
         print(resp, file=sys.stdout, flush=True)
-
-
-def safe(dispatcher):
-
-    @functools.wraps(dispatcher)
-    def wrapper(app, context, data=None, loop=None):
-        try:
-            return dispatcher(app, context, data=data, loop=loop)
-        except (Exception, TimeoutError) as ex:
-            traceback.print_exc(file=sys.stderr)
-            status = 502 if isinstance(ex, TimeoutError) else 500
-            return context.DispatchError(context, status, str(ex)).response()
-
-    return wrapper
 
 
 class RawResponse(object):
@@ -79,7 +67,7 @@ class RawResponse(object):
         :param context: request context
         :type context: fdk.context.RequestContext
         :param response_data: response data
-        :type response_data: str
+        :type response_data: object
         :param headers: response headers
         :param status_code: status code
         :type status_code: int

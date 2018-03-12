@@ -39,4 +39,5 @@ class JSONDispatchException(Exception):
                 }
             },
             headers=resp_headers,
-            status_code=self.status)
+            status_code=self.status
+        )

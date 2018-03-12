@@ -12,9 +12,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime as dt
+
 from fdk import headers
 from fdk import response
 from fdk import errors
+
+
+DEFAULT_DEADLINE = 30
 
 
 class JSONDispatchException(Exception):
@@ -46,7 +51,8 @@ class JSONDispatchException(Exception):
 class RequestContext(object):
 
     def __init__(self, app_name, route, call_id,
-                 fntype, execution_type=None, deadline=None,
+                 fn_format, content_type="text/plain",
+                 execution_type=None, deadline=None,
                  config=None, headers=None, arguments=None):
         """
         Request context here to be a placeholder
@@ -58,9 +64,10 @@ class RequestContext(object):
         self.__config = config if config else {}
         self.__headers = headers if headers else {}
         self.__arguments = {} if not arguments else arguments
-        self.__type = fntype
+        self.__fn_format = fn_format
         self.__exec_type = execution_type
         self.__deadline = deadline
+        self.__content_type = content_type
 
     def AppName(self):
         return self.__app_name
@@ -80,24 +87,37 @@ class RequestContext(object):
     def Arguments(self):
         return self.__arguments
 
-    def Type(self):
-        return self.__type
+    def Format(self):
+        return self.__fn_format
 
     def Deadline(self):
+        if self.__deadline is None:
+            now = dt.datetime.now(dt.timezone.utc).astimezone()
+            now += dt.timedelta(0, float(DEFAULT_DEADLINE))
+            return now.isoformat()
         return self.__deadline
 
     def ExecutionType(self):
         return self.__exec_type
 
+    def RequestContentType(self):
+        return
+
 
 class JSONContext(RequestContext):
 
     def __init__(self, app_name, route, call_id,
-                 fntype="json", deadline=None,
-                 execution_type=None, config=None,
+                 content_type="text/plain",
+                 deadline=None,
+                 execution_type=None,
+                 config=None,
                  headers=None):
         self.DispatchError = errors.JSONDispatchException
         super(JSONContext, self).__init__(
-            app_name, route, call_id, fntype,
+            app_name, route, call_id, "json",
             execution_type=execution_type,
-            deadline=deadline, config=config, headers=headers)
+            deadline=deadline,
+            config=config,
+            headers=headers,
+            content_type=content_type
+        )

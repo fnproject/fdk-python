@@ -12,16 +12,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
 import dill
 import fdk
 import sys
+import ujson
 
 from fdk import response
 
 
-@fdk.coerce_input_to_content_type
-async def handler(context, data=None, loop=None):
+def handler(context, data=None):
     """
     General purpose Python3 function processor
 
@@ -42,18 +41,16 @@ async def handler(context, data=None, loop=None):
     :type context: fdk.context.RequestContext
     :param data: request data
     :type data: dict
-    :param loop: asyncio event loop
-    :type loop: asyncio.AbstractEventLoop
     :return: resulting object of distributed function
     :rtype: object
     """
-    (is_coroutine, self_in_bytes,
+    payload = ujson.loads(data)
+    (self_in_bytes,
      action_in_bytes, action_args, action_kwargs) = (
-        data['is_coroutine'],
-        data['self'],
-        data['action'],
-        data['args'],
-        data['kwargs'])
+        payload['self'],
+        payload['action'],
+        payload['args'],
+        payload['kwargs'])
 
     print("Got {} bytes of class instance".format(len(self_in_bytes)),
           file=sys.stderr, flush=True)
@@ -91,24 +88,20 @@ async def handler(context, data=None, loop=None):
             context,
             status_code=500,
             headers={
-                "Content-Type": "text/plain",
+                "content-type": "text/plain",
             },
             response_data=str(ex))
 
     print("call result: {}".format(res), file=sys.stderr, flush=True)
 
-    if is_coroutine:
-        res = await res
-
     return response.RawResponse(
         context,
         status_code=200,
         headers={
-            "Content-Type": "text/plain",
+            "content-type": "text/plain",
         },
         response_data=dill.dumps(res))
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    fdk.handle(handler, loop=loop)
+    fdk.handle(handler)
