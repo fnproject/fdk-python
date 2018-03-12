@@ -38,7 +38,7 @@ if __name__ == "__main__":
         raise err
     print(res)
 
-    # res, err = app.square(10, 20)
-    # if err:
-    #     raise err
-    # print(res)
+    res, err = app.square(10, 20)
+    if err:
+        raise err
+    print(res)
