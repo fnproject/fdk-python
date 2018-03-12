@@ -12,20 +12,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
-import uvloop
-
-from fdk import runner
+import fdk
+import json
 
 
-def handle(handle_func):
-    with open("/dev/stdin", "rb", buffering=0) as stdin:
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        loop = asyncio.get_event_loop()
-        try:
-            proto = runner.JSONProtocol(handle_func)
-            loop.run_until_complete(
-                loop.connect_read_pipe(lambda: proto, stdin))
-            loop.run_forever()
-        finally:
-            loop.close()
+def handler(ctx, data=None):
+    body = json.loads(data) if len(data) > 0 else {"name": "World"}
+    return "Hello {0}".format(body.get("name"))
+
+
+if __name__ == "__main__":
+    fdk.handle(handler)

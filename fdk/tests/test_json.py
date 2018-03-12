@@ -12,41 +12,48 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
+import datetime as dt
 import json
 import testtools
+import time
 
+from fdk import context
 from fdk import runner
 from fdk import response
 from fdk.tests import data
 
 
-def dummy_func(ctx, data=None, loop=None):
+def dummy_func(ctx, data=None):
     body = json.loads(data) if len(data) > 0 else {"name": "World"}
     return "Hello {0}".format(body.get("name"))
 
 
-def custom_response(ctx, data=None, loop=None):
+def custom_response(ctx, data=None):
     return response.RawResponse(
         ctx,
-        response_data=dummy_func(ctx, data=data, loop=loop),
+        response_data=dummy_func(ctx, data=data),
         status_code=201)
 
 
-def expectioner(ctx, data=None, loop=None):
+def expectioner(ctx, data=None):
     raise Exception("custom_error")
 
 
-def none_func(ctx, data=None, loop=None):
+def none_func(ctx, data=None):
     return
+
+
+def timed_sleepr(timeout):
+
+    def sleeper(ctx, data=None):
+        time.sleep(timeout)
+
+    return sleeper
 
 
 class TestJSONRequestParser(testtools.TestCase):
 
     def setUp(self):
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(None)
-
         super(TestJSONRequestParser, self).setUp()
 
     def tearDown(self):
@@ -84,3 +91,28 @@ class TestJSONRequestParser(testtools.TestCase):
         self.assertIsNotNone(r)
         self.assertEqual(200, r.status())
         self.assertIn("", r.body())
+
+    def test_deadline(self):
+        timeout = 5
+        now = dt.datetime.now(dt.timezone.utc).astimezone()
+        now += dt.timedelta(0, float(timeout))
+        timeout_data = data.json_request_with_body.copy()
+        timeout_data["deadline"] = now.isoformat()
+
+        r = runner.handle_request(timed_sleepr(timeout + 1),
+                                  json.dumps(timeout_data).encode("utf8"))
+        self.assertIsNotNone(r)
+        self.assertEqual(502, r.status())
+        self.assertIn("function timed out",
+                      r.body()["error"]["message"])
+
+    def test_default_deadline(self):
+        timeout_data = data.json_request_with_body.copy()
+        timeout_data["deadline"] = None
+
+        r = runner.handle_request(timed_sleepr(context.DEFAULT_DEADLINE + 1),
+                                  json.dumps(timeout_data).encode("utf8"))
+        self.assertIsNotNone(r)
+        self.assertEqual(502, r.status())
+        self.assertIn("function timed out",
+                      r.body()["error"]["message"])

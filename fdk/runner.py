@@ -17,6 +17,9 @@ import sys
 import ujson
 import os
 import traceback
+import signal
+import datetime as dt
+import iso8601
 
 from fdk import context
 from fdk import errors
@@ -24,25 +27,58 @@ from fdk import headers
 from fdk import response
 
 
-def from_request(handle_func, incoming_request, loop=None):
-    print("request parsed", file=sys.stderr, flush=True)
-    json_headers = headers.GoLikeHeaders(
-        incoming_request.get('protocol', {"headers": {}}).get("headers"))
+def with_deadline(ctx, handle_func, data):
 
-    print("headers parsed", file=sys.stderr, flush=True)
-    ctx = context.JSONContext(os.environ.get("FN_APP_NAME"),
-                              os.environ.get("FN_PATH"),
-                              incoming_request.get("call_id"),
-                              execution_type=incoming_request.get(
-                                  "type", "sync"),
+    def timeout_func(*_):
+        raise TimeoutError("function timed out")
+
+    now = dt.datetime.now(dt.timezone.utc).astimezone()
+    # ctx.Deadline() would never be an empty value,
+    # by default it will be 30 secs from now
+    deadline = ctx.Deadline()
+    alarm_after = iso8601.parse_date(deadline)
+    delta = alarm_after - now
+    signal.signal(signal.SIGALRM, timeout_func)
+    signal.alarm(int(delta.total_seconds()))
+
+    try:
+        result = handle_func(ctx, data=data)
+        signal.alarm(0)
+        return result
+    except (Exception, TimeoutError) as ex:
+        signal.alarm(0)
+        raise ex
+
+
+def from_request(handle_func, incoming_request):
+    print("request parsed", file=sys.stderr, flush=True)
+
+    call_id = incoming_request.get("call_id")
+    app = os.environ.get("FN_APP_NAME")
+    path = os.environ.get("FN_PATH")
+    content_type = incoming_request.get("content_type")
+    protocol = incoming_request.get("protocol", {
+        "headers": {},
+        "type": "http",
+        "method": "GET",
+        "request_url": "{0}{1}".format(app, path),
+    })
+
+    json_headers = headers.GoLikeHeaders(protocol.get("headers"))
+    call_type = json_headers.get("fn-type", "sync")
+
+    ctx = context.JSONContext(app, path, call_id,
+                              content_type=content_type,
+                              execution_type=call_type,
                               deadline=incoming_request.get("deadline"),
                               config=os.environ, headers=json_headers)
 
     print("context allocated", file=sys.stderr, flush=True)
     print("starting the function", file=sys.stderr, flush=True)
     print(incoming_request.get("body"), file=sys.stderr, flush=True)
-    response_data = handle_func(
-        ctx, data=incoming_request.get("body"))
+
+    response_data = with_deadline(
+        ctx, handle_func, incoming_request.get("body"))
 
     if isinstance(response_data, response.RawResponse):
         return response_data
@@ -52,12 +88,12 @@ def from_request(handle_func, incoming_request, loop=None):
         ctx, response_data=response_data, status_code=200)
 
 
-def handle_request(handle_func, data, loop=None):
+def handle_request(handle_func, data):
     try:
         print("entering handle_request", file=sys.stderr, flush=True)
         incoming_json = ujson.loads(str(data.decode('utf8').replace("'", '"')))
 
-        return from_request(handle_func, incoming_json, loop=loop)
+        return from_request(handle_func, incoming_json)
 
     except (Exception, TimeoutError) as ex:
         traceback.print_exc(file=sys.stderr)
@@ -68,14 +104,8 @@ def handle_request(handle_func, data, loop=None):
 
 class JSONProtocol(asyncio.Protocol):
 
-    handle_func = None
-    loop = None
-
-    @classmethod
-    def with_handler(cls, handler_func, loop=None):
-        cls.handle_func = handler_func
-        cls.loop = loop
-        return cls
+    def __init__(self, handle_func):
+        self.handle_func = handle_func
 
     def connection_made(self, transport):
         print('pipe opened', file=sys.stderr, flush=True)
@@ -84,8 +114,8 @@ class JSONProtocol(asyncio.Protocol):
     def data_received(self, data):
         print('received: ', data.decode(), file=sys.stderr, flush=True)
 
-        rs = handle_request(
-            self.__class__.handle_func, data, loop=self.__class__.loop)
+        # todo: handle formats - reject default and http
+        rs = handle_request(self.handle_func, data)
         print("response created", file=sys.stderr, flush=True)
         rs.dump()
 

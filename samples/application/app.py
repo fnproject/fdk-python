@@ -12,14 +12,33 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fdk
-import json
+from fdk.application import decorators
 
 
-def handler(ctx, data=None, loop=None):
-    body = json.loads(data) if len(data) > 0 else {"name": "World"}
-    return "Hello {0}".format(body.get("name"))
+@decorators.fn_app
+class Application(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @decorators.with_fn(fn_image="denismakogon/fdk-python-echo:0.0.1")
+    def env(self, fn_data=None, **kwargs):
+        return fn_data
+
+    @decorators.fn(fn_type="sync")
+    def square(self, x, y, *args, **kwargs):
+        return x * y
 
 
 if __name__ == "__main__":
-    fdk.handle(handler)
+    app = Application(config={})
+
+    res, err = app.env(name="Denis")
+    if err:
+        raise err
+    print(res)
+
+    # res, err = app.square(10, 20)
+    # if err:
+    #     raise err
+    # print(res)

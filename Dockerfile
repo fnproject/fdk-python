@@ -6,5 +6,5 @@ ADD . /code/
 RUN pip3 install -r /code/requirements.txt
 RUN pip3 install -e /code/
 
-WORKDIR /code/samples/hot/json/echo
+WORKDIR /code/samples/echo
 ENTRYPOINT ["python3", "func.py"]
