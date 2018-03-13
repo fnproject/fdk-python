@@ -176,13 +176,40 @@ def fn(fn_type=None, fn_timeout=60,
                     resp.content)
 
             resp.close()
-            content_type = resp.headers.get("content-type")
-            if "text/plain" in content_type:
-                return resp.text, None
-            if "application/json" in content_type:
-                return resp.json(), None
+            return resp.json(), None
 
-            return resp.content, None
+        return inner_wrapper
+
+    return ext_wrapper
+
+
+def with_type_cast(return_type=lambda x: x):
+    """
+    Casts the response body to a different type.
+
+    @decorators.with_type_cast(
+    return_type=lambda x: {"square": int(x.decode("utf8"))})
+    @decorators.fn(fn_type="sync")
+    def square(self, x: int, y: int, *args, **kwargs) -> int:
+        return x * y
+
+    This decorator accepts the callable object as a parameter
+    to apply that to the function's response data for type casting.
+    The default response type from the function is - bytes.
+
+    :param return_type: a callable object for processing the result
+    :type return_type: types.FunctionType
+    :return: type-casted function response data
+    """
+
+    def ext_wrapper(action):
+        @functools.wraps(action)
+        def inner_wrapper(*args, **kwargs):
+            result, err = action(*args, **kwargs)
+            if err is not None:
+                return None, err
+
+            return return_type(result), None
 
         return inner_wrapper
 
