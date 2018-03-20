@@ -12,14 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-raw_request_without_body = (
-    '{"call_id":"01C7YFE8B867WG200000000000",'
-    '"deadline":"2018-03-06T22:19:29.864+02:00",'
-    '"body":"","content_type":"","protocol":'
-    '{"type":"http","method":"GET","request_url":'
-    '"http://localhost:8080/r/test/new-python","headers":'
-    '{"Accept":["*/*"],"User-Agent":["curl/7.54.0"]}}}')
-
 json_request_without_body = {
     "call_id": "01C7Y3PZFM67WG200000000000",
     "deadline": "2018-03-06T18:54:32.788+02:00",

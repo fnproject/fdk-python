@@ -1,5 +1,0 @@
-name: fdk-python
-version: 0.0.2
-runtime: docker
-format: json
-path: /test-pr-branch

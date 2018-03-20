@@ -22,10 +22,7 @@ def handle(handle_func):
     with open("/dev/stdin", "rb", buffering=0) as stdin:
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
         loop = asyncio.get_event_loop()
-        try:
-            proto = runner.JSONProtocol(handle_func)
-            loop.run_until_complete(
-                loop.connect_read_pipe(lambda: proto, stdin))
-            loop.run_forever()
-        finally:
-            loop.close()
+        while True:
+            response = runner.handle_request(
+                handle_func, runner.read_json(stdin), loop=loop)
+            response.dump()

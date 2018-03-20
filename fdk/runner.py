@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
 import sys
 import ujson
 import os
@@ -27,7 +26,7 @@ from fdk import headers
 from fdk import response
 
 
-def with_deadline(ctx, handle_func, data):
+def with_deadline(ctx, handle_func, data, loop=None):
 
     def timeout_func(*_):
         raise TimeoutError("function timed out")
@@ -42,7 +41,7 @@ def with_deadline(ctx, handle_func, data):
     signal.alarm(int(delta.total_seconds()))
 
     try:
-        result = handle_func(ctx, data=data)
+        result = handle_func(ctx, data=data, loop=loop)
         signal.alarm(0)
         return result
     except (Exception, TimeoutError) as ex:
@@ -50,7 +49,7 @@ def with_deadline(ctx, handle_func, data):
         raise ex
 
 
-def from_request(handle_func, incoming_request):
+def from_request(handle_func, incoming_request, loop=None):
     print("request parsed", file=sys.stderr, flush=True)
 
     call_id = incoming_request.get("call_id")
@@ -78,7 +77,7 @@ def from_request(handle_func, incoming_request):
     print(incoming_request.get("body"), file=sys.stderr, flush=True)
 
     response_data = with_deadline(
-        ctx, handle_func, incoming_request.get("body"))
+        ctx, handle_func, incoming_request.get("body"), loop=loop)
 
     if isinstance(response_data, response.RawResponse):
         return response_data
@@ -88,12 +87,10 @@ def from_request(handle_func, incoming_request):
         ctx, response_data=response_data, status_code=200)
 
 
-def handle_request(handle_func, data):
+def handle_request(handle_func, data, loop=None):
     try:
         print("entering handle_request", file=sys.stderr, flush=True)
-        incoming_json = ujson.loads(str(data.decode('utf8').replace("'", '"')))
-
-        return from_request(handle_func, incoming_json)
+        return from_request(handle_func, data, loop=loop)
 
     except (Exception, TimeoutError) as ex:
         traceback.print_exc(file=sys.stderr)
@@ -102,26 +99,16 @@ def handle_request(handle_func, data):
             context, status, str(ex)).response()
 
 
-class JSONProtocol(asyncio.Protocol):
+def read_json(stream) -> bytes:
 
-    def __init__(self, handle_func):
-        self.handle_func = handle_func
-
-    def connection_made(self, transport):
-        print('pipe opened', file=sys.stderr, flush=True)
-        super(JSONProtocol, self).connection_made(transport=transport)
-
-    def data_received(self, data):
-        print('received: ', data.decode(), file=sys.stderr, flush=True)
-
-        # todo: handle formats - reject default and http
-        rs = handle_request(self.handle_func, data)
-        print("response created", file=sys.stderr, flush=True)
-        rs.dump()
-
-        super(JSONProtocol, self).data_received(data)
-
-    def connection_lost(self, exc):
-        print('pipe closed', file=sys.stderr, flush=True)
-        super(JSONProtocol, self).connection_lost(exc)
-        sys.exit(0)
+    line = bytes()
+    while True:
+        c = stream.read(1)
+        if c is None:
+            continue
+        else:
+            line += c
+            try:
+                return ujson.loads(line)
+            except (Exception, BaseException):
+                continue
