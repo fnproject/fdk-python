@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import asyncio
 import datetime as dt
 import json
 import testtools
@@ -20,6 +21,7 @@ import time
 from fdk import context
 from fdk import runner
 from fdk import response
+
 from fdk.tests import data
 
 
@@ -51,17 +53,25 @@ def timed_sleepr(timeout):
     return sleeper
 
 
+async def coro(ctx, **kwargs):
+    return "hello from coro"
+
+
 class TestJSONRequestParser(testtools.TestCase):
 
     def setUp(self):
+        self.loop = asyncio.new_event_loop()
         super(TestJSONRequestParser, self).setUp()
 
     def tearDown(self):
+        self.loop = None
         super(TestJSONRequestParser, self).tearDown()
 
     def test_parse_request_without_data(self):
         r = runner.from_request(
             dummy_func, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertIn("Hello World", r.body())
         self.assertEqual(200, r.status())
@@ -69,28 +79,46 @@ class TestJSONRequestParser(testtools.TestCase):
     def test_parse_request_with_data(self):
         r = runner.from_request(
             dummy_func, data.json_request_with_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertIn("Hello John", r.body())
         self.assertEqual(200, r.status())
 
     def test_custom_response_object(self):
-        r = runner.from_request(custom_response, data.json_request_with_body)
+        r = runner.from_request(
+            custom_response, data.json_request_with_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertIn("Hello John", r.body())
         self.assertEqual(201, r.status())
 
     def test_errored_func(self):
-        in_bytes = data.raw_request_without_body.encode('utf8')
-        r = runner.handle_request(expectioner, in_bytes)
+        r = runner.handle_request(
+            expectioner, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertEqual(500, r.status())
 
     def test_none_func(self):
-        in_bytes = data.raw_request_without_body.encode('utf8')
-        r = runner.handle_request(none_func, in_bytes)
+        r = runner.handle_request(
+            none_func, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertEqual(200, r.status())
         self.assertIn("", r.body())
+
+    def test_coro_func(self):
+        r = runner.handle_request(
+            coro, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
+        self.assertIsNotNone(r)
+        self.assertEqual(200, r.status())
+        self.assertIn("hello from coro", r.body())
 
     def test_deadline(self):
         timeout = 5
@@ -99,8 +127,10 @@ class TestJSONRequestParser(testtools.TestCase):
         timeout_data = data.json_request_with_body.copy()
         timeout_data["deadline"] = now.isoformat()
 
-        r = runner.handle_request(timed_sleepr(timeout + 1),
-                                  json.dumps(timeout_data).encode("utf8"))
+        r = runner.handle_request(
+            timed_sleepr(timeout + 1), timeout_data)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertEqual(502, r.status())
         self.assertIn("function timed out",
@@ -110,8 +140,10 @@ class TestJSONRequestParser(testtools.TestCase):
         timeout_data = data.json_request_with_body.copy()
         timeout_data["deadline"] = None
 
-        r = runner.handle_request(timed_sleepr(context.DEFAULT_DEADLINE + 1),
-                                  json.dumps(timeout_data).encode("utf8"))
+        r = runner.handle_request(
+            timed_sleepr(context.DEFAULT_DEADLINE + 1), timeout_data)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertEqual(502, r.status())
         self.assertIn("function timed out",
