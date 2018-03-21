@@ -107,15 +107,26 @@ async def handle_request(handle_func, data):
 
 def read_json(stream) -> bytes:
 
-    line = bytes()
+    line = str()
+    ret = False
+
     while True:
         c = stream.read(1)
         if c is None:
             continue
-        else:
+        if len(c) == 0:
+            print("Before JSON parsing: {}".format(line),
+                  file=sys.stderr, flush=True)
+            return ujson.loads(line)
+
+        if c == "}":
             line += c
-            print(line, file=sys.stderr, flush=True)
-            try:
-                return ujson.loads(line)
-            except (Exception, BaseException):
-                continue
+            ret = True
+        elif c == "\n" and ret:
+            line += c
+            print("Before JSON parsing: {}".format(line),
+                  file=sys.stderr, flush=True)
+            return ujson.loads(line)
+        else:
+            ret = False
+            line += c
