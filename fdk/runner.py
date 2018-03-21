@@ -114,6 +114,7 @@ def read_json(stream) -> bytes:
             continue
         else:
             line += c
+            print(line, file=sys.stderr, flush=True)
             try:
                 return ujson.loads(line)
             except (Exception, BaseException):
