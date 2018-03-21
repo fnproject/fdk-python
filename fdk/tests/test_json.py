@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import asyncio
 import datetime as dt
 import json
 import testtools
@@ -24,45 +25,53 @@ from fdk import response
 from fdk.tests import data
 
 
-def dummy_func(ctx, data=None, loop=None):
+def dummy_func(ctx, data=None):
     body = json.loads(data) if len(data) > 0 else {"name": "World"}
     return "Hello {0}".format(body.get("name"))
 
 
-def custom_response(ctx, data=None, loop=None):
+def custom_response(ctx, data=None):
     return response.RawResponse(
         ctx,
         response_data=dummy_func(ctx, data=data),
         status_code=201)
 
 
-def expectioner(ctx, data=None, loop=None):
+def expectioner(ctx, data=None):
     raise Exception("custom_error")
 
 
-def none_func(ctx, data=None, loop=None):
+def none_func(ctx, data=None):
     return
 
 
 def timed_sleepr(timeout):
 
-    def sleeper(ctx, data=None, loop=None):
+    def sleeper(ctx, data=None):
         time.sleep(timeout)
 
     return sleeper
 
 
+async def coro(ctx, **kwargs):
+    return "hello from coro"
+
+
 class TestJSONRequestParser(testtools.TestCase):
 
     def setUp(self):
+        self.loop = asyncio.new_event_loop()
         super(TestJSONRequestParser, self).setUp()
 
     def tearDown(self):
+        self.loop = None
         super(TestJSONRequestParser, self).tearDown()
 
     def test_parse_request_without_data(self):
         r = runner.from_request(
             dummy_func, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertIn("Hello World", r.body())
         self.assertEqual(200, r.status())
@@ -70,6 +79,8 @@ class TestJSONRequestParser(testtools.TestCase):
     def test_parse_request_with_data(self):
         r = runner.from_request(
             dummy_func, data.json_request_with_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertIn("Hello John", r.body())
         self.assertEqual(200, r.status())
@@ -77,6 +88,8 @@ class TestJSONRequestParser(testtools.TestCase):
     def test_custom_response_object(self):
         r = runner.from_request(
             custom_response, data.json_request_with_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertIn("Hello John", r.body())
         self.assertEqual(201, r.status())
@@ -84,15 +97,28 @@ class TestJSONRequestParser(testtools.TestCase):
     def test_errored_func(self):
         r = runner.handle_request(
             expectioner, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertEqual(500, r.status())
 
     def test_none_func(self):
         r = runner.handle_request(
             none_func, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertEqual(200, r.status())
         self.assertIn("", r.body())
+
+    def test_coro_func(self):
+        r = runner.handle_request(
+            coro, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
+        self.assertIsNotNone(r)
+        self.assertEqual(200, r.status())
+        self.assertIn("hello from coro", r.body())
 
     def test_deadline(self):
         timeout = 5
@@ -103,6 +129,8 @@ class TestJSONRequestParser(testtools.TestCase):
 
         r = runner.handle_request(
             timed_sleepr(timeout + 1), timeout_data)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertEqual(502, r.status())
         self.assertIn("function timed out",
@@ -114,6 +142,8 @@ class TestJSONRequestParser(testtools.TestCase):
 
         r = runner.handle_request(
             timed_sleepr(context.DEFAULT_DEADLINE + 1), timeout_data)
+        r = self.loop.run_until_complete(r)
+
         self.assertIsNotNone(r)
         self.assertEqual(502, r.status())
         self.assertIn("function timed out",

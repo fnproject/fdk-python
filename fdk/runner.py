@@ -19,6 +19,7 @@ import traceback
 import signal
 import datetime as dt
 import iso8601
+import types
 
 from fdk import context
 from fdk import errors
@@ -26,7 +27,7 @@ from fdk import headers
 from fdk import response
 
 
-def with_deadline(ctx, handle_func, data, loop=None):
+async def with_deadline(ctx, handle_func, data):
 
     def timeout_func(*_):
         raise TimeoutError("function timed out")
@@ -41,7 +42,11 @@ def with_deadline(ctx, handle_func, data, loop=None):
     signal.alarm(int(delta.total_seconds()))
 
     try:
-        result = handle_func(ctx, data=data, loop=loop)
+        result = handle_func(ctx, data=data)
+        if isinstance(result, types.CoroutineType):
+            signal.alarm(0)
+            return await result
+
         signal.alarm(0)
         return result
     except (Exception, TimeoutError) as ex:
@@ -49,7 +54,7 @@ def with_deadline(ctx, handle_func, data, loop=None):
         raise ex
 
 
-def from_request(handle_func, incoming_request, loop=None):
+async def from_request(handle_func, incoming_request):
     print("request parsed", file=sys.stderr, flush=True)
 
     call_id = incoming_request.get("call_id")
@@ -76,8 +81,8 @@ def from_request(handle_func, incoming_request, loop=None):
     print("starting the function", file=sys.stderr, flush=True)
     print(incoming_request.get("body"), file=sys.stderr, flush=True)
 
-    response_data = with_deadline(
-        ctx, handle_func, incoming_request.get("body"), loop=loop)
+    response_data = await with_deadline(
+        ctx, handle_func, incoming_request.get("body"))
 
     if isinstance(response_data, response.RawResponse):
         return response_data
@@ -87,10 +92,11 @@ def from_request(handle_func, incoming_request, loop=None):
         ctx, response_data=response_data, status_code=200)
 
 
-def handle_request(handle_func, data, loop=None):
+async def handle_request(handle_func, data):
+
     try:
         print("entering handle_request", file=sys.stderr, flush=True)
-        return from_request(handle_func, data, loop=loop)
+        return await from_request(handle_func, data)
 
     except (Exception, TimeoutError) as ex:
         traceback.print_exc(file=sys.stderr)
