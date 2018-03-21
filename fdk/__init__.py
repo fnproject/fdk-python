@@ -14,6 +14,7 @@
 
 import asyncio
 import uvloop
+import sys
 
 from fdk import runner
 
@@ -23,6 +24,7 @@ def handle(handle_func):
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
         loop = asyncio.get_event_loop()
         while True:
+            print("starting the request parsing", file=sys.stderr, flush=True)
             response = loop.run_until_complete(runner.handle_request(
                 handle_func, runner.read_json(stdin)))
             response.dump()
