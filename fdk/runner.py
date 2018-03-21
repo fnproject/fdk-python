@@ -107,7 +107,7 @@ async def handle_request(handle_func, data):
 
 def read_json(stream) -> bytes:
 
-    line = str()
+    line = bytes()
     ret = False
 
     while True:
@@ -119,10 +119,10 @@ def read_json(stream) -> bytes:
                   file=sys.stderr, flush=True)
             return ujson.loads(line)
 
-        if c == "}":
+        if c.decode() == "}":
             line += c
             ret = True
-        elif c == "\n" and ret:
+        elif c.decode() == "\n" and ret:
             line += c
             print("Before JSON parsing: {}".format(line),
                   file=sys.stderr, flush=True)
