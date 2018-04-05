@@ -30,6 +30,14 @@ def dummy_func(ctx, data=None):
     return "Hello {0}".format(body.get("name"))
 
 
+def content_type(ctx, data=None):
+    return response.RawResponse(
+        ctx, response_data="OK",
+        status_code=200,
+        headers={"content-type": "application/xml"}
+    )
+
+
 def custom_response(ctx, data=None):
     return response.RawResponse(
         ctx,
@@ -66,6 +74,15 @@ class TestJSONRequestParser(testtools.TestCase):
     def tearDown(self):
         self.loop = None
         super(TestJSONRequestParser, self).tearDown()
+
+    def test_override_content_type(self):
+        r = runner.from_request(
+            content_type, data.json_request_without_body)
+        r = self.loop.run_until_complete(r)
+
+        self.assertIsNotNone(r)
+        h = r.response.headers
+        self.assertEqual(h.get("content-type"), "application/xml")
 
     def test_parse_request_without_data(self):
         r = runner.from_request(

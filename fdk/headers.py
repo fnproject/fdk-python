@@ -23,10 +23,10 @@ class GoLikeHeaders(object):
         if not isinstance(headers, dict):
             raise TypeError("Invalid headers type: {}, only dict allowed."
                             .format(type(headers)))
+        self.__headers = {}
+
         for k, v in headers.copy().items():
-            del headers[k]
-            headers[k.lower().replace("fn_header_", "")] = v
-        self.__headers = headers
+            self.set(k, v)
 
     def get(self, key, default=None):
         """
