@@ -27,10 +27,6 @@ class GoLikeHeaders(object):
 
         for k, v in headers.copy().items():
             self.set(k, v)
-            # del headers[k]
-            # # golang http headers style
-            # headers[k.lower()] = [v, ]
-        # self.__headers = headers
 
     def get(self, key, default=None):
         """
