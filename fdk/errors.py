@@ -12,13 +12,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+import os
+import uuid
+
+from fdk import context
 from fdk import headers
 from fdk import response
 
 
 class JSONDispatchException(Exception):
 
-    def __init__(self, context, status, message):
+    def __init__(self, status, message):
         """
         JSON response with error
         :param status: HTTP status code
@@ -26,13 +31,12 @@ class JSONDispatchException(Exception):
         """
         self.status = status
         self.message = message
-        self.context = context
 
     def response(self):
         resp_headers = headers.GoLikeHeaders({})
         resp_headers.set("content-type", "text/plain; charset=utf-8")
-        return response.RawResponse(
-            self.context,
+        return response.JSONResponse(
+            None,
             response_data={
                 "error": {
                     "message": self.message,
@@ -41,3 +45,53 @@ class JSONDispatchException(Exception):
             headers=resp_headers,
             status_code=self.status
         )
+
+
+class CloudEventDispatchException(Exception):
+
+    def __init__(self, status, message):
+        """
+        JSON response with error
+        :param status: HTTP status code
+        :param message: error message
+        """
+        self.status = status
+        self.message = message
+
+    def response(self):
+        resp_headers = headers.GoLikeHeaders({})
+        resp_headers.set(
+            "content-type",
+            "application/json; charset=utf-8")
+        app = os.environ.get("FN_APP_NAME")
+        path = os.environ.get("FN_PATH")
+        return response.CloudEventResponse(
+            context.CloudEventContext(app, path, "", cloudevent={
+                "cloudEventsVersion": "0.1",
+                "eventID": uuid.uuid4().hex,
+                "source": "fdk-python",
+                "eventType": "fdk-python-error",
+                "eventTypeVersion": "0.1",
+                "eventTime": datetime.datetime.now(
+                    datetime.timezone.utc).astimezone(),
+                "schemaURL": "",
+                "contentType": "application/json; charset=utf-8",
+                "extensions": {
+                    "protocol": {}
+                },
+            }),
+            response_data={
+                "error": {
+                    "message": self.message,
+                }
+            },
+            headers=resp_headers,
+            status_code=self.status
+        )
+
+
+def error_class_from_format(format_def):
+    if format_def == "json":
+        return JSONDispatchException
+    if format_def == "cloudevent":
+        return CloudEventDispatchException

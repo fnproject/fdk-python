@@ -13,8 +13,6 @@
 #    under the License.
 
 import sys
-import ujson
-import os
 import traceback
 import signal
 import datetime as dt
@@ -23,7 +21,6 @@ import types
 
 from fdk import context
 from fdk import errors
-from fdk import headers
 from fdk import response
 
 
@@ -54,79 +51,26 @@ async def with_deadline(ctx, handle_func, data):
         raise ex
 
 
-async def from_request(handle_func, incoming_request):
-    print("request parsed", file=sys.stderr, flush=True)
+async def from_request(handle_func, stream, format_def):
 
-    call_id = incoming_request.get("call_id")
-    app = os.environ.get("FN_APP_NAME")
-    path = os.environ.get("FN_PATH")
-    content_type = incoming_request.get("content_type")
-    protocol = incoming_request.get("protocol", {
-        "headers": {},
-        "type": "http",
-        "method": "GET",
-        "request_url": "{0}{1}".format(app, path),
-    })
-
-    json_headers = headers.GoLikeHeaders(protocol.get("headers"))
-    call_type = json_headers.get("fn-type", "sync")
-
-    ctx = context.JSONContext(app, path, call_id,
-                              content_type=content_type,
-                              execution_type=call_type,
-                              deadline=incoming_request.get("deadline"),
-                              config=os.environ, headers=json_headers)
-
-    print("context allocated", file=sys.stderr, flush=True)
-    print("starting the function", file=sys.stderr, flush=True)
-    print(incoming_request.get("body"), file=sys.stderr, flush=True)
-
-    response_data = await with_deadline(
-        ctx, handle_func, incoming_request.get("body"))
+    ctx, body = context.context_from_format(format_def, stream)
+    response_data = await with_deadline(ctx, handle_func, body)
 
     if isinstance(response_data, response.RawResponse):
         return response_data
 
-    print("the function finished", file=sys.stderr, flush=True)
-    return response.RawResponse(
+    resp_class = response.response_class_from_context(ctx)
+    return resp_class(
         ctx, response_data=response_data, status_code=200)
 
 
-async def handle_request(handle_func, data):
+async def handle_request(handle_func, data, format_def):
 
     try:
-        print("entering handle_request", file=sys.stderr, flush=True)
-        return await from_request(handle_func, data)
+        return await from_request(handle_func, data, format_def)
 
     except (Exception, TimeoutError) as ex:
         traceback.print_exc(file=sys.stderr)
         status = 502 if isinstance(ex, TimeoutError) else 500
-        return errors.JSONDispatchException(
-            context, status, str(ex)).response()
-
-
-def read_json(stream) -> bytes:
-
-    line = bytes()
-    ret = False
-
-    while True:
-        c = stream.read(1)
-        if c is None:
-            continue
-        if len(c) == 0:
-            print("Before JSON parsing: {}".format(line),
-                  file=sys.stderr, flush=True)
-            return ujson.loads(line)
-
-        if c.decode() == "}":
-            line += c
-            ret = True
-        elif c.decode() == "\n" and ret:
-            line += c
-            print("Before JSON parsing: {}".format(line),
-                  file=sys.stderr, flush=True)
-            return ujson.loads(line)
-        else:
-            ret = False
-            line += c
+        err_class = errors.error_class_from_format(format_def)
+        return err_class(status, str(ex)).response()

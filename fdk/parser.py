@@ -12,19 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
-import os
-import uvloop
-
-from fdk import runner
+import ujson
 
 
-def handle(handle_func):
-    with open("/dev/stdin", "rb", buffering=0) as stdin:
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        loop = asyncio.get_event_loop()
-        while True:
-            f = runner.handle_request(
-                handle_func, stdin, os.environ.get("FN_FORMAT"))
-            response = loop.run_until_complete(f)
-            response.dump()
+def read_json(stream) -> dict:
+
+    line = bytes()
+    ret = False
+
+    while True:
+        c = stream.read(1)
+        if c is None:
+            continue
+        if len(c) == 0:
+            return ujson.loads(line)
+        if c.decode() == "}":
+            line += c
+            ret = True
+        elif c.decode() == "\n" and ret:
+            line += c
+            return ujson.loads(line)
+        else:
+            ret = False
+            line += c
