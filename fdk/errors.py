@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
+import datetime as dt
 import os
 import uuid
 
@@ -62,7 +62,7 @@ class CloudEventDispatchException(Exception):
         resp_headers = headers.GoLikeHeaders({})
         resp_headers.set(
             "content-type",
-            "application/json; charset=utf-8")
+            "application/json")
         app = os.environ.get("FN_APP_NAME")
         path = os.environ.get("FN_PATH")
         return response.CloudEventResponse(
@@ -72,10 +72,8 @@ class CloudEventDispatchException(Exception):
                 "source": "fdk-python",
                 "eventType": "fdk-python-error",
                 "eventTypeVersion": "0.1",
-                "eventTime": datetime.datetime.now(
-                    datetime.timezone.utc).astimezone(),
                 "schemaURL": "",
-                "contentType": "application/json; charset=utf-8",
+                "contentType": "application/json",
                 "extensions": {
                     "protocol": {}
                 },

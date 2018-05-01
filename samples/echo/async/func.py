@@ -17,8 +17,11 @@ import json
 
 
 async def handler(ctx, data=None):
-    body = json.loads(data) if len(data) > 0 else {"name": "World"}
-    return "Hello {0}".format(body.get("name"))
+    name = "World"
+    if data and len(data) > 0:
+        body = json.loads(data)
+        name = body.get("name")
+    return "Hello {0}".format(name)
 
 
 if __name__ == "__main__":

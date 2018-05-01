@@ -15,7 +15,7 @@
 import ujson
 import sys
 
-from datetime import datetime
+import datetime as dt
 
 from fdk import headers as hrs
 
@@ -96,9 +96,9 @@ class CloudEventResponse(object):
         json_data = ujson.dumps(self.response_data)
         self.headers.set("content-length", len(json_data))
         ce = self.cloudevent
-        ce["contentType"] = self.headers.get("content-type")
+        ce["contentType"] = self.headers.get(
+            "content-type", default="text/plain")
         ce["data"] = json_data
-        ce["eventTime"] = datetime.utcnow()
         ce["extensions"] = {
             "protocol": {
                 "status_code": self.status_code,
