@@ -15,8 +15,6 @@
 import ujson
 import sys
 
-import datetime as dt
-
 from fdk import headers as hrs
 
 
