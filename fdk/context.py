@@ -13,10 +13,12 @@
 #    under the License.
 
 import datetime as dt
+import os
+import sys
 
 from fdk import headers
 from fdk import response
-from fdk import errors
+from fdk import parser
 
 
 DEFAULT_DEADLINE = 30
@@ -53,7 +55,8 @@ class RequestContext(object):
     def __init__(self, app_name, route, call_id,
                  fn_format, content_type="text/plain",
                  execution_type=None, deadline=None,
-                 config=None, headers=None, arguments=None):
+                 config=None, headers=None, arguments=None,
+                 request_url=None):
         """
         Request context here to be a placeholder
         for request-specific attributes
@@ -68,6 +71,7 @@ class RequestContext(object):
         self.__exec_type = execution_type
         self.__deadline = deadline
         self.__content_type = content_type
+        self.__request_url = request_url
 
     def AppName(self):
         return self.__app_name
@@ -101,7 +105,10 @@ class RequestContext(object):
         return self.__exec_type
 
     def RequestContentType(self):
-        return
+        return self.__content_type
+
+    def RequestURL(self):
+        return self.__request_url
 
 
 class JSONContext(RequestContext):
@@ -111,13 +118,98 @@ class JSONContext(RequestContext):
                  deadline=None,
                  execution_type=None,
                  config=None,
-                 headers=None):
-        self.DispatchError = errors.JSONDispatchException
+                 headers=None,
+                 request_url=None):
         super(JSONContext, self).__init__(
             app_name, route, call_id, "json",
             execution_type=execution_type,
             deadline=deadline,
             config=config,
             headers=headers,
-            content_type=content_type
+            content_type=content_type,
+            request_url=request_url,
         )
+
+
+class CloudEventContext(RequestContext):
+
+    def __init__(self, app_name, route, call_id,
+                 content_type="application/cloudevents+json",
+                 deadline=None,
+                 execution_type=None,
+                 config=None,
+                 headers=None,
+                 request_url=None,
+                 cloudevent=None):
+        super(CloudEventContext, self).__init__(
+            app_name, route, call_id, "cloudevent",
+            execution_type=execution_type,
+            deadline=deadline,
+            config=config,
+            headers=headers,
+            content_type=content_type,
+            request_url=request_url,
+        )
+        self.cloudevent = cloudevent if cloudevent else {}
+
+
+def context_from_format(format_def, stream) -> (RequestContext, object):
+    app = os.environ.get("FN_APP_NAME")
+    path = os.environ.get("FN_PATH")
+
+    if format_def == "cloudevent":
+        incoming_request = parser.read_json(stream)
+        call_id = incoming_request.get("eventID")
+        content_type = incoming_request.get("contentType")
+        extensions = incoming_request.get("extensions")
+        deadline = extensions.get("deadline")
+        protocol = incoming_request.get("protocol", {
+            "headers": {},
+            "type": "http",
+            "method": "GET",
+            "request_url": "http://localhost:8080/r/{0}{1}".format(app, path),
+        })
+        json_headers = headers.GoLikeHeaders(protocol.get("headers"))
+        data = incoming_request.get("data", "{}")
+        del incoming_request["data"]
+
+        ctx = CloudEventContext(
+            app, path, call_id,
+            content_type=content_type,
+            execution_type=os.getenv("FN_TYPE"),
+            deadline=deadline,
+            config=os.environ,
+            headers=json_headers,
+            request_url=protocol.get("request_url"),
+            cloudevent=incoming_request,
+        )
+        return ctx, data
+
+    if format_def == "json":
+        incoming_request = parser.read_json(stream)
+        call_id = incoming_request.get("call_id")
+
+        content_type = incoming_request.get("content_type")
+        protocol = incoming_request.get("protocol", {
+            "headers": {},
+            "type": "http",
+            "method": "GET",
+            "request_url": "http://localhost:8080/r/{0}{1}".format(app, path),
+        })
+
+        json_headers = headers.GoLikeHeaders(protocol.get("headers"))
+        call_type = json_headers.get("fn-type", "sync")
+
+        ctx = JSONContext(
+            app, path, call_id,
+            content_type=content_type,
+            execution_type=call_type,
+            deadline=incoming_request.get("deadline"),
+            config=os.environ, headers=json_headers,
+            request_url=protocol.get("request_url")
+        )
+        return ctx, incoming_request.get("body", "{}")
+
+    if format_def not in ["cloudevent", "json"]:
+        print("incompatible function format!", file=sys.stderr, flush=True)
+        sys.exit("incompatible function format!")

@@ -12,17 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fdk
-import json
+import ujson
 
 
-async def handler(ctx, data=None):
-    name = "World"
-    if data and len(data) > 0:
-        body = json.loads(data)
-        name = body.get("name")
-    return "Hello {0}".format(name)
+def read_json(stream) -> dict:
 
+    line = bytes()
+    ret = False
 
-if __name__ == "__main__":
-    fdk.handle(handler)
+    while True:
+        c = stream.read(1)
+        if c is None:
+            continue
+        if len(c) == 0:
+            return ujson.loads(line)
+        if c.decode() == "}":
+            line += c
+            ret = True
+        elif c.decode() == "\n" and ret:
+            line += c
+            return ujson.loads(line)
+        else:
+            ret = False
+            line += c
