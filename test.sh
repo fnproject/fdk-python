@@ -56,6 +56,7 @@ format: json
 path: /test-pr-branch
 " >> func.yaml
 
+echo -e '\n\n\n'
 rm -fr Dockerfile
 echo -e "FROM python:3.6
 

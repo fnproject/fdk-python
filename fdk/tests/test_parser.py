@@ -12,29 +12,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
+import testtools
 import ujson
 
+from fdk import parser
 
-def read_json(stream) -> dict:
+from fdk.tests import data
 
-    line = bytes()
-    ret = False
 
-    while True:
-        c = stream.read(1)
-        if c is None:
-            continue
-        if len(c) == 0:
-            # prevent from attempts to parse b'\n'
-            if len(set(line)) == 1 and set(line).pop() == 10:
-                continue
-            return ujson.loads(line)
-        if c.decode() == "}":
-            line += c
-            ret = True
-        elif c.decode() == "\n" and ret:
-            line += c
-            return ujson.loads(line)
-        else:
-            ret = False
-            line += c
+class TestJSONParser(testtools.TestCase):
+
+    def setUp(self):
+        super(TestJSONParser, self).setUp()
+
+    def tearDown(self):
+        super(TestJSONParser, self).tearDown()
+
+    def test_parser(self):
+        d = ujson.dumps(data.cloudevent_request_without_body)
+        encoded = io.BytesIO(("\n\n\n\n\n\n\n\n\n\n\n\n" + d).encode())
+        parsed_data = parser.read_json(encoded)
+
+        self.assertIsNotNone(parsed_data)
+        self.assertIsInstance(parsed_data, dict)
