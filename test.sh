@@ -47,6 +47,7 @@ ENTRYPOINT [\"python3\", \"func.py\"]
 
 fn -v deploy --local --app myapp
 fn call myapp /test-pr-branch
+fn run --format cloudevent
 
 rm func.yaml
 echo -e "name: fdk-python
@@ -71,6 +72,7 @@ ENTRYPOINT [\"python3\", \"func.py\"]
 
 fn -v deploy --local --app myapp
 fn call myapp /test-pr-branch
+fn run --format json
 
 echo -e '\n\n\n'
 

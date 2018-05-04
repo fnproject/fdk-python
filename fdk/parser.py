@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
 import ujson
 
 
@@ -25,10 +26,10 @@ def read_json(stream) -> dict:
         if c is None:
             continue
         if len(c) == 0:
-            # prevent from attempts to parse b'\n'
-            if len(set(line)) == 1 and set(line).pop() == 10:
-                continue
-            return ujson.loads(line)
+            try:
+                return ujson.loads(line)
+            except (BaseException, Exception):
+                sys.exit(0)
         if c.decode() == "}":
             line += c
             ret = True
