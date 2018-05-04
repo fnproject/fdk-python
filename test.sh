@@ -17,12 +17,13 @@ funcname="py3-func"
 mkdir $funcname
 cd $funcname
 fn init --name $funcname --runtime python3.6
-fn deploy --local --app myapp
+fn -v deploy --local --app myapp
+echo -e "\n\n\n"
 fn call myapp /$funcname
-echo -e "\n"
+echo -e "\n\n\n"
 echo '{"name": "John"}' | fn call myapp /$funcname
 
-
+echo -e '\n\n\n'
 # test current FDK pull request branch stability with regular function
 cd $CURDIR
 
@@ -47,7 +48,9 @@ ENTRYPOINT [\"python3\", \"func.py\"]
 
 fn -v deploy --local --app myapp
 fn call myapp /test-pr-branch
-
+echo -e '\n\n\n'
+fn -v run --format cloudevent
+echo -e '\n\n\n'
 rm func.yaml
 echo -e "name: fdk-python
 version: 0.0.1
@@ -56,6 +59,7 @@ format: json
 path: /test-pr-branch
 " >> func.yaml
 
+echo -e '\n\n\n'
 rm -fr Dockerfile
 echo -e "FROM python:3.6
 
@@ -70,7 +74,10 @@ ENTRYPOINT [\"python3\", \"func.py\"]
 
 fn -v deploy --local --app myapp
 fn call myapp /test-pr-branch
-
+echo -e '\n\n\n'
+echo '{"name": "John"}' | fn call myapp /test-pr-branch
+echo -e '\n\n\n'
+fn -v run --format json
 echo -e '\n\n\n'
 
 rm -fr Dockerfile
@@ -86,8 +93,11 @@ ENTRYPOINT [\"python3\", \"func.py\"]
 " >> Dockerfile
 
 fn -v deploy --local --app myapp
+echo -e '\n\n\n'
 fn call myapp /test-pr-branch
-
+echo -e '\n\n\n'
+echo '{"name": "John"}' | fn call myapp /test-pr-branch
+fn -v run --format json
 echo -e '\n\n\n'
 
 rm -fr Dockerfile
@@ -103,9 +113,17 @@ ENTRYPOINT [\"python3\", \"func.py\"]
 " >> Dockerfile
 
 fn -v deploy --local --app myapp
+echo -e '\n\n\n'
 fn call myapp /test-pr-branch
+echo '{"name": "John"}' | fn call myapp /test-pr-branch
+echo -e '\n\n\n'
+fn -v run --format json
+echo -e '\n\n\n'
 
 sleep 30
 
+docker rmi -f $(docker images -q -f dangling=true) | true
+docker rmi -f $(docker images -q fdk-python) | true
+docker rmi -f $(docker images -q fdk-python-cloudevent)  | true
 docker rmi -f $(docker images py3-func --format={{.ID}}) | true
 docker rmi -f $(docker images fdk-python --format={{.ID}}) | true
