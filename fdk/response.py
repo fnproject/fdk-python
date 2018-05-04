@@ -48,7 +48,8 @@ class JSONResponse(object):
         self.headers.set("content-length", len(json_data))
         resp = ujson.dumps({
             "body": json_data,
-            "content_type": self.headers.get("content-type", "text/plain"),
+            "content_type": self.headers.get(
+                "content-type", default="application/json"),
             "protocol": {
                 "status_code": self.status_code,
                 "headers": self.headers.for_dump()
