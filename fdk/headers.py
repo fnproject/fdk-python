@@ -47,10 +47,9 @@ class GoLikeHeaders(object):
         :param value:
         :return:
         """
-        if isinstance(value, (str, float, int)):
-            self.__headers[key] = [str(value), ]
-        if isinstance(value, (list, tuple)):
-            self.__headers = value
+        if not isinstance(value, (list, tuple)):
+            value = [str(value), ]
+        self.__headers[key] = value
 
     def append(self, key, value):
         """
