@@ -40,7 +40,7 @@ def setup_data(response_data, headers):
         # by modern browsers as a string
         data = response_data
 
-    return data
+    return content_type, data
 
 
 class JSONResponse(object):

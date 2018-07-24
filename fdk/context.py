@@ -170,8 +170,9 @@ def context_from_format(format_def, stream) -> (RequestContext, object):
             "request_url": "http://localhost:8080/r/{0}{1}".format(app, path),
         })
         json_headers = headers.GoLikeHeaders(protocol.get("headers"))
-        data = incoming_request.get("data", "{}")
-        del incoming_request["data"]
+        data = incoming_request.get("data")
+        if "data" in incoming_request:
+            del incoming_request["data"]
 
         ctx = CloudEventContext(
             app, path, call_id,
