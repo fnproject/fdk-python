@@ -17,6 +17,8 @@ from fdk import runner
 
 from fdk.tests import funcs
 
+from xml.etree import ElementTree
+
 
 class Mixin(object):
 
@@ -104,3 +106,22 @@ class Mixin(object):
         self.assertEqual(502, r.status())
         self.assertIn("function timed out",
                       r.body()["error"]["message"])
+
+    def xml_successful_verification(self, income_data):
+        r = runner.from_request(
+            funcs.valid_xml, income_data, self.format_def)
+        r = self.loop.run_until_complete(r)
+        # this should not raise an error
+        ElementTree.fromstring(r.body())
+        h = r.headers()
+        self.assertEqual(h.get("content-type"), "application/xml")
+
+    def xml_unsuccessful_verification(self, income_data):
+        r = runner.from_request(
+            funcs.invalid_xml, income_data, self.format_def)
+        r = self.loop.run_until_complete(r)
+        # this should raise an error
+        self.assertRaises(
+            ElementTree.ParseError,
+            ElementTree.fromstring, r.body()
+        )

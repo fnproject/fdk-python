@@ -74,7 +74,12 @@ class TestJSONRequestParser(mixin.Mixin, testtools.TestCase):
         timeout_data["deadline"] = now.isoformat()
         self.deadline(timeout, data.to_stream(timeout_data))
 
-    def test_default_deadline(self):
-        timeout_data = data.json_request_with_body.copy()
-        timeout_data["deadline"] = None
-        self.default_deadline(data.to_stream(timeout_data))
+    def test_valid_xml(self):
+        income_data = data.to_stream(
+            data.json_request_without_body)
+        self.xml_successful_verification(income_data)
+
+    def test_invalid_xml(self):
+        income_data = data.to_stream(
+            data.json_request_without_body)
+        self.xml_unsuccessful_verification(income_data)

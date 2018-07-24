@@ -18,6 +18,18 @@ import ujson
 from fdk import response
 
 
+xml = """<!DOCTYPE mensaje SYSTEM "record.dtd">
+<record>
+    <player_birthday>1979-09-23</player_birthday>
+    <player_name>Orene Ai'i</player_name>
+    <player_team>Blues</player_team>
+    <player_id>453</player_id>
+    <player_height>170</player_height>
+    <player_position>FW</player_position>
+    <player_weight>75</player_weight>
+</record>"""
+
+
 def dummy_func(ctx, data=None):
     body = ujson.loads(data) if len(data) > 0 else {"name": "World"}
     return "Hello {0}".format(body.get("name"))
@@ -52,3 +64,19 @@ def timed_sleepr(timeout):
 
 async def coro(ctx, **kwargs):
     return "hello from coro"
+
+
+def valid_xml(ctx, **kwargs):
+    return response.RawResponse(
+        ctx, response_data=xml, headers={
+            "content-type": "application/xml",
+        }
+    )
+
+
+def invalid_xml(ctx, **kwargs):
+    return response.RawResponse(
+        ctx, response_data=ujson.dumps(xml), headers={
+            "content-type": "application/xml",
+        }
+    )
