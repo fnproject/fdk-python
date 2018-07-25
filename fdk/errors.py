@@ -33,7 +33,8 @@ class JSONDispatchException(Exception):
 
     def response(self):
         resp_headers = headers.GoLikeHeaders({})
-        resp_headers.set("content-type", "text/plain; charset=utf-8")
+        resp_headers.set(
+            "content-type", "application/json; charset=utf-8")
         return response.JSONResponse(
             None,
             response_data={
@@ -72,7 +73,8 @@ class CloudEventDispatchException(Exception):
                 "eventType": "fdk-python-error",
                 "eventTypeVersion": "0.1",
                 "schemaURL": "",
-                "contentType": "application/json",
+                "contentType":
+                    "application/json; charset=utf-8",
                 "extensions": {
                     "protocol": {}
                 },
