@@ -17,6 +17,31 @@ import sys
 
 from fdk import headers as hrs
 
+APP_JSON = "application/json"
+
+
+def setup_data(response_data, headers):
+    content_type = headers.get(
+        "content-type",
+        default=APP_JSON
+    )
+    # if response data is an HTML data JSON
+    # decoding will make it malformed
+    # so, we need to tread data with
+    # respect according to content type header
+
+    if content_type.startswith(APP_JSON):
+        # dump to JSON only in case of explicitly declared type
+        data = ujson.dumps(response_data)
+    else:
+        # any other type like HTML/XML must
+        # be returned as native strings
+        # JSON-encoded HTML/XML would be recognized
+        # by modern browsers as a string
+        data = response_data
+
+    return content_type, data
+
 
 class JSONResponse(object):
 
@@ -24,6 +49,8 @@ class JSONResponse(object):
                  headers=None, status_code=200):
         """
         JSON response object
+        :param context: request context
+        :type context: fdk.context.JSONContext
         :param response_data: response data (any JSON-serializable object)
         :type response_data: object
         :param headers: JSON response HTTP headers
@@ -44,12 +71,13 @@ class JSONResponse(object):
         Dumps raw JSON response to a stream
         :return: result of dumping
         """
-        json_data = ujson.dumps(self.response_data)
-        self.headers.set("content-length", len(json_data))
+        content_type, data = setup_data(
+            self.response_data, self.headers)
+
+        self.headers.set("content-length", len(data))
         resp = ujson.dumps({
-            "body": json_data,
-            "content_type": self.headers.get(
-                "content-type", default="application/json"),
+            "body": data,
+            "content_type": content_type,
             "protocol": {
                 "status_code": self.status_code,
                 "headers": self.headers.for_dump()
@@ -70,6 +98,8 @@ class CloudEventResponse(object):
                  headers=None, status_code=200):
         """
         CloudEvent response object
+        :param context: request context
+        :type context: fdk.context.CloudEventContext
         :param response_data: response data (any JSON-serializable object)
         :type response_data: object
         :param headers: JSON response HTTP headers
@@ -92,12 +122,13 @@ class CloudEventResponse(object):
         Dumps raw JSON response to a stream
         :return: result of dumping
         """
-        json_data = ujson.dumps(self.response_data)
-        self.headers.set("content-length", len(json_data))
+        content_type, data = setup_data(
+            self.response_data, self.headers)
+
+        self.headers.set("content-length", len(data))
         ce = self.cloudevent
-        ce["contentType"] = self.headers.get(
-            "content-type", default="text/plain")
-        ce["data"] = json_data
+        ce["contentType"] = content_type
+        ce["data"] = data
         ce["extensions"] = {
             "protocol": {
                 "status_code": self.status_code,
