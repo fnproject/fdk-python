@@ -80,3 +80,11 @@ def invalid_xml(ctx, **kwargs):
             "content-type": "application/xml",
         }
     )
+
+
+def verify_request_headers(ctx, **kwargs):
+    return response.RawResponse(
+        ctx,
+        response_data=ujson.dumps(xml),
+        headers=ctx.Headers()
+    )

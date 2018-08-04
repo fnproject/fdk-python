@@ -163,7 +163,7 @@ def context_from_format(format_def, stream) -> (RequestContext, object):
         content_type = incoming_request.get("contentType")
         extensions = incoming_request.get("extensions")
         deadline = extensions.get("deadline")
-        protocol = incoming_request.get("protocol", {
+        protocol = extensions.get("protocol", {
             "headers": {},
             "type": "http",
             "method": "GET",
