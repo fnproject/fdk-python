@@ -83,3 +83,8 @@ class TestJSONRequestParser(mixin.Mixin, testtools.TestCase):
         income_data = data.to_stream(
             data.json_request_without_body)
         self.xml_unsuccessful_verification(income_data)
+
+    def test_verify_request_headers(self):
+        income_data = data.to_stream(
+            data.json_request_without_body)
+        self.verify_request_headers_through_func(income_data)

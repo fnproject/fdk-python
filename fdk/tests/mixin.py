@@ -125,3 +125,14 @@ class Mixin(object):
             ElementTree.ParseError,
             ElementTree.fromstring, r.body()
         )
+
+    def verify_request_headers_through_func(self, income_data):
+        r = runner.from_request(funcs.verify_request_headers,
+                                income_data,
+                                self.format_def)
+        r = self.loop.run_until_complete(r)
+
+        self.assertIsNotNone(r)
+        h = r.headers()
+        self.assertIsNotNone(h.get("Accept"))
+        self.assertIsNotNone(h.get("User-Agent"))
