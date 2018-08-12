@@ -35,7 +35,7 @@ fn test
 
 This CLI call depends on `test.json` file that contains an input and the output data for the black-box testing.
 
-Starting v0.0.33 FDK-Python provides a testing framework that allows to perform unit tests of your function's code.
+Starting v0.0.33 FDK-Python provides a testing framework that allows performing unit tests of your function's code.
 The framework is an extension to [testtools](https://testtools.readthedocs.io/en/latest/) testing framework, coding style remain the same, so, write your tests as you've got used to.
 Here's the example of the test suite:
 ```python
@@ -77,10 +77,10 @@ class TestFuncToTest(fixtures.FunctionTestCase):
 
 As you may see, the framework provides new assertion methods like:
 
- * assertInHeaders - allows to assert header(s) presence in response
- * assertInTime - allows to assert the time necessary for a function to finish
- * assertNotInTime - allows to assert the time within a function was not able to finish
- * assertResponseConsistent - allows to assert function's response content consistency by accepting a callable object that must return boolean value that states the consistency
+ * assertInHeaders - allows asserting header(s) presence in response
+ * assertInTime - allows asserting the time necessary for a function to finish
+ * assertNotInTime - allows asserting the time within a function was not able to finish
+ * assertResponseConsistent - allows asserting function's response content consistency by accepting a callable object that must return a boolean value that states the consistency
 
 
 In order to run tests, use the following command:
