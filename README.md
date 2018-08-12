@@ -24,6 +24,83 @@ if __name__ == "__main__":
 
 ```
 
+Unittest your functions
+--------------------------
+
+As you may be aware [Fn CLI](https://github.com/fnproject/cli) offers a very first compatibility barrier between your code and Fn server 
+by allowing developers to perform black-box testing using the following CLI call with a function's folder:
+```bash
+fn test
+```
+
+This CLI call depends on `test.json` file that contains an input and the output data for the black-box testing.
+
+Starting v0.0.33 FDK-Python provides a testing framework that allows to perform unit tests of your function's code.
+The framework is an extension to [testtools](https://testtools.readthedocs.io/en/latest/) testing framework, coding style remain the same, so, write your tests as you've got used to.
+Here's the example of the test suite:
+```python
+from fdk import fixtures
+from fdk.tests import funcs
+
+
+class TestFuncToTest(fixtures.FunctionTestCase):
+
+    content = "OK"
+
+    def setUp(self):
+        super(TestFuncToTest, self).setUp(
+            self.content, funcs.content_type)
+
+    def tearDown(self):
+        super(TestFuncToTest, self).tearDown()
+
+    def test_response_data(self):
+        self.assertResponseConsistent(
+            lambda x: x == self.content,
+            message="content must be equal to '{0}'"
+            .format(self.content)
+        )
+
+    def test_response_header_presence(self):
+        self.assertInHeaders(
+            "content-type",
+            message="header 'content-type' "
+                    "must be present in headers")
+
+    def test_response_header_value(self):
+        self.assertInHeaders(
+            "content-type", value='application/xml',
+            message="header 'content-type' "
+                    "must be present in headers with the exact value")
+
+```
+
+As you may see, the framework provides new assertion methods like:
+
+ * assertInHeaders - allows to assert header(s) presence in response
+ * assertInTime - allows to assert the time necessary for a function to finish
+ * assertNotInTime - allows to assert the time within a function was not able to finish
+ * assertResponseConsistent - allows to assert function's response content consistency by accepting a callable object that must return boolean value that states the consistency
+
+
+In order to run tests, use the following command:
+```bash
+pytest -v -s --tb=long <your-function's-folder-with-tests>
+```
+
+To add coverage first install one more package:
+```bash
+pip install pytest-cov
+```
+then run tests with coverage flag:
+```bash
+pytest -v -s --tb=long --cov=<your-function's-package> <your-function's-folder-with-tests>
+```
+
+
+If you'd like to add more assertions to an upstream - please open an issue.
+
+
 Applications powered by Fn: Concept
 -----------------------------------
 

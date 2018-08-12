@@ -29,6 +29,7 @@ class TestHeaders(testtools.TestCase):
 
         self.assertEqual(headers.for_dump(),
                          self.to_go_like_headers(header_dict))
+        self.assertIn("User-Agent", headers)
 
     def to_go_like_headers(self, headers):
         return {k: v if isinstance(v, (list, tuple)) else [v]

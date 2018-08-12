@@ -28,6 +28,16 @@ class GoLikeHeaders(object):
         for k, v in headers.copy().items():
             self.set(k, v)
 
+    def __contains__(self, item: str):
+        """
+        Implements `if ... in ...` protocol on headers
+        :param item: header key
+        :type item: str
+        :return: true/false whether header key is headers
+        :rtype: bool
+        """
+        return item in self.__headers
+
     def get(self, key, default=None):
         """
         :param key:
