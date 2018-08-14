@@ -20,6 +20,7 @@ import ujson
 import testtools
 import datetime as dt
 
+from fdk import response
 from fdk import runner
 
 
@@ -118,21 +119,30 @@ class FunctionTestCase(testtools.TestCase):
         raise Exception("unknown format")
 
     def assertInHeaders(self, key, value=None, message=None):
-        r = runner.handle_request(
-            self.__func, self.__protocol_frame, self.fn_format)
-        r = self.loop.run_until_complete(r)
-        self.assertIn(key, r.headers())
+        r = self.loop.run_until_complete(
+            runner.handle_request(
+                self.__func, self.__protocol_frame, self.fn_format
+            )
+        )
+        if isinstance(r, (response.JSONResponse, response.CloudEventResponse)):
+            headers = r.headers
+        else:
+            headers = r.headers()
+
+        self.assertIn(key, headers)
 
         if value is not None:
-            header_value = r.headers().get(key)
+            header_value = headers.get(key)
             self.assertEqual(value, header_value)
 
     def assertInTime(self, timeout, message=None):
         frame = self.setup_protocol_frame(
             self.__func_data, timeout=timeout)
-        r = runner.handle_request(
-            self.__func, frame, self.fn_format)
-        r = self.loop.run_until_complete(r)
+        r = self.loop.run_until_complete(
+            runner.handle_request(
+                self.__func, frame, self.fn_format
+            )
+        )
 
         self.assertIsNotNone(r)
         self.assertEqual(200, r.status(), message=message)
@@ -140,9 +150,11 @@ class FunctionTestCase(testtools.TestCase):
     def assertNotInTime(self, timeout, message=None):
         frame = self.setup_protocol_frame(
             self.__func_data, timeout=timeout)
-        r = runner.handle_request(
-            self.__func, frame, self.fn_format)
-        r = self.loop.run_until_complete(r)
+        r = self.loop.run_until_complete(
+            runner.handle_request(
+                self.__func, frame, self.fn_format
+            )
+        )
 
         self.assertIsNotNone(r)
         self.assertEqual(
@@ -153,9 +165,11 @@ class FunctionTestCase(testtools.TestCase):
                       r.body()["error"]["message"])
 
     def assertResponseConsistent(self, response_validator_func, message=None):
-        r = runner.handle_request(
-            self.__func, self.__protocol_frame, self.fn_format)
-        r = self.loop.run_until_complete(r)
+        r = self.loop.run_until_complete(
+            runner.handle_request(
+                self.__func, self.__protocol_frame, self.fn_format
+            )
+        )
 
         ok = response_validator_func(r.body())
         self.assertEqual(True, ok, message=message)
