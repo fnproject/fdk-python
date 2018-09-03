@@ -24,6 +24,152 @@ if __name__ == "__main__":
 
 ```
 
+Unittest your functions
+--------------------------
+
+As you may be aware [Fn CLI](https://github.com/fnproject/cli) offers a very first compatibility barrier between your code and Fn server 
+by allowing developers to perform black-box testing using the following CLI call with a function's folder:
+```bash
+fn test
+```
+
+This CLI call depends on `test.json` file that contains an input and the output data for the black-box testing.
+
+Starting v0.0.33 FDK-Python provides a testing framework that allows performing unit tests of your function's code.
+The framework is an extension to [testtools](https://testtools.readthedocs.io/en/latest/) testing framework, coding style remain the same, so, write your tests as you've got used to.
+Here's the example of the test suite:
+```python
+import fdk
+import ujson
+
+from fdk import fixtures
+
+
+def handler(ctx, data=None, loop=None):
+    name = "World"
+    if data and len(data) > 0:
+        body = ujson.loads(data)
+        name = body.get("name")
+    return {"message": "Hello {0}".format(name)}
+
+
+class TestFuncWithData(fixtures.FunctionTestCase):
+    content = ujson.dumps({"name": "John"})
+
+    def setUp(self):
+        super(TestFuncWithData, self).setUp(
+            self.content, handler, fn_format="json")
+
+    def tearDown(self):
+        super(TestFuncWithData, self).tearDown()
+
+    def test_response_with_data(self):
+        def assert_data(data):
+            return {"message": "Hello John"} == data
+
+        self.assertResponseConsistent(
+            assert_data,
+            message="content must be equal to '{0}'"
+            .format({"message": "Hello John"})
+        )
+
+
+class TestFuncWithoutData(fixtures.FunctionTestCase):
+    content = ""
+
+    def setUp(self):
+        super(TestFuncWithoutData, self).setUp(
+            self.content, handler, fn_format="cloudevent")
+
+    def tearDown(self):
+        super(TestFuncWithoutData, self).tearDown()
+
+    def test_response_without_data(self):
+
+        def assert_data(data):
+            return {"message": "Hello World"} == data
+
+        self.assertResponseConsistent(
+            assert_data,
+            message="content must be equal to '{0}'"
+            .format({"message": "Hello World"})
+        )
+
+
+if __name__ == "__main__":
+    fdk.handle(handler)
+
+```
+
+As you may see, the framework provides new assertion methods like:
+
+ * assertInHeaders - allows asserting header(s) presence in response
+ * assertInTime - allows asserting the time necessary for a function to finish
+ * assertNotInTime - allows asserting the time within a function was not able to finish
+ * assertResponseConsistent - allows asserting function's response content consistency by accepting a callable object that must return a boolean value that states the consistency
+
+
+In order to run tests, use the following command:
+```bash
+pytest -v -s --tb=long func.py
+```
+
+```bash
+$ pytest -v -s --tb=long func.py
+======================================================================================= func session starts ========================================================================================
+platform darwin -- Python 3.6.2, pytest-3.7.1, py-1.5.4, pluggy-0.7.1 -- /usr/bin/python3.6
+cachedir: .pytest_cache
+rootdir: /func, inifile:
+plugins: cov-2.4.0
+collected 1 item                                                                                                                                                                                   
+
+func.py::TestFuncWithData::test_in_time PASSED
+func.py::TestFuncWithData::test_response_with_data PASSED
+func.py::TestFuncWithoutData::test_in_time PASSED
+func.py::TestFuncWithoutData::test_response_without_data PASSED
+
+
+===================================================================================== 1 passed in 0.11 seconds =====================================================================================
+```
+
+To add coverage first install one more package:
+```bash
+pip install pytest-cov
+```
+then run tests with coverage flag:
+```bash
+pytest -v -s --tb=long --cov=func func.py
+```
+
+```bash
+$ pytest -v -s --tb=long func.py
+======================================================================================= func session starts ========================================================================================
+platform darwin -- Python 3.6.2, pytest-3.7.1, py-1.5.4, pluggy-0.7.1 -- /usr/bin/python3.6
+cachedir: .pytest_cache
+rootdir: /func, inifile:
+plugins: cov-2.4.0
+collected 1 item                                                                                                                                                                                   
+
+func.py::TestFuncWithData::test_in_time PASSED
+func.py::TestFuncWithData::test_response_with_data PASSED
+func.py::TestFuncWithoutData::test_in_time PASSED
+func.py::TestFuncWithoutData::test_response_without_data PASSED
+
+
+---------- coverage: platform darwin, python 3.6.2-final-0 -----------
+Name      Stmts   Miss  Cover
+-----------------------------
+func.py      31      1    97%
+
+
+===================================================================================== 1 passed in 0.17 seconds =====================================================================================
+```
+
+
+
+If you'd like to add more assertions to an upstream - please open an issue.
+
+
 Applications powered by Fn: Concept
 -----------------------------------
 
