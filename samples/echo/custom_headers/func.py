@@ -16,7 +16,7 @@ import fdk
 from fdk import response
 
 
-def handler(ctx, data=None):
+def handler(ctx, data=None, **kwargs):
     return response.RawResponse(
         ctx, response_data="OK",
         status_code=200,

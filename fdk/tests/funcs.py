@@ -30,7 +30,7 @@ xml = """<!DOCTYPE mensaje SYSTEM "record.dtd">
 </record>"""
 
 
-def dummy_func(ctx, data=None):
+def dummy_func(ctx, data=None, **kwargs):
     if data is not None and len(data) > 0:
         body = ujson.loads(data)
     else:
@@ -48,28 +48,28 @@ def encaped_header(ctx, **kwargs):
                  "custom-header-maybe": v})
 
 
-def content_type(ctx, data=None):
+def content_type(ctx, **kwargs):
     return response.RawResponse(
         ctx, response_data="OK", status_code=200,
         headers={"Content-Type": "text/plain"})
 
 
-def custom_response(ctx, data=None):
+def custom_response(ctx, data=None, **kwargs):
     return response.RawResponse(
         ctx, response_data=dummy_func(ctx, data=data), status_code=201)
 
 
-def expectioner(ctx, data=None):
+def expectioner(ctx, data=None, **kwargs):
     raise Exception("custom_error")
 
 
-def none_func(ctx, data=None):
+def none_func(ctx, data=None, **kwargs):
     return
 
 
 def timed_sleepr(timeout):
 
-    def sleeper(ctx, data=None):
+    def sleeper(ctx, data=None, **kwargs):
         time.sleep(timeout)
 
     return sleeper

@@ -41,7 +41,7 @@ def serialize_response_data(data, content_type):
     return
 
 
-def handle(handle_func):
+def handle(handle_func, **fnkwargs):
     async def pure_handler(request):
         log.log("in pure_handler")
         data = None
@@ -51,7 +51,7 @@ def handle(handle_func):
             data = await request.content.read()
         response = await runner.handle_request(
             handle_func, constants.HTTPSTREAM,
-            request=request, data=data)
+            request=request, data=data, fnkwargs=fnkwargs)
         log.log("request execution completed")
         headers = response.context().GetResponseHeaders()
 
@@ -87,18 +87,18 @@ def handle(handle_func):
     return pure_handler
 
 
-def setup_unix_server(handle_func, loop=None):
+def setup_unix_server(handle_func, loop=None, **fnkwargs):
     log.log("in setup_unix_server")
     app = web.Application(loop=loop)
 
-    app.router.add_post('/{tail:.*}', handle(handle_func))
+    app.router.add_post('/{tail:.*}', handle(handle_func, **fnkwargs))
 
     return app
 
 
-def start(handle_func, uds, loop=None):
+def start(handle_func, uds, loop=None, **fnkwargs):
     log.log("in http_stream.start")
-    app = setup_unix_server(handle_func, loop=loop)
+    app = setup_unix_server(handle_func, loop=loop, **fnkwargs)
 
     socket_path = str(uds).lstrip("unix:")
 

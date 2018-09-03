@@ -16,7 +16,7 @@ import fdk
 import json
 
 
-async def handler(ctx, data=None):
+async def handler(ctx, data=None, **kwargs):
     name = "World"
     if data and len(data) > 0:
         body = json.loads(data)

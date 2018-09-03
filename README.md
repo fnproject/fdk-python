@@ -15,7 +15,7 @@ In order to utilise this, you can write your `app.py` as follows:
 import fdk
 
 
-def handler(context, data=None, loop=None):
+def handler(context, data=None, **kwargs):
     return data
 
 
@@ -37,7 +37,7 @@ import ujson
 from fdk import fixtures
 
 
-def handler(ctx, data=None, loop=None):
+def handler(ctx, data=None, **kwargs):
     name = "World"
     if data and len(data) > 0:
         body = ujson.loads(data)

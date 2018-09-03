@@ -26,7 +26,7 @@ from fdk import response
 
 
 # TODO(xxx): use loop.run_in_executor instead
-async def with_deadline(ctx, handle_func, data):
+async def with_deadline(ctx, handle_func, data, loop=None, **fnkwargs):
 
     def timeout_func(*_):
         raise TimeoutError("function timed out")
@@ -41,7 +41,7 @@ async def with_deadline(ctx, handle_func, data):
     signal.alarm(int(delta.total_seconds()))
 
     try:
-        result = handle_func(ctx, data=data)
+        result = handle_func(ctx, data=data, loop=loop, **fnkwargs)
         if isinstance(result, types.CoroutineType):
             signal.alarm(0)
             return await result
@@ -53,12 +53,13 @@ async def with_deadline(ctx, handle_func, data):
         raise ex
 
 
-async def handle_request(handle_func, format_def, **kwargs):
+async def handle_request(handle_func, format_def, fnkwargs=None, **kwargs):
 
     ctx, body = context.context_from_format(format_def, **kwargs)
+    fnkwargs = fnkwargs if fnkwargs else {}
 
     try:
-        response_data = await with_deadline(ctx, handle_func, body)
+        response_data = await with_deadline(ctx, handle_func, body, **fnkwargs)
 
         if isinstance(response_data, response.RawResponse):
             return response_data
@@ -69,7 +70,16 @@ async def handle_request(handle_func, format_def, **kwargs):
 
     except (Exception, TimeoutError) as ex:
         log.log("exception appeared")
+        print_exception(*sys.exc_info())
+        sys.stderr.flush()
         traceback.print_exc(file=sys.stderr)
         status = 502 if isinstance(ex, TimeoutError) else 500
         err_class = errors.error_class_from_format(format_def)
         return err_class(ctx, status, str(ex), ).response()
+
+
+def print_exception(_, value, tb):
+    for line in traceback.TracebackException(
+            type(value), value, tb).format():
+        print(line, file=sys.stderr,
+              end="", flush=True)

@@ -16,7 +16,7 @@ import fdk
 import json
 
 
-def handler(ctx, data=None):
+def handler(ctx, data=None, **kwargs):
     body = json.loads(data) if len(data) > 0 else {"name": "World"}
     return "Hello {0}".format(body.get("name"))
 
