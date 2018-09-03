@@ -1,0 +1,8 @@
+FROM alpine:latest
+
+RUN apk add tar
+COPY 3.7/ /function/
+WORKDIR /function
+RUN tar -cvf init.tar *
+RUN apk del tar
+CMD ["cat", "/function/init.tar"]
