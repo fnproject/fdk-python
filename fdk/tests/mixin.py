@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from fdk import context
+from fdk import constants
 from fdk import runner
 
 from fdk.tests import funcs
@@ -98,7 +98,7 @@ class Mixin(object):
 
     def default_deadline(self, income_data):
         r = runner.handle_request(
-            funcs.timed_sleepr(context.DEFAULT_DEADLINE + 1),
+            funcs.timed_sleepr(constants.DEFAULT_DEADLINE + 1),
             income_data, self.format_def)
         r = self.loop.run_until_complete(r)
 

@@ -51,9 +51,9 @@ async def with_deadline(ctx, handle_func, data):
         raise ex
 
 
-async def from_request(handle_func, stream, format_def):
+async def from_request(handle_func, stream, format_def, **kwargs):
 
-    ctx, body = context.context_from_format(format_def, stream)
+    ctx, body = context.context_from_format(format_def, stream, **kwargs)
     response_data = await with_deadline(ctx, handle_func, body)
 
     if isinstance(response_data, response.RawResponse):
@@ -64,10 +64,10 @@ async def from_request(handle_func, stream, format_def):
         ctx, response_data=response_data, status_code=200)
 
 
-async def handle_request(handle_func, data, format_def):
+async def handle_request(handle_func, stream, format_def, **kwargs):
 
     try:
-        return await from_request(handle_func, data, format_def)
+        return await from_request(handle_func, stream, format_def, **kwargs)
 
     except (Exception, TimeoutError) as ex:
         traceback.print_exc(file=sys.stderr)

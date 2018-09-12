@@ -15,6 +15,7 @@
 import ujson
 import sys
 
+from fdk import constants
 from fdk import headers as hrs
 
 APP_JSON = "application/json"
@@ -92,6 +93,38 @@ class JSONResponse(object):
         return self.response_data
 
 
+class HTTPStreamResponse(object):
+    def __init__(self, context, response_data=None,
+                 headers=None, status_code=200):
+        """
+        HTTPStream response object
+        :param context: request context
+        :type context: fdk.context.HTTPStreamContext
+        :param response_data: response data
+        :type response_data: object
+        :param headers: HTTP headers
+        :type headers: fdk.headers.GoLikeHeaders
+        :param status_code: HTTP status code
+        :type status_code: int
+        """
+        self.status_code = status_code
+        self.response_data = response_data if response_data else ""
+        self.headers = hrs.GoLikeHeaders({})
+        if isinstance(headers, dict):
+            self.headers = hrs.GoLikeHeaders(headers)
+        if isinstance(headers, hrs.GoLikeHeaders):
+            self.headers = headers
+
+    def status(self):
+        return self.status_code
+
+    def body(self):
+        return self.response_data
+
+    def dump(self):
+        pass
+
+
 class CloudEventResponse(object):
 
     def __init__(self, context, response_data=None,
@@ -151,10 +184,12 @@ def response_class_from_context(context):
     :type context: fdk.context.RequestContext
     """
     format_def = context.Format()
-    if format_def == "json":
+    if format_def == constants.JSON:
         return JSONResponse
-    if format_def == "cloudevent":
+    if format_def == constants.CLOUDEVENT:
         return CloudEventResponse
+    if format_def == constants.HTTPSTREAM:
+        return HTTPStreamResponse
 
 
 class RawResponse(object):

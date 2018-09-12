@@ -16,15 +16,24 @@ import asyncio
 import os
 import uvloop
 
+from fdk import constants
 from fdk import runner
+from fdk import http_stream
 
 
 def handle(handle_func):
-    with open("/dev/stdin", "rb", buffering=0) as stdin:
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        loop = asyncio.get_event_loop()
-        while True:
-            f = runner.handle_request(
-                handle_func, stdin, os.environ.get("FN_FORMAT"))
-            response = loop.run_until_complete(f)
-            response.dump()
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    loop = asyncio.get_event_loop()
+
+    format_def = os.environ.get("FN_FORMAT")
+    lsnr = os.environ.get("FN_LISTENER", "/tmp/fn.sock")
+
+    if format_def == constants.HTTPSTREAM:
+        http_stream.start(handle_func, lsnr, loop=loop)
+    else:
+        with open("/dev/stdin", "rb", buffering=0) as stdin:
+            while True:
+                f = runner.handle_request(
+                    handle_func, stdin, format_def)
+                response = loop.run_until_complete(f)
+                response.dump()

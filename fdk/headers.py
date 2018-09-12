@@ -78,3 +78,12 @@ class GoLikeHeaders(object):
 
     def for_dump(self):
         return self.__headers
+
+    def http_raw(self):
+        raw_headers = {}
+        headers = self.for_dump()
+        for k, v in headers.items():
+            if isinstance(v, list):
+                raw_headers[k] = ", ".join(headers.get(k))
+
+        return raw_headers

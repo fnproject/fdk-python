@@ -16,12 +16,10 @@ import datetime as dt
 import os
 import sys
 
+from fdk import constants
 from fdk import headers
 from fdk import response
 from fdk import parser
-
-
-DEFAULT_DEADLINE = 30
 
 
 class JSONDispatchException(Exception):
@@ -53,8 +51,7 @@ class JSONDispatchException(Exception):
 class RequestContext(object):
 
     def __init__(self, app_name, route, call_id,
-                 fn_format, content_type="text/plain",
-                 execution_type=None, deadline=None,
+                 fn_format, content_type="text/plain", deadline=None,
                  config=None, headers=None, arguments=None,
                  request_url=None):
         """
@@ -68,7 +65,6 @@ class RequestContext(object):
         self.__headers = headers if headers else {}
         self.__arguments = {} if not arguments else arguments
         self.__fn_format = fn_format
-        self.__exec_type = execution_type
         self.__deadline = deadline
         self.__content_type = content_type
         self.__request_url = request_url
@@ -97,12 +93,9 @@ class RequestContext(object):
     def Deadline(self):
         if self.__deadline is None:
             now = dt.datetime.now(dt.timezone.utc).astimezone()
-            now += dt.timedelta(0, float(DEFAULT_DEADLINE))
+            now += dt.timedelta(0, float(constants.DEFAULT_DEADLINE))
             return now.isoformat()
         return self.__deadline
-
-    def ExecutionType(self):
-        return self.__exec_type
 
     def RequestContentType(self):
         return self.__content_type
@@ -116,13 +109,28 @@ class JSONContext(RequestContext):
     def __init__(self, app_name, route, call_id,
                  content_type="text/plain",
                  deadline=None,
-                 execution_type=None,
                  config=None,
                  headers=None,
                  request_url=None):
         super(JSONContext, self).__init__(
-            app_name, route, call_id, "json",
-            execution_type=execution_type,
+            app_name, route, call_id, constants.JSON,
+            deadline=deadline,
+            config=config,
+            headers=headers,
+            content_type=content_type,
+            request_url=request_url,
+        )
+
+
+class HTTPStreamContext(RequestContext):
+    def __init__(self, app_name, route, call_id,
+                 content_type="application/octet-stream",
+                 deadline=None,
+                 config=None,
+                 headers=None,
+                 request_url=None):
+        super(HTTPStreamContext, self).__init__(
+            app_name, route, call_id, constants.HTTPSTREAM,
             deadline=deadline,
             config=config,
             headers=headers,
@@ -136,14 +144,12 @@ class CloudEventContext(RequestContext):
     def __init__(self, app_name, route, call_id,
                  content_type="application/cloudevents+json",
                  deadline=None,
-                 execution_type=None,
                  config=None,
                  headers=None,
                  request_url=None,
                  cloudevent=None):
         super(CloudEventContext, self).__init__(
-            app_name, route, call_id, "cloudevent",
-            execution_type=execution_type,
+            app_name, route, call_id, constants.CLOUDEVENT,
             deadline=deadline,
             config=config,
             headers=headers,
@@ -153,11 +159,28 @@ class CloudEventContext(RequestContext):
         self.cloudevent = cloudevent if cloudevent else {}
 
 
-def context_from_format(format_def, stream) -> (RequestContext, object):
+def context_from_format(
+        format_def, stream, **kwargs) -> (RequestContext, object):
     app = os.environ.get("FN_APP_NAME")
     path = os.environ.get("FN_PATH")
 
-    if format_def == "cloudevent":
+    if format_def == constants.HTTPSTREAM:
+        data = kwargs.get("data")
+        request = kwargs.get("request")
+
+        ctx_headers = headers.GoLikeHeaders(dict(request.headers))
+
+        content_type = request.content_type
+        ctx = HTTPStreamContext(
+            app, "/", ctx_headers.get("Fn_call_id"),
+            content_type=content_type,
+            deadline=ctx_headers.get("Fn_deadline"),
+            config=os.environ, headers=ctx_headers,
+        )
+
+        return ctx, data
+
+    if format_def == constants.CLOUDEVENT:
         incoming_request = parser.read_json(stream)
         call_id = incoming_request.get("eventID")
         content_type = incoming_request.get("contentType")
@@ -177,7 +200,6 @@ def context_from_format(format_def, stream) -> (RequestContext, object):
         ctx = CloudEventContext(
             app, path, call_id,
             content_type=content_type,
-            execution_type=os.getenv("FN_TYPE"),
             deadline=deadline,
             config=os.environ,
             headers=json_headers,
@@ -186,7 +208,7 @@ def context_from_format(format_def, stream) -> (RequestContext, object):
         )
         return ctx, data
 
-    if format_def == "json":
+    if format_def == constants.JSON:
         incoming_request = parser.read_json(stream)
         call_id = incoming_request.get("call_id")
 
@@ -199,18 +221,18 @@ def context_from_format(format_def, stream) -> (RequestContext, object):
         })
 
         json_headers = headers.GoLikeHeaders(protocol.get("headers"))
-        call_type = json_headers.get("fn-type", "sync")
 
         ctx = JSONContext(
             app, path, call_id,
             content_type=content_type,
-            execution_type=call_type,
             deadline=incoming_request.get("deadline"),
             config=os.environ, headers=json_headers,
             request_url=protocol.get("request_url")
         )
         return ctx, incoming_request.get("body", "{}")
 
-    if format_def not in ["cloudevent", "json"]:
+    if format_def not in [constants.CLOUDEVENT,
+                          constants.JSON,
+                          constants.HTTPSTREAM]:
         print("incompatible function format!", file=sys.stderr, flush=True)
         sys.exit("incompatible function format!")
