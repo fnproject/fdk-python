@@ -56,4 +56,4 @@ def setup_unix_server(handle_func, loop=None):
 
 def start(handle_func, uds, loop=None):
     app = setup_unix_server(handle_func, loop=loop)
-    web.run_app(app, path=uds, shutdown_timeout=1.0)
+    web.run_app(app, path=uds[len("unix:/"):], shutdown_timeout=1.0)

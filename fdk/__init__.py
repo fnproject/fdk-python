@@ -26,7 +26,7 @@ def handle(handle_func):
     loop = asyncio.get_event_loop()
 
     format_def = os.environ.get("FN_FORMAT")
-    lsnr = os.environ.get("FN_LISTENER", "/tmp/fn.sock")
+    lsnr = os.environ.get("FN_LISTENER", "unix:/iofs/lsnr.sock")
 
     if format_def == constants.HTTPSTREAM:
         http_stream.start(handle_func, lsnr, loop=loop)
