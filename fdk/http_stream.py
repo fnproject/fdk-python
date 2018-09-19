@@ -16,6 +16,7 @@ from aiohttp import web
 
 from fdk import constants
 from fdk import runner
+from fdk import response as rtypes
 
 
 def handle(handle_func):
@@ -24,18 +25,26 @@ def handle(handle_func):
         if (request.has_body and
                 request.content_length is not None and
                 request.content_length > 0):
-            data = request.content.read(request.content_length)
+            data = await request.content.read(request.content_length)
 
         response = await runner.handle_request(
             handle_func, None, constants.HTTPSTREAM,
             request=request, data=data)
         # check content type and response data type
 
-        return web.Response(
-            body=response.body(),
-            status=response.status(),
-            headers=response.headers().http_raw(),
-        )
+        headers = (response.headers()
+                   if isinstance(response, rtypes.RawResponse)
+                   else response.headers)
+        kwargs = {
+            "status": response.status(),
+            "headers": headers.http_raw()
+        }
+        if response.status() >= 500:
+            kwargs.update(reason=response.body())
+        else:
+            kwargs.update(body=response.body())
+
+        return web.Response(**kwargs)
 
     return pure_handler
 
@@ -56,4 +65,4 @@ def setup_unix_server(handle_func, loop=None):
 
 def start(handle_func, uds, loop=None):
     app = setup_unix_server(handle_func, loop=loop)
-    web.run_app(app, path=uds[len("unix:/"):], shutdown_timeout=1.0)
+    web.run_app(app, path=uds[len("unix:"):], shutdown_timeout=1.0)

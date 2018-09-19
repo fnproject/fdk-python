@@ -16,8 +16,32 @@ import os
 import uuid
 
 from fdk import context
+from fdk import constants
 from fdk import headers
 from fdk import response
+
+
+class HTTPStreamDispatchException(Exception):
+
+    def __init__(self, status, message):
+        """
+        JSON response with error
+        :param status: HTTP status code
+        :param message: error message
+        """
+        self.status = status
+        self.message = message
+
+    def response(self):
+        resp_headers = headers.GoLikeHeaders({})
+        resp_headers.set(
+            "content-type", "application/json; charset=utf-8")
+        return response.HTTPStreamResponse(
+            None,
+            response_data=self.message,
+            headers=resp_headers,
+            status_code=self.status
+        )
 
 
 class JSONDispatchException(Exception):
@@ -90,7 +114,9 @@ class CloudEventDispatchException(Exception):
 
 
 def error_class_from_format(format_def):
-    if format_def == "json":
+    if format_def == constants.JSON:
         return JSONDispatchException
-    if format_def == "cloudevent":
+    if format_def == constants.CLOUDEVENT:
         return CloudEventDispatchException
+    if format_def == constants.HTTPSTREAM:
+        return HTTPStreamDispatchException

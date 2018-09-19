@@ -15,6 +15,7 @@
 import asyncio
 import os
 import uvloop
+import sys
 
 from fdk import constants
 from fdk import runner
@@ -25,10 +26,15 @@ def handle(handle_func):
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     loop = asyncio.get_event_loop()
 
-    format_def = os.environ.get("FN_FORMAT")
-    lsnr = os.environ.get("FN_LISTENER", "unix:/iofs/lsnr.sock")
+    format_def = os.environ.get(constants.FN_FORMAT)
+    lsnr = os.environ.get(constants.FN_LISTENER)
 
     if format_def == constants.HTTPSTREAM:
+        if lsnr is None:
+            print("{0} is not set".format(constants.FN_LISTENER),
+                  file=sys.stderr, flush=True)
+            sys.exit(1)
+
         http_stream.start(handle_func, lsnr, loop=loop)
     else:
         with open("/dev/stdin", "rb", buffering=0) as stdin:

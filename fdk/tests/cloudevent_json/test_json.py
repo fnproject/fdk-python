@@ -89,3 +89,8 @@ class TestJSONRequestParser(mixin.Mixin, testtools.TestCase):
         income_data = data.to_stream(
             data.json_request_without_body)
         self.verify_request_headers_through_func(income_data)
+
+    def test_default_deadline(self):
+        timeout_data = data.json_request_with_body.copy()
+        timeout_data["deadline"] = None
+        self.default_deadline(data.to_stream(timeout_data))

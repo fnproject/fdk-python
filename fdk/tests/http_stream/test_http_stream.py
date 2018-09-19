@@ -13,22 +13,118 @@
 #    under the License.
 
 import asyncio
+import pytest
 
 from fdk import http_stream
+from xml.etree import ElementTree
 
 from fdk.tests import funcs
 
 
-async def test_override_content_type(aiohttp_client):
+async def setup_application_client(aiohttp_client, handle_func):
     app = http_stream.setup_unix_server(
-        funcs.content_type,
-        loop=asyncio.get_event_loop(),
+        handle_func,
+        loop=asyncio.get_event_loop()
     )
 
-    client = await aiohttp_client(app, )
+    return await aiohttp_client(app)
+
+
+async def test_override_content_type(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.content_type)
     resp = await client.get("/r/app/route")
     resp_data = await resp.text()
 
-    assert resp.status == 200
+    assert 200 == resp.status
     assert "OK" == resp_data
-    assert "application/xml" in resp.headers.get("Content-Type")
+    assert "application/xml" in resp.content_type
+
+
+async def test_parse_request_without_data(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.dummy_func)
+
+    resp = await client.post("/r/app/route")
+    resp_data = await resp.text()
+
+    assert 200 == resp.status
+    assert "Hello World" == resp_data
+    assert "text/plain" in resp.content_type
+
+
+async def test_parse_request_with_data(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.dummy_func)
+    resp = await client.post("/r/app/route", json={"name": "John"})
+    resp_data = await resp.text()
+
+    assert 200 == resp.status
+    assert "Hello John" == resp_data
+    assert "text/plain" in resp.content_type
+
+
+async def test_custom_response_object(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.custom_response)
+    resp = await client.post(
+        "/r/app/route", json={"name": "John"})
+
+    assert 201 == resp.status
+
+
+async def test_errored_func(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.expectioner)
+    resp = await client.get("/r/app/route")
+
+    assert 500 == resp.status
+    assert "custom_error" == resp.reason
+
+
+async def test_none_func(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.none_func)
+    resp = await client.get("/r/app/route")
+
+    assert 0 == resp.content_length
+    assert 200 == resp.status
+
+
+async def test_coro_func(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.coro)
+    resp = await client.get("/r/app/route")
+
+    assert 200 == resp.status
+    assert 'hello from coro' == await resp.text()
+
+
+# async def test_deadline(aiohttp_client):
+#     timeout = 5
+#     client = await setup_application_client(
+#         aiohttp_client, funcs.timed_sleepr(timeout + 1))
+
+#
+# async def test_default_deadline(aiohttp_client):
+#     client = await setup_application_client(
+#         aiohttp_client, funcs.coro)
+
+
+async def test_valid_xml(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.valid_xml)
+    resp = await client.get("/r/app/route")
+
+    ElementTree.fromstring(await resp.text())
+
+    assert "application/xml" in resp.content_type
+
+
+async def test_invalid_xml(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.invalid_xml)
+    resp = await client.get("/r/app/route")
+
+    with pytest.raises(ElementTree.ParseError):
+        ElementTree.fromstring(await resp.text())

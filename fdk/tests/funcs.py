@@ -31,7 +31,10 @@ xml = """<!DOCTYPE mensaje SYSTEM "record.dtd">
 
 
 def dummy_func(ctx, data=None):
-    body = ujson.loads(data) if len(data) > 0 else {"name": "World"}
+    if data is not None and len(data) > 0:
+        body = ujson.loads(data)
+    else:
+        body = {"name": "World"}
     return "Hello {0}".format(body.get("name"))
 
 

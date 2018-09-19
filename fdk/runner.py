@@ -73,4 +73,4 @@ async def handle_request(handle_func, stream, format_def, **kwargs):
         traceback.print_exc(file=sys.stderr)
         status = 502 if isinstance(ex, TimeoutError) else 500
         err_class = errors.error_class_from_format(format_def)
-        return err_class(status, str(ex)).response()
+        return err_class(status, str(ex), ).response()
