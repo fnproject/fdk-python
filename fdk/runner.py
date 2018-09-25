@@ -21,6 +21,7 @@ import types
 
 from fdk import context
 from fdk import errors
+from fdk import log
 from fdk import response
 
 
@@ -70,6 +71,7 @@ async def handle_request(handle_func, stream, format_def, **kwargs):
         return await from_request(handle_func, stream, format_def, **kwargs)
 
     except (Exception, TimeoutError) as ex:
+        log.log("exception appeared")
         traceback.print_exc(file=sys.stderr)
         status = 502 if isinstance(ex, TimeoutError) else 500
         err_class = errors.error_class_from_format(format_def)

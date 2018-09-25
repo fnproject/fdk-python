@@ -41,7 +41,7 @@ def dummy_func(ctx, data=None):
 def content_type(ctx, data=None):
     return response.RawResponse(
         ctx, response_data="OK", status_code=200,
-        headers={"content-type": "application/xml"})
+        headers={"content-type": "text/plain"})
 
 
 def custom_response(ctx, data=None):

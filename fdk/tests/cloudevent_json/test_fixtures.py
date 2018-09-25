@@ -42,7 +42,7 @@ class TestFuncToTest(fixtures.FunctionTestCase):
 
     def test_response_header_value(self):
         self.assertInHeaders(
-            "content-type", value='application/xml',
+            "content-type", value='text/plain',
             message="header 'content-type' "
                     "must be present in headers with the exact value")
 

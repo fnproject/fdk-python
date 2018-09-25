@@ -14,6 +14,7 @@
 
 import asyncio
 import pytest
+import ujson
 
 from fdk import http_stream
 from xml.etree import ElementTree
@@ -38,7 +39,7 @@ async def test_override_content_type(aiohttp_client):
 
     assert 200 == resp.status
     assert "OK" == resp_data
-    assert "application/xml" in resp.content_type
+    assert "text/plain" in resp.content_type
 
 
 async def test_parse_request_without_data(aiohttp_client):
@@ -49,8 +50,8 @@ async def test_parse_request_without_data(aiohttp_client):
     resp_data = await resp.text()
 
     assert 200 == resp.status
-    assert "Hello World" == resp_data
-    assert "text/plain" in resp.content_type
+    assert "Hello World" == ujson.loads(resp_data)
+    assert "application/json" in resp.content_type
 
 
 async def test_parse_request_with_data(aiohttp_client):
@@ -60,8 +61,8 @@ async def test_parse_request_with_data(aiohttp_client):
     resp_data = await resp.text()
 
     assert 200 == resp.status
-    assert "Hello John" == resp_data
-    assert "text/plain" in resp.content_type
+    assert "Hello John" == ujson.loads(resp_data)
+    assert "application/json" in resp.content_type
 
 
 async def test_custom_response_object(aiohttp_client):
@@ -79,7 +80,7 @@ async def test_errored_func(aiohttp_client):
     resp = await client.get("/r/app/route")
 
     assert 500 == resp.status
-    assert "custom_error" == resp.reason
+    assert "custom_error" in resp.reason
 
 
 async def test_none_func(aiohttp_client):
@@ -97,7 +98,7 @@ async def test_coro_func(aiohttp_client):
     resp = await client.get("/r/app/route")
 
     assert 200 == resp.status
-    assert 'hello from coro' == await resp.text()
+    assert 'hello from coro' == ujson.loads(await resp.text())
 
 
 # async def test_deadline(aiohttp_client):

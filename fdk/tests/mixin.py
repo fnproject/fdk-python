@@ -30,7 +30,7 @@ class Mixin(object):
 
         self.assertIsNotNone(r)
         h = r.headers()
-        self.assertEqual(h.get("content-type"), "application/xml")
+        self.assertEqual(h.get("content-type"), "text/plain")
 
     def parse_request_without_data(self, income_data):
         r = runner.from_request(
