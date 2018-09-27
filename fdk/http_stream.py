@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import asyncio
+import os
 import ujson
 
 from aiohttp import web
@@ -116,6 +118,61 @@ def setup_unix_server(handle_func, loop=None):
 def start(handle_func, uds, loop=None):
     log.log("in http_stream.start")
     app = setup_unix_server(handle_func, loop=loop)
-    web.run_app(app, path=uds.lstrip("unix:"),
-                shutdown_timeout=1.0,
-                access_log=log.get_logger())
+
+    socket_path = str(uds).lstrip("unix:")
+
+    if asyncio.iscoroutine(app):
+        app = loop.run_until_complete(app)
+
+    log.log("socket file exist? - {0}"
+            .format(os.path.exists(socket_path)))
+    app_runner = web.AppRunner(
+        app, handle_signals=True,
+        access_log=log.get_logger())
+
+    # setting up app runner
+    log.log("setting app_runner")
+    loop.run_until_complete(app_runner.setup())
+
+    # try to remove pre-existing UDS: ignore errors here
+    socket_dir, socket_file = os.path.split(socket_path)
+    phony_socket_path = os.path.join(
+        socket_dir, "phony" + socket_file)
+
+    log.log("deleting socket files if they exist")
+    try:
+        os.remove(socket_path)
+        os.remove(phony_socket_path)
+    except (FileNotFoundError, Exception, BaseException):
+        pass
+
+    log.log("starting unix socket site")
+    uds_sock = web.UnixSite(
+        app_runner, phony_socket_path,
+        shutdown_timeout=0.1)
+    loop.run_until_complete(uds_sock.start())
+    try:
+
+        try:
+            log.log("CHMOD 666 {0}".format(phony_socket_path))
+            os.chmod(phony_socket_path, 0o666)
+            log.log("phony socket permissions: {0}"
+                    .format(oct(os.stat(phony_socket_path).st_mode)))
+            log.log("sym-linking {0} to {1}".format(
+                socket_path, phony_socket_path))
+            os.symlink(os.path.basename(phony_socket_path), socket_path)
+            log.log("socket permissions: {0}"
+                    .format(oct(os.stat(socket_path).st_mode)))
+        except (Exception, BaseException) as ex:
+            log.log(str(ex))
+            raise ex
+        try:
+            log.log("starting infinite loop")
+            loop.run_forever()
+        except web.GracefulExit:
+            pass
+    finally:
+        loop.run_until_complete(app_runner.cleanup())
+    if hasattr(loop, 'shutdown_asyncgens'):
+        loop.run_until_complete(loop.shutdown_asyncgens())
+    loop.close()
