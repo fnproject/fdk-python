@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import asyncio
+import os
 import ujson
 
 from aiohttp import web
@@ -108,19 +110,13 @@ def setup_unix_server(handle_func, loop=None):
     log.log("in setup_unix_server")
     app = web.Application(loop=loop)
 
-    for m in [app.router.add_get,
-              app.router.add_post,
-              app.router.add_put,
-              app.router.add_patch,
-              app.router.add_delete,
-              app.router.add_head]:
-        m('/{tail:.*}', handle(handle_func))
+    app.router.add_post('/{tail:.*}', handle(handle_func))
 
     return app
 
 
 def start(handle_func, uds, loop=None):
-    log.log("in htt_stream.start")
+    log.log("in http_stream.start")
     app = setup_unix_server(handle_func, loop=loop)
     web.run_app(app, path=uds[len("unix:"):],
                 shutdown_timeout=1.0,
