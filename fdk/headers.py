@@ -87,3 +87,19 @@ class GoLikeHeaders(object):
                 raw_headers[k] = ", ".join(headers.get(k))
 
         return raw_headers
+
+    def delete(self, key):
+        if self.get(key) is not None:
+            del self.__headers[key]
+
+    def __iter__(self):
+        return iter(self.__headers.items())
+
+    def keys(self):
+        return self.__headers.keys()
+
+    def items(self):
+        return self.__headers.items()
+
+    def values(self):
+        return self.__headers.values()

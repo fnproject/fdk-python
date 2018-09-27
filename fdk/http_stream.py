@@ -18,6 +18,7 @@ from aiohttp import web
 from xml.etree import ElementTree
 
 from fdk import constants
+from fdk import headers as hs
 from fdk import log
 from fdk import runner
 from fdk import response as rtypes
@@ -40,6 +41,17 @@ def serialize_response_data(data, content_type):
     return
 
 
+def encap_headers(headers, status, content_type):
+    new_headers = hs.GoLikeHeaders({})
+    for k, v in headers.items():
+        if "content_type" not in k:
+            new_headers.set(constants.FN_HTTP_PREFIX + k, v)
+
+    new_headers.set("Fn-Http-Status", str(status))
+    new_headers.set("Content-Type", content_type)
+    return new_headers
+
+
 def handle(handle_func):
     async def pure_handler(request):
         log.log("in pure_handler")
@@ -49,7 +61,6 @@ def handle(handle_func):
                 request.content_length > 0):
             log.log("request comes with data")
             data = await request.content.read(request.content_length)
-
         response = await runner.handle_request(
             handle_func, None, constants.HTTPSTREAM,
             request=request, data=data)
@@ -60,7 +71,10 @@ def handle(handle_func):
         response_content_type = headers.get(
             "content-type", "application/json"
         )
-        headers.set("content-type", response_content_type)
+        headers.delete("content-type")
+
+        headers = encap_headers(
+            headers, response.status(), response_content_type)
         kwargs = {
             "status": response.status(),
             "headers": headers.http_raw()
@@ -78,9 +92,12 @@ def handle(handle_func):
         try:
             resp = web.Response(**kwargs)
         except (Exception, BaseException) as ex:
+
             resp = web.Response(
                 text=str(ex), reason=str(ex),
-                status=500, content_type="text/plain")
+                status=500, content_type="text/plain", headers={
+                    "Fn-Http-Status": str(500)
+                })
 
         return resp
 

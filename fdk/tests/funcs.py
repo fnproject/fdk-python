@@ -38,6 +38,16 @@ def dummy_func(ctx, data=None):
     return "Hello {0}".format(body.get("name"))
 
 
+def encaped_header(ctx, **kwargs):
+    hs = ctx.Headers()
+    v = hs.get("custom-header-maybe")
+    # assert "aloha" == v
+    return response.RawResponse(
+        ctx, response_data="OK", status_code=200,
+        headers={"content-type": "text/plain",
+                 "custom-header-maybe": v})
+
+
 def content_type(ctx, data=None):
     return response.RawResponse(
         ctx, response_data="OK", status_code=200,

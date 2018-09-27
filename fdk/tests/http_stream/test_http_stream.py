@@ -16,6 +16,7 @@ import asyncio
 import pytest
 import ujson
 
+from fdk import constants
 from fdk import http_stream
 from xml.etree import ElementTree
 
@@ -129,3 +130,14 @@ async def test_invalid_xml(aiohttp_client):
 
     with pytest.raises(ElementTree.ParseError):
         ElementTree.fromstring(await resp.text())
+
+
+async def test_access_decaped_headers(aiohttp_client):
+    client = await setup_application_client(
+        aiohttp_client, funcs.encaped_header)
+    header_key = constants.FN_HTTP_PREFIX + "custom-header-maybe"
+    value = "aloha"
+    resp = await client.post("/r/app/route", headers={
+        header_key: value
+    })
+    assert value == resp.headers.get(header_key)
