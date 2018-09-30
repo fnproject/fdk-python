@@ -41,7 +41,6 @@ def dummy_func(ctx, data=None):
 def encaped_header(ctx, **kwargs):
     hs = ctx.Headers()
     v = hs.get("custom-header-maybe")
-    # assert "aloha" == v
     return response.RawResponse(
         ctx, response_data="OK", status_code=200,
         headers={"content-type": "text/plain",
@@ -100,4 +99,16 @@ def verify_request_headers(ctx, **kwargs):
         ctx,
         response_data=ujson.dumps(xml),
         headers=ctx.Headers()
+    )
+
+
+def access_request_url(ctx, **kwargs):
+    hs = ctx.Headers()
+    method = ctx.Method()
+    request_url = hs.get("Fn-Http-Request-Url")
+    return response.RawResponse(
+        ctx, response_data="OK", headers={
+            "Response-Request-URL": request_url,
+            "Request-Method": method,
+        }
     )

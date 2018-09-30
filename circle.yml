@@ -33,7 +33,7 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            tox -epy3.7-cloudevent-json
+            tox -epy3.6-http-stream
       - run:
           command: |
             . venv/bin/activate

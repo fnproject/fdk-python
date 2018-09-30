@@ -25,6 +25,7 @@ from fdk import log
 from fdk import response
 
 
+# TODO(xxx): use loop.run_in_executor instead
 async def with_deadline(ctx, handle_func, data):
 
     def timeout_func(*_):
@@ -52,9 +53,9 @@ async def with_deadline(ctx, handle_func, data):
         raise ex
 
 
-async def from_request(handle_func, stream, format_def, **kwargs):
+async def from_request(handle_func, format_def, **kwargs):
 
-    ctx, body = context.context_from_format(format_def, stream, **kwargs)
+    ctx, body = context.context_from_format(format_def, **kwargs)
     response_data = await with_deadline(ctx, handle_func, body)
 
     if isinstance(response_data, response.RawResponse):
@@ -65,10 +66,10 @@ async def from_request(handle_func, stream, format_def, **kwargs):
         ctx, response_data=response_data, status_code=200)
 
 
-async def handle_request(handle_func, stream, format_def, **kwargs):
+async def handle_request(handle_func, format_def, **kwargs):
 
     try:
-        return await from_request(handle_func, stream, format_def, **kwargs)
+        return await from_request(handle_func, format_def, **kwargs)
 
     except (Exception, TimeoutError) as ex:
         log.log("exception appeared")

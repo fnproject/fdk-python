@@ -64,7 +64,7 @@ def handle(handle_func):
             log.log("request comes with data")
             data = await request.content.read(request.content_length)
         response = await runner.handle_request(
-            handle_func, None, constants.HTTPSTREAM,
+            handle_func, constants.HTTPSTREAM,
             request=request, data=data)
         log.log("request execution completed")
         headers = (response.headers()
@@ -78,7 +78,6 @@ def handle(handle_func):
         headers = encap_headers(
             headers, response.status(), response_content_type)
         kwargs = {
-            "status": response.status(),
             "headers": headers.http_raw()
         }
 
@@ -86,9 +85,9 @@ def handle(handle_func):
             response.body(), response_content_type)
 
         if response.status() >= 500:
-            kwargs.update(reason=sdata)
+            kwargs.update(reason=sdata, status=500)
         else:
-            kwargs.update(body=sdata)
+            kwargs.update(body=sdata, status=200)
 
         log.log("sending response back")
         try:

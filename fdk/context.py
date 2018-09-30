@@ -14,38 +14,9 @@
 
 import datetime as dt
 import os
-import sys
 
 from fdk import constants
 from fdk import headers
-from fdk import response
-from fdk import parser
-
-
-class JSONDispatchException(Exception):
-
-    def __init__(self, context, status, message):
-        """
-        JSON response with error
-        :param status: HTTP status code
-        :param message: error message
-        """
-        self.status = status
-        self.message = message
-        self.context = context
-
-    def response(self):
-        resp_headers = headers.GoLikeHeaders({})
-        resp_headers.set("content-type", "text/plain; charset=utf-8")
-        return response.RawResponse(
-            self.context,
-            response_data={
-                "error": {
-                    "message": self.message,
-                }
-            },
-            headers=resp_headers,
-            status_code=self.status)
 
 
 class RequestContext(object):
@@ -60,7 +31,6 @@ class RequestContext(object):
         """
         self.__app_id = app_id
         self.__fn_id = fn_id
-        # self.__app_route = route
         self.__call_id = call_id
         self.__config = config if config else {}
         self.__headers = headers if headers else {}
@@ -112,24 +82,6 @@ class RequestContext(object):
         return self.__method
 
 
-class JSONContext(RequestContext):
-
-    def __init__(self, app_name, route, call_id,
-                 content_type="text/plain",
-                 deadline=None,
-                 config=None,
-                 headers=None,
-                 request_url=None):
-        super(JSONContext, self).__init__(
-            app_name, route, call_id, constants.JSON,
-            deadline=deadline,
-            config=config,
-            headers=headers,
-            content_type=content_type,
-            request_url=request_url,
-        )
-
-
 class HTTPStreamContext(RequestContext):
     def __init__(self, app_id, fn_id, call_id,
                  content_type="application/octet-stream",
@@ -145,52 +97,33 @@ class HTTPStreamContext(RequestContext):
             headers=headers,
             content_type=content_type,
             request_url=request_url,
+            method=method,
         )
 
 
-class CloudEventContext(RequestContext):
-
-    def __init__(self, app_id, fn_id, call_id,
-                 content_type="application/cloudevents+json",
-                 deadline=None,
-                 config=None,
-                 headers=None,
-                 request_url=None,
-                 cloudevent=None):
-        super(CloudEventContext, self).__init__(
-            app_id, fn_id, call_id, constants.CLOUDEVENT,
-            deadline=deadline,
-            config=config,
-            headers=headers,
-            content_type=content_type,
-            request_url=request_url,
-        )
-        self.cloudevent = cloudevent if cloudevent else {}
-
-
-def decap_headers(request):
+def decap_headers(request_response):
     ctx_headers = headers.GoLikeHeaders({})
-
-    for k, v in dict(request.headers).items():
-        if constants.FN_HTTP_PREFIX in k:
+    for k, v in dict(request_response.headers).items():
+        if k.startswith(constants.FN_HTTP_PREFIX):
             ctx_headers.set(k.lstrip(constants.FN_HTTP_PREFIX), v)
-
+        else:
+            ctx_headers.set(k, v)
     return ctx_headers
 
 
-def context_from_format(
-        format_def, stream, **kwargs) -> (RequestContext, object):
-    app_id = os.environ.get("FN_APP_ID")
-    fn_id = os.environ.get("FN_FN_ID")
+def context_from_format(format_def, **kwargs) -> (RequestContext, object):
+    app_id = os.environ.get(constants.FN_APP_ID)
+    fn_id = os.environ.get(constants.FN_ID)
 
     if format_def == constants.HTTPSTREAM:
         data = kwargs.get("data")
         request = kwargs.get("request")
 
-        method = request.headers.get("Fn-Http-Method")
-        request_url = request.headers.get("Fn-Http-Request-Url")
-        deadline = request.headers.get("Fn-Deadline")
-        call_id = request.headers.get("Fn-Call-Id")
+        method = request.headers.get(constants.FN_HTTP_METHOD)
+        request_url = request.headers.get(
+            constants.FN_HTTP_REQUEST_URL)
+        deadline = request.headers.get(constants.FN_DEADLINE)
+        call_id = request.headers.get(constants.FN_CALL_ID)
         content_type = request.content_type
 
         ctx = HTTPStreamContext(
@@ -204,50 +137,3 @@ def context_from_format(
         )
 
         return ctx, data
-
-    if format_def == constants.CLOUDEVENT:
-        incoming_request = parser.read_json(stream)
-        call_id = incoming_request.get("eventID")
-        content_type = incoming_request.get("contentType")
-        extensions = incoming_request.get("extensions")
-        deadline = extensions.get("deadline")
-        protocol = extensions.get("protocol")
-        json_headers = headers.GoLikeHeaders(protocol.get("headers"))
-        data = incoming_request.get("data")
-        if "data" in incoming_request:
-            del incoming_request["data"]
-
-        ctx = CloudEventContext(
-            app_id, fn_id, call_id,
-            content_type=content_type,
-            deadline=deadline,
-            config=os.environ,
-            headers=json_headers,
-            request_url=protocol.get("request_url"),
-            cloudevent=incoming_request,
-        )
-        return ctx, data
-
-    if format_def == constants.JSON:
-        incoming_request = parser.read_json(stream)
-        call_id = incoming_request.get("call_id")
-
-        content_type = incoming_request.get("content_type")
-        protocol = incoming_request.get("protocol")
-
-        json_headers = headers.GoLikeHeaders(protocol.get("headers"))
-
-        ctx = JSONContext(
-            app_id, fn_id, call_id,
-            content_type=content_type,
-            deadline=incoming_request.get("deadline"),
-            config=os.environ, headers=json_headers,
-            request_url=protocol.get("request_url")
-        )
-        return ctx, incoming_request.get("body", "{}")
-
-    if format_def not in [constants.CLOUDEVENT,
-                          constants.JSON,
-                          constants.HTTPSTREAM]:
-        print("incompatible function format!", file=sys.stderr, flush=True)
-        sys.exit("incompatible function format!")

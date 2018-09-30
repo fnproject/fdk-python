@@ -19,7 +19,6 @@ import sys
 
 from fdk import constants
 from fdk import log
-from fdk import runner
 from fdk import http_stream
 
 
@@ -40,9 +39,6 @@ def handle(handle_func):
                 format(constants.FN_LISTENER, lsnr))
         http_stream.start(handle_func, lsnr, loop=loop)
     else:
-        with open("/dev/stdin", "rb", buffering=0) as stdin:
-            while True:
-                f = runner.handle_request(
-                    handle_func, stdin, format_def)
-                response = loop.run_until_complete(f)
-                response.dump()
+        log.log("incompatible function format!")
+        print("incompatible function format!", file=sys.stderr, flush=True)
+        sys.exit("incompatible function format!")

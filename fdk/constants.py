@@ -13,9 +13,14 @@
 #    under the License.
 
 DEFAULT_DEADLINE = 30
-CLOUDEVENT = "cloudevent"
-JSON = "json"
 HTTPSTREAM = "http-stream"
 FN_FORMAT = "FN_FORMAT"
 FN_LISTENER = "FN_LISTENER"
 FN_HTTP_PREFIX = "Fn-Http-H-"
+FN_HTTP_STATUS = "Fn-Http-Status"
+FN_DEADLINE = "Fn-Deadline"
+FN_HTTP_REQUEST_URL = "Fn-Http-Request-Url"
+FN_CALL_ID = "Fn-Call-Id"
+FN_HTTP_METHOD = "Fn-Http-Method"
+FN_APP_ID = "FN_APP_ID"
+FN_ID = "FN_FN_ID"
