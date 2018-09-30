@@ -53,27 +53,23 @@ async def with_deadline(ctx, handle_func, data):
         raise ex
 
 
-async def from_request(handle_func, format_def, **kwargs):
-
-    ctx, body = context.context_from_format(format_def, **kwargs)
-    response_data = await with_deadline(ctx, handle_func, body)
-
-    if isinstance(response_data, response.RawResponse):
-        return response_data
-
-    resp_class = response.response_class_from_context(ctx)
-    return resp_class(
-        ctx, response_data=response_data, status_code=200)
-
-
 async def handle_request(handle_func, format_def, **kwargs):
 
+    ctx, body = context.context_from_format(format_def, **kwargs)
+
     try:
-        return await from_request(handle_func, format_def, **kwargs)
+        response_data = await with_deadline(ctx, handle_func, body)
+
+        if isinstance(response_data, response.RawResponse):
+            return response_data
+
+        resp_class = response.response_class_from_context(ctx)
+        return resp_class(
+            ctx, response_data=response_data, headers={}, status_code=200)
 
     except (Exception, TimeoutError) as ex:
         log.log("exception appeared")
         traceback.print_exc(file=sys.stderr)
         status = 502 if isinstance(ex, TimeoutError) else 500
         err_class = errors.error_class_from_format(format_def)
-        return err_class(status, str(ex), ).response()
+        return err_class(ctx, status, str(ex), ).response()

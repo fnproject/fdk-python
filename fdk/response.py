@@ -15,7 +15,6 @@
 import ujson
 
 from fdk import constants
-from fdk import headers as hrs
 
 APP_JSON = "application/json"
 
@@ -44,12 +43,12 @@ def setup_data(response_data, headers):
 
 
 class HTTPStreamResponse(object):
-    def __init__(self, context, response_data=None,
+    def __init__(self, ctx, response_data=None,
                  headers=None, status_code=200):
         """
         HTTPStream response object
-        :param context: request context
-        :type context: fdk.context.HTTPStreamContext
+        :param ctx: request context
+        :type ctx: fdk.context.HTTPStreamContext
         :param response_data: response data
         :type response_data: object
         :param headers: HTTP headers
@@ -57,13 +56,15 @@ class HTTPStreamResponse(object):
         :param status_code: HTTP status code
         :type status_code: int
         """
+
         self.status_code = status_code
         self.response_data = response_data if response_data else ""
-        self.headers = hrs.GoLikeHeaders({})
-        if isinstance(headers, dict):
-            self.headers = hrs.GoLikeHeaders(headers)
-        if isinstance(headers, hrs.GoLikeHeaders):
-            self.headers = headers
+
+        ctx.SetResponseHeaders(
+            headers, status_code,
+            content_type=headers.get(constants.CONTENT_TYPE)
+        )
+        self.ctx = ctx
 
     def status(self):
         return self.status_code
@@ -73,6 +74,9 @@ class HTTPStreamResponse(object):
 
     def dump(self):
         pass
+
+    def context(self):
+        return self.ctx
 
 
 def response_class_from_context(context):
@@ -87,16 +91,14 @@ def response_class_from_context(context):
 
 class RawResponse(object):
 
-    def __init__(self, context, response_data=None,
+    def __init__(self, ctx, response_data=None,
                  headers=None, status_code=200):
-        cls = response_class_from_context(context)
+        cls = response_class_from_context(ctx)
         self.__resp = cls(
-            context, response_data=response_data,
-            headers=headers, status_code=status_code
+            ctx, response_data=response_data,
+            headers=headers if headers else {},
+            status_code=status_code
         )
-
-    def headers(self):
-        return self.__resp.headers
 
     def status(self):
         return self.__resp.status_code
@@ -106,3 +108,6 @@ class RawResponse(object):
 
     def dump(self):
         self.__resp.dump()
+
+    def context(self):
+        return self.__resp.context()

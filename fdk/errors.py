@@ -19,7 +19,7 @@ from fdk import response
 
 class HTTPStreamDispatchException(Exception):
 
-    def __init__(self, status, message):
+    def __init__(self, ctx, status, message):
         """
         JSON response with error
         :param status: HTTP status code
@@ -27,13 +27,14 @@ class HTTPStreamDispatchException(Exception):
         """
         self.status = status
         self.message = message
+        self.ctx = ctx
 
     def response(self):
         resp_headers = headers.GoLikeHeaders({})
         resp_headers.set(
             "content-type", "application/json; charset=utf-8")
         return response.HTTPStreamResponse(
-            None,
+            self.ctx,
             response_data=self.message,
             headers=resp_headers,
             status_code=self.status

@@ -20,10 +20,8 @@ from aiohttp import web
 from xml.etree import ElementTree
 
 from fdk import constants
-from fdk import headers as hs
 from fdk import log
 from fdk import runner
-from fdk import response as rtypes
 
 
 def serialize_response_data(data, content_type):
@@ -43,17 +41,6 @@ def serialize_response_data(data, content_type):
     return
 
 
-def encap_headers(headers, status, content_type):
-    new_headers = hs.GoLikeHeaders({})
-    for k, v in headers.items():
-        if "content_type" not in k:
-            new_headers.set(constants.FN_HTTP_PREFIX + k, v)
-
-    new_headers.set("Fn-Http-Status", str(status))
-    new_headers.set("Content-Type", content_type)
-    return new_headers
-
-
 def handle(handle_func):
     async def pure_handler(request):
         log.log("in pure_handler")
@@ -67,16 +54,12 @@ def handle(handle_func):
             handle_func, constants.HTTPSTREAM,
             request=request, data=data)
         log.log("request execution completed")
-        headers = (response.headers()
-                   if isinstance(response, rtypes.RawResponse)
-                   else response.headers)
-        response_content_type = headers.get(
-            "content-type", "application/json"
-        )
-        headers.delete("content-type")
+        headers = response.context().GetResponseHeaders()
 
-        headers = encap_headers(
-            headers, response.status(), response_content_type)
+        response_content_type = headers.get(
+            constants.CONTENT_TYPE, "application/json"
+        )
+        headers.set(constants.CONTENT_TYPE, response_content_type)
         kwargs = {
             "headers": headers.http_raw()
         }

@@ -16,7 +16,7 @@ import asyncio
 import datetime as dt
 
 from fdk import constants
-from fdk import context
+from fdk import headers as hs
 from fdk import http_stream
 
 
@@ -28,7 +28,7 @@ async def process_response(fn_call_coro):
             k.lstrip(constants.FN_HTTP_PREFIX): v
         })
     content = await resp.content.read()
-    resp_headers = context.decap_headers(resp)
+    resp_headers = hs.decap_headers(resp.headers)
     status = int(resp.headers.get(constants.FN_HTTP_STATUS))
     resp_headers.delete(constants.FN_HTTP_STATUS)
     return content, status, resp_headers

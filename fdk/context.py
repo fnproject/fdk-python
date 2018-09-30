@@ -16,15 +16,40 @@ import datetime as dt
 import os
 
 from fdk import constants
-from fdk import headers
+from fdk import headers as hs
 
 
-class RequestContext(object):
+def set_response_headers(current_headers, new_headers,
+                       status_code, content_type=None):
+    if isinstance(new_headers, dict):
+        new_headers = hs.GoLikeHeaders(new_headers)
+    elif isinstance(new_headers, hs.GoLikeHeaders):
+        pass
+    else:
+        raise TypeError(
+            "Invalid headers type: {}, only dict allowed."
+            .format(type(new_headers))
+        )
+
+    new_headers = hs.encap_headers(
+        new_headers,
+        status=status_code,
+        content_type=content_type
+    )
+    for k, v in new_headers.items():
+        current_headers.set(k, v)
+
+    return current_headers
+
+
+class InvokeContext(object):
 
     def __init__(self, app_id, fn_id, call_id,
-                 fn_format, content_type="text/plain", deadline=None,
-                 config=None, headers=None, arguments=None,
-                 request_url=None, method="POST"):
+                 content_type="application/octet-stream",
+                 deadline=None, config=None,
+                 headers=None, arguments=None,
+                 request_url=None, method="POST",
+                 fn_format=None):
         """
         Request context here to be a placeholder
         for request-specific attributes
@@ -34,21 +59,19 @@ class RequestContext(object):
         self.__call_id = call_id
         self.__config = config if config else {}
         self.__headers = headers if headers else {}
-        self.__arguments = {} if not arguments else arguments
-        self.__fn_format = fn_format
+        self._arguments = {} if not arguments else arguments
         self.__deadline = deadline
         self.__content_type = content_type
-        self.__request_url = request_url
-        self.__method = method
+        self._request_url = request_url
+        self._method = method
+        self.__response_headers = hs.GoLikeHeaders({})
+        self.__fn_format = fn_format
 
     def AppID(self):
         return self.__app_id
 
     def FnID(self):
         return self.__fn_id
-
-    # def Route(self):
-    #     return self.__app_route
 
     def CallID(self):
         return self.__call_id
@@ -58,9 +81,6 @@ class RequestContext(object):
 
     def Headers(self):
         return self.__headers
-
-    def Arguments(self):
-        return self.__arguments
 
     def Format(self):
         return self.__fn_format
@@ -72,46 +92,46 @@ class RequestContext(object):
             return now.isoformat()
         return self.__deadline
 
-    def RequestContentType(self):
-        return self.__content_type
+    def SetResponseHeaders(self, headers, status_code, content_type=None):
+        self.__response_headers = set_response_headers(
+            self.GetResponseHeaders(), headers, status_code,
+            content_type=content_type)
+
+    def GetResponseHeaders(self):
+        return self.__response_headers
+
+    def HTTPContext(self):
+        return HTTPGatewayContext(self)
+
+
+class HTTPGatewayContext(object):
+    def __init__(self, invoke_context: InvokeContext):
+        self.__headers = hs.decap_headers(invoke_context.Headers())
+        self.__invoke_context = invoke_context
+        self.__response_headers = hs.GoLikeHeaders({})
 
     def RequestURL(self):
-        return self.__request_url
+        return self.__invoke_context._request_url
 
     def Method(self):
-        return self.__method
+        return self.__invoke_context._method
+
+    def Headers(self):
+        return self.__headers
+
+    def SetResponseHeaders(self, headers, status_code, content_type=None):
+        self.__response_headers = set_response_headers(
+            self.GetResponseHeaders(), headers, status_code,
+            content_type=content_type)
+
+    def GetResponseHeaders(self):
+        return self.__response_headers
+
+    def Format(self):
+        return self.__invoke_context.Format()
 
 
-class HTTPStreamContext(RequestContext):
-    def __init__(self, app_id, fn_id, call_id,
-                 content_type="application/octet-stream",
-                 deadline=None,
-                 config=None,
-                 headers=None,
-                 request_url=None,
-                 method=None):
-        super(HTTPStreamContext, self).__init__(
-            app_id, fn_id, call_id, constants.HTTPSTREAM,
-            deadline=deadline,
-            config=config,
-            headers=headers,
-            content_type=content_type,
-            request_url=request_url,
-            method=method,
-        )
-
-
-def decap_headers(request_response):
-    ctx_headers = headers.GoLikeHeaders({})
-    for k, v in dict(request_response.headers).items():
-        if k.startswith(constants.FN_HTTP_PREFIX):
-            ctx_headers.set(k.lstrip(constants.FN_HTTP_PREFIX), v)
-        else:
-            ctx_headers.set(k, v)
-    return ctx_headers
-
-
-def context_from_format(format_def, **kwargs) -> (RequestContext, object):
+def context_from_format(format_def, **kwargs) -> (InvokeContext, object):
     app_id = os.environ.get(constants.FN_APP_ID)
     fn_id = os.environ.get(constants.FN_ID)
 
@@ -126,14 +146,15 @@ def context_from_format(format_def, **kwargs) -> (RequestContext, object):
         call_id = request.headers.get(constants.FN_CALL_ID)
         content_type = request.content_type
 
-        ctx = HTTPStreamContext(
+        ctx = InvokeContext(
             app_id, fn_id, call_id,
             content_type=content_type,
             deadline=deadline,
             config=os.environ,
-            headers=decap_headers(request),
+            headers=request.headers,
             method=method,
-            request_url=request_url
+            request_url=request_url,
+            fn_format=constants.HTTPSTREAM,
         )
 
         return ctx, data
