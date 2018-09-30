@@ -20,7 +20,7 @@ from fdk import headers as hs
 
 
 def set_response_headers(current_headers, new_headers,
-                       status_code, content_type=None):
+                         status_code, content_type=None):
     if isinstance(new_headers, dict):
         new_headers = hs.GoLikeHeaders(new_headers)
     elif isinstance(new_headers, hs.GoLikeHeaders):
