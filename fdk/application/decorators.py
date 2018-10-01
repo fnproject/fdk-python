@@ -145,11 +145,21 @@ def fn(gpi_image=None, fn_timeout=60,
                     )
                     if resp.status_code == 409:
                         # look for fn_id using fn name and app ID
-                        pass
+                        fns_resp = requests.get(
+                            "{0}/v2/fns?app_id={1}".format(fn_api_url, app_id))
+                        fns_resp.raise_for_status()
+
+                        fns = fns_resp.json().get("items", [])
+                        for fn_dct in fns:
+                            if fn_path == fn_dct.get("name"):
+                                fn_id = fn_dct.get("id")
+
                     if resp.status_code != 200 and resp.status_code != 409:
                         resp.raise_for_status()
+                    if resp.status_code == 200:
+                        fn_id = resp.json().get("id")
+
                     # create a trigger
-                    fn_id = resp.json().get("id")
                     resp = requests.post(
                         "{0}/v2/triggers".format(fn_api_url), json={
                             "app_id": app_id,
