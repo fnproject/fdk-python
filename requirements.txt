@@ -4,4 +4,6 @@ ujson==1.35
 requests==2.18.4
 dill==0.2.7.1
 iso8601==0.1.12
-testtools>=1.4.0 # MIT
+aiohttp==3.4.4
+pytest-aiohttp==0.3.0
+

@@ -12,27 +12,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import io
-import testtools
-import ujson
-
-from fdk import parser
-
-from fdk.tests import data
-
-
-class TestJSONParser(testtools.TestCase):
-
-    def setUp(self):
-        super(TestJSONParser, self).setUp()
-
-    def tearDown(self):
-        super(TestJSONParser, self).tearDown()
-
-    def test_parser(self):
-        d = ujson.dumps(data.cloudevent_request_without_body)
-        encoded = io.BytesIO(("\n\n\n\n\n\n\n\n\n\n\n\n" + d).encode())
-        parsed_data = parser.read_json(encoded)
-
-        self.assertIsNotNone(parsed_data)
-        self.assertIsInstance(parsed_data, dict)
+DEFAULT_DEADLINE = 30
+HTTPSTREAM = "http-stream"
+FN_FORMAT = "FN_FORMAT"
+FN_LISTENER = "FN_LISTENER"
+FN_HTTP_PREFIX = "Fn-Http-H-"
+FN_HTTP_STATUS = "Fn-Http-Status"
+FN_DEADLINE = "Fn-Deadline"
+FN_HTTP_REQUEST_URL = "Fn-Http-Request-Url"
+FN_CALL_ID = "Fn-Call-Id"
+FN_HTTP_METHOD = "Fn-Http-Method"
+FN_APP_ID = "FN_APP_ID"
+FN_ID = "FN_FN_ID"
+CONTENT_TYPE = "Content-Type"

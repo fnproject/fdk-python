@@ -15,16 +15,30 @@
 import asyncio
 import os
 import uvloop
+import sys
 
-from fdk import runner
+from fdk import constants
+from fdk import log
+from fdk import http_stream
 
 
 def handle(handle_func):
-    with open("/dev/stdin", "rb", buffering=0) as stdin:
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        loop = asyncio.get_event_loop()
-        while True:
-            f = runner.handle_request(
-                handle_func, stdin, os.environ.get("FN_FORMAT"))
-            response = loop.run_until_complete(f)
-            response.dump()
+    log.log("entering handle")
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    loop = asyncio.get_event_loop()
+
+    format_def = os.environ.get(constants.FN_FORMAT)
+    lsnr = os.environ.get(constants.FN_LISTENER)
+    log.log("format: {0}".format(format_def))
+
+    if format_def == constants.HTTPSTREAM:
+        if lsnr is None:
+            log.log("{0} is not set".format(constants.FN_LISTENER))
+            sys.exit(1)
+        log.log("{0} is set, value: {1}".
+                format(constants.FN_LISTENER, lsnr))
+        http_stream.start(handle_func, lsnr, loop=loop)
+    else:
+        log.log("incompatible function format!")
+        print("incompatible function format!", file=sys.stderr, flush=True)
+        sys.exit("incompatible function format!")

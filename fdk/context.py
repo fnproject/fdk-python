@@ -14,70 +14,64 @@
 
 import datetime as dt
 import os
-import sys
 
-from fdk import headers
-from fdk import response
-from fdk import parser
+from fdk import constants
+from fdk import headers as hs
 
 
-DEFAULT_DEADLINE = 30
+def set_response_headers(current_headers, new_headers,
+                         status_code, content_type=None):
+    if isinstance(new_headers, dict):
+        new_headers = hs.GoLikeHeaders(new_headers)
+    elif isinstance(new_headers, hs.GoLikeHeaders):
+        pass
+    else:
+        raise TypeError(
+            "Invalid headers type: {}, only dict allowed."
+            .format(type(new_headers))
+        )
+
+    new_headers = hs.encap_headers(
+        new_headers,
+        status=status_code,
+        content_type=content_type
+    )
+    for k, v in new_headers.items():
+        current_headers.set(k, v)
+
+    return current_headers
 
 
-class JSONDispatchException(Exception):
+class InvokeContext(object):
 
-    def __init__(self, context, status, message):
-        """
-        JSON response with error
-        :param status: HTTP status code
-        :param message: error message
-        """
-        self.status = status
-        self.message = message
-        self.context = context
-
-    def response(self):
-        resp_headers = headers.GoLikeHeaders({})
-        resp_headers.set("content-type", "text/plain; charset=utf-8")
-        return response.RawResponse(
-            self.context,
-            response_data={
-                "error": {
-                    "message": self.message,
-                }
-            },
-            headers=resp_headers,
-            status_code=self.status)
-
-
-class RequestContext(object):
-
-    def __init__(self, app_name, route, call_id,
-                 fn_format, content_type="text/plain",
-                 execution_type=None, deadline=None,
-                 config=None, headers=None, arguments=None,
-                 request_url=None):
+    def __init__(self, app_id, fn_id, call_id,
+                 content_type="application/octet-stream",
+                 deadline=None, config=None,
+                 headers=None, arguments=None,
+                 request_url=None, method="POST",
+                 fn_format=None):
         """
         Request context here to be a placeholder
         for request-specific attributes
         """
-        self.__app_name = app_name
-        self.__app_route = route
+        self.__app_id = app_id
+        self.__fn_id = fn_id
         self.__call_id = call_id
         self.__config = config if config else {}
         self.__headers = headers if headers else {}
-        self.__arguments = {} if not arguments else arguments
-        self.__fn_format = fn_format
-        self.__exec_type = execution_type
+        self._arguments = {} if not arguments else arguments
         self.__deadline = deadline
         self.__content_type = content_type
-        self.__request_url = request_url
+        self._request_url = request_url
+        self._method = method
+        self.__response_headers = hs.GoLikeHeaders({})
+        self.__fn_format = fn_format
 
-    def AppName(self):
-        return self.__app_name
+    def AppID(self):
+        return self.__app_id
 
-    def Route(self):
-        return self.__app_route
+    def FnID(self):
+        return self.__fn_id
 
     def CallID(self):
         return self.__call_id
@@ -88,129 +82,79 @@ class RequestContext(object):
     def Headers(self):
         return self.__headers
 
-    def Arguments(self):
-        return self.__arguments
-
     def Format(self):
         return self.__fn_format
 
     def Deadline(self):
         if self.__deadline is None:
             now = dt.datetime.now(dt.timezone.utc).astimezone()
-            now += dt.timedelta(0, float(DEFAULT_DEADLINE))
+            now += dt.timedelta(0, float(constants.DEFAULT_DEADLINE))
             return now.isoformat()
         return self.__deadline
 
-    def ExecutionType(self):
-        return self.__exec_type
+    def SetResponseHeaders(self, headers, status_code, content_type=None):
+        self.__response_headers = set_response_headers(
+            self.GetResponseHeaders(), headers, status_code,
+            content_type=content_type)
 
-    def RequestContentType(self):
-        return self.__content_type
+    def GetResponseHeaders(self):
+        return self.__response_headers
+
+    def HTTPContext(self):
+        return HTTPGatewayContext(self)
+
+
+class HTTPGatewayContext(object):
+    def __init__(self, invoke_context: InvokeContext):
+        self.__headers = hs.decap_headers(invoke_context.Headers())
+        self.__invoke_context = invoke_context
+        self.__response_headers = hs.GoLikeHeaders({})
 
     def RequestURL(self):
-        return self.__request_url
+        return self.__invoke_context._request_url
+
+    def Method(self):
+        return self.__invoke_context._method
+
+    def Headers(self):
+        return self.__headers
+
+    def SetResponseHeaders(self, headers, status_code, content_type=None):
+        self.__response_headers = set_response_headers(
+            self.GetResponseHeaders(), headers, status_code,
+            content_type=content_type)
+
+    def GetResponseHeaders(self):
+        return self.__response_headers
+
+    def Format(self):
+        return self.__invoke_context.Format()
 
 
-class JSONContext(RequestContext):
+def context_from_format(format_def, **kwargs) -> (InvokeContext, object):
+    app_id = os.environ.get(constants.FN_APP_ID)
+    fn_id = os.environ.get(constants.FN_ID)
 
-    def __init__(self, app_name, route, call_id,
-                 content_type="text/plain",
-                 deadline=None,
-                 execution_type=None,
-                 config=None,
-                 headers=None,
-                 request_url=None):
-        super(JSONContext, self).__init__(
-            app_name, route, call_id, "json",
-            execution_type=execution_type,
-            deadline=deadline,
-            config=config,
-            headers=headers,
+    if format_def == constants.HTTPSTREAM:
+        data = kwargs.get("data")
+        request = kwargs.get("request")
+
+        method = request.headers.get(constants.FN_HTTP_METHOD)
+        request_url = request.headers.get(
+            constants.FN_HTTP_REQUEST_URL)
+        deadline = request.headers.get(constants.FN_DEADLINE)
+        call_id = request.headers.get(constants.FN_CALL_ID)
+        content_type = request.content_type
+
+        ctx = InvokeContext(
+            app_id, fn_id, call_id,
             content_type=content_type,
-            request_url=request_url,
-        )
-
-
-class CloudEventContext(RequestContext):
-
-    def __init__(self, app_name, route, call_id,
-                 content_type="application/cloudevents+json",
-                 deadline=None,
-                 execution_type=None,
-                 config=None,
-                 headers=None,
-                 request_url=None,
-                 cloudevent=None):
-        super(CloudEventContext, self).__init__(
-            app_name, route, call_id, "cloudevent",
-            execution_type=execution_type,
-            deadline=deadline,
-            config=config,
-            headers=headers,
-            content_type=content_type,
-            request_url=request_url,
-        )
-        self.cloudevent = cloudevent if cloudevent else {}
-
-
-def context_from_format(format_def, stream) -> (RequestContext, object):
-    app = os.environ.get("FN_APP_NAME")
-    path = os.environ.get("FN_PATH")
-
-    if format_def == "cloudevent":
-        incoming_request = parser.read_json(stream)
-        call_id = incoming_request.get("eventID")
-        content_type = incoming_request.get("contentType")
-        extensions = incoming_request.get("extensions")
-        deadline = extensions.get("deadline")
-        protocol = extensions.get("protocol", {
-            "headers": {},
-            "type": "http",
-            "method": "GET",
-            "request_url": "http://localhost:8080/r/{0}{1}".format(app, path),
-        })
-        json_headers = headers.GoLikeHeaders(protocol.get("headers"))
-        data = incoming_request.get("data")
-        if "data" in incoming_request:
-            del incoming_request["data"]
-
-        ctx = CloudEventContext(
-            app, path, call_id,
-            content_type=content_type,
-            execution_type=os.getenv("FN_TYPE"),
             deadline=deadline,
             config=os.environ,
-            headers=json_headers,
-            request_url=protocol.get("request_url"),
-            cloudevent=incoming_request,
+            headers=request.headers,
+            method=method,
+            request_url=request_url,
+            fn_format=constants.HTTPSTREAM,
         )
+
         return ctx, data
-
-    if format_def == "json":
-        incoming_request = parser.read_json(stream)
-        call_id = incoming_request.get("call_id")
-
-        content_type = incoming_request.get("content_type")
-        protocol = incoming_request.get("protocol", {
-            "headers": {},
-            "type": "http",
-            "method": "GET",
-            "request_url": "http://localhost:8080/r/{0}{1}".format(app, path),
-        })
-
-        json_headers = headers.GoLikeHeaders(protocol.get("headers"))
-        call_type = json_headers.get("fn-type", "sync")
-
-        ctx = JSONContext(
-            app, path, call_id,
-            content_type=content_type,
-            execution_type=call_type,
-            deadline=incoming_request.get("deadline"),
-            config=os.environ, headers=json_headers,
-            request_url=protocol.get("request_url")
-        )
-        return ctx, incoming_request.get("body", "{}")
-
-    if format_def not in ["cloudevent", "json"]:
-        print("incompatible function format!", file=sys.stderr, flush=True)
-        sys.exit("incompatible function format!")

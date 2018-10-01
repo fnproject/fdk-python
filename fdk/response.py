@@ -13,9 +13,8 @@
 #    under the License.
 
 import ujson
-import sys
 
-from fdk import headers as hrs
+from fdk import constants
 
 APP_JSON = "application/json"
 
@@ -43,47 +42,29 @@ def setup_data(response_data, headers):
     return content_type, data
 
 
-class JSONResponse(object):
-
-    def __init__(self, context, response_data=None,
+class HTTPStreamResponse(object):
+    def __init__(self, ctx, response_data=None,
                  headers=None, status_code=200):
         """
-        JSON response object
-        :param context: request context
-        :type context: fdk.context.JSONContext
-        :param response_data: response data (any JSON-serializable object)
+        HTTPStream response object
+        :param ctx: request context
+        :type ctx: fdk.context.HTTPStreamContext
+        :param response_data: response data
         :type response_data: object
-        :param headers: JSON response HTTP headers
+        :param headers: HTTP headers
         :type headers: fdk.headers.GoLikeHeaders
-        :param status_code: JSON response HTTP status code
+        :param status_code: HTTP status code
         :type status_code: int
         """
+
         self.status_code = status_code
         self.response_data = response_data if response_data else ""
-        self.headers = hrs.GoLikeHeaders({})
-        if isinstance(headers, dict):
-            self.headers = hrs.GoLikeHeaders(headers)
-        if isinstance(headers, hrs.GoLikeHeaders):
-            self.headers = headers
 
-    def dump(self):
-        """
-        Dumps raw JSON response to a stream
-        :return: result of dumping
-        """
-        content_type, data = setup_data(
-            self.response_data, self.headers)
-
-        self.headers.set("content-length", len(data))
-        resp = ujson.dumps({
-            "body": data,
-            "content_type": content_type,
-            "protocol": {
-                "status_code": self.status_code,
-                "headers": self.headers.for_dump()
-            },
-        })
-        print(resp, file=sys.stdout, flush=True)
+        ctx.SetResponseHeaders(
+            headers, status_code,
+            content_type=headers.get(constants.CONTENT_TYPE)
+        )
+        self.ctx = ctx
 
     def status(self):
         return self.status_code
@@ -91,58 +72,11 @@ class JSONResponse(object):
     def body(self):
         return self.response_data
 
-
-class CloudEventResponse(object):
-
-    def __init__(self, context, response_data=None,
-                 headers=None, status_code=200):
-        """
-        CloudEvent response object
-        :param context: request context
-        :type context: fdk.context.CloudEventContext
-        :param response_data: response data (any JSON-serializable object)
-        :type response_data: object
-        :param headers: JSON response HTTP headers
-        :type headers: fdk.headers.GoLikeHeaders
-        :param status_code: JSON response HTTP status code
-        :type status_code: int
-        """
-        self.cloudevent = context.cloudevent
-
-        self.status_code = status_code
-        self.response_data = response_data if response_data else ""
-        self.headers = hrs.GoLikeHeaders({})
-        if isinstance(headers, dict):
-            self.headers = hrs.GoLikeHeaders(headers)
-        if isinstance(headers, hrs.GoLikeHeaders):
-            self.headers = headers
-
     def dump(self):
-        """
-        Dumps raw JSON response to a stream
-        :return: result of dumping
-        """
-        content_type, data = setup_data(
-            self.response_data, self.headers)
+        pass
 
-        self.headers.set("content-length", len(data))
-        ce = self.cloudevent
-        ce["contentType"] = content_type
-        ce["data"] = data
-        ce["extensions"] = {
-            "protocol": {
-                "status_code": self.status_code,
-                "headers": self.headers.for_dump()
-            }
-        }
-        resp = ujson.dumps(self.cloudevent)
-        print(resp, file=sys.stdout, flush=True)
-
-    def status(self):
-        return self.status_code
-
-    def body(self):
-        return self.response_data
+    def context(self):
+        return self.ctx
 
 
 def response_class_from_context(context):
@@ -151,24 +85,20 @@ def response_class_from_context(context):
     :type context: fdk.context.RequestContext
     """
     format_def = context.Format()
-    if format_def == "json":
-        return JSONResponse
-    if format_def == "cloudevent":
-        return CloudEventResponse
+    if format_def == constants.HTTPSTREAM:
+        return HTTPStreamResponse
 
 
 class RawResponse(object):
 
-    def __init__(self, context, response_data=None,
+    def __init__(self, ctx, response_data=None,
                  headers=None, status_code=200):
-        cls = response_class_from_context(context)
+        cls = response_class_from_context(ctx)
         self.__resp = cls(
-            context, response_data=response_data,
-            headers=headers, status_code=status_code
+            ctx, response_data=response_data,
+            headers=headers if headers else {},
+            status_code=status_code
         )
-
-    def headers(self):
-        return self.__resp.headers
 
     def status(self):
         return self.__resp.status_code
@@ -178,3 +108,6 @@ class RawResponse(object):
 
     def dump(self):
         self.__resp.dump()
+
+    def context(self):
+        return self.__resp.context()

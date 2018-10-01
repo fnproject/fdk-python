@@ -31,14 +31,27 @@ xml = """<!DOCTYPE mensaje SYSTEM "record.dtd">
 
 
 def dummy_func(ctx, data=None):
-    body = ujson.loads(data) if len(data) > 0 else {"name": "World"}
+    if data is not None and len(data) > 0:
+        body = ujson.loads(data)
+    else:
+        body = {"name": "World"}
     return "Hello {0}".format(body.get("name"))
+
+
+def encaped_header(ctx, **kwargs):
+    httpctx = ctx.HTTPContext()
+    hs = httpctx.Headers()
+    v = hs.get("custom-header-maybe")
+    return response.RawResponse(
+        httpctx, response_data="OK", status_code=200,
+        headers={"Content-Type": "text/plain",
+                 "custom-header-maybe": v})
 
 
 def content_type(ctx, data=None):
     return response.RawResponse(
         ctx, response_data="OK", status_code=200,
-        headers={"content-type": "application/xml"})
+        headers={"Content-Type": "text/plain"})
 
 
 def custom_response(ctx, data=None):
@@ -69,7 +82,7 @@ async def coro(ctx, **kwargs):
 def valid_xml(ctx, **kwargs):
     return response.RawResponse(
         ctx, response_data=xml, headers={
-            "content-type": "application/xml",
+            "Content-Type": "application/xml",
         }
     )
 
@@ -77,7 +90,7 @@ def valid_xml(ctx, **kwargs):
 def invalid_xml(ctx, **kwargs):
     return response.RawResponse(
         ctx, response_data=ujson.dumps(xml), headers={
-            "content-type": "application/xml",
+            "Content-Type": "application/xml",
         }
     )
 
@@ -87,4 +100,17 @@ def verify_request_headers(ctx, **kwargs):
         ctx,
         response_data=ujson.dumps(xml),
         headers=ctx.Headers()
+    )
+
+
+def access_request_url(ctx, **kwargs):
+    httpctx = ctx.HTTPContext()
+    hs = httpctx.Headers()
+    method = httpctx.Method()
+    request_url = hs.get("Fn-Http-Request-Url")
+    return response.RawResponse(
+        httpctx, response_data="OK", headers={
+            "Response-Request-URL": request_url,
+            "Request-Method": method,
+        }
     )

@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from fdk import constants
+
 
 class GoLikeHeaders(object):
 
@@ -78,3 +80,51 @@ class GoLikeHeaders(object):
 
     def for_dump(self):
         return self.__headers
+
+    def http_raw(self):
+        raw_headers = {}
+        headers = self.for_dump()
+        for k, v in headers.items():
+            if isinstance(v, list):
+                raw_headers[k] = ", ".join(headers.get(k))
+
+        return raw_headers
+
+    def delete(self, key):
+        if self.get(key) is not None:
+            del self.__headers[key]
+
+    def __iter__(self):
+        return iter(self.__headers.items())
+
+    def keys(self):
+        return self.__headers.keys()
+
+    def items(self):
+        return self.__headers.items()
+
+    def values(self):
+        return self.__headers.values()
+
+
+def decap_headers(hdsr):
+    ctx_headers = GoLikeHeaders({})
+    for k, v in dict(hdsr).items():
+        if k.startswith(constants.FN_HTTP_PREFIX):
+            ctx_headers.set(k.lstrip(constants.FN_HTTP_PREFIX), v)
+        else:
+            ctx_headers.set(k, v)
+    return ctx_headers
+
+
+def encap_headers(headers, status=None, content_type=None):
+    new_headers = GoLikeHeaders({})
+    for k, v in headers.items():
+        if not k.startswith(constants.CONTENT_TYPE):
+            new_headers.set(constants.FN_HTTP_PREFIX + k, v)
+
+    if status is not None:
+        new_headers.set(constants.FN_HTTP_STATUS, str(status))
+    if content_type is not None:
+        new_headers.set(constants.CONTENT_TYPE, content_type)
+    return new_headers

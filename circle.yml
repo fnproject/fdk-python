@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6.2
+      - image: circleci/python:3.7.0
     working_directory: ~/fdk-python
     steps:
       - checkout
@@ -33,4 +33,4 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            tox -epy3.6
+            tox -epy3.7-http-stream

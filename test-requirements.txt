@@ -1,4 +1,4 @@
 flake8==2.5.0
 hacking<0.11,>=0.10.0
 pytest-cov==2.4.0
-testtools>=1.4.0 # MIT
+pytest-aiohttp
