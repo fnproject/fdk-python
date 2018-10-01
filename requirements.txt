@@ -6,4 +6,3 @@ dill==0.2.7.1
 iso8601==0.1.12
 aiohttp==3.4.4
 pytest-aiohttp==0.3.0
-

@@ -151,7 +151,7 @@ def context_from_format(format_def, **kwargs) -> (InvokeContext, object):
             content_type=content_type,
             deadline=deadline,
             config=os.environ,
-            headers=request.headers,
+            headers=hs.GoLikeHeaders(dict(request.headers)),
             method=method,
             request_url=request_url,
             fn_format=constants.HTTPSTREAM,

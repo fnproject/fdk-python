@@ -45,11 +45,10 @@ def handle(handle_func):
     async def pure_handler(request):
         log.log("in pure_handler")
         data = None
-        if (request.has_body and
-                request.content_length is not None and
-                request.content_length > 0):
+        if request.has_body:
+            log.log("has body: {}".format(request.has_body))
             log.log("request comes with data")
-            data = await request.content.read(request.content_length)
+            data = await request.content.read()
         response = await runner.handle_request(
             handle_func, constants.HTTPSTREAM,
             request=request, data=data)

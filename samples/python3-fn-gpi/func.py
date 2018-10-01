@@ -14,15 +14,15 @@
 
 import dill
 import fdk
-import sys
 import ujson
 
+from fdk import log
 from fdk import response
 
 
-def handler(context, data=None):
+def handler(ctx, data=None, **kwargs):
     """
-    General purpose Python3 function processor
+    General purpose Python3.7 function processor
 
     Why general purpose?
 
@@ -37,13 +37,15 @@ def handler(context, data=None):
        represented as serialized functions, no matter if they are module-level,
        class-level Python objects
 
-    :param context: request context
-    :type context: fdk.context.RequestContext
+    :param ctx: request context
+    :type ctx: fdk.context.RequestContext
     :param data: request data
     :type data: dict
     :return: resulting object of distributed function
     :rtype: object
     """
+    log.log("income data type: {0}".format(type(data)))
+    log.log("data len: {}".format(len(data)))
     payload = ujson.loads(data)
     (self_in_bytes,
      action_in_bytes, action_args, action_kwargs) = (
@@ -52,47 +54,43 @@ def handler(context, data=None):
         payload['args'],
         payload['kwargs'])
 
-    print("Got {} bytes of class instance".format(len(self_in_bytes)),
-          file=sys.stderr, flush=True)
-    print("Got {} bytes of function".format(len(action_in_bytes)),
-          file=sys.stderr, flush=True)
+    log.log("Got {} bytes of class instance".format(len(self_in_bytes)))
+    log.log("Got {} bytes of function".format(len(action_in_bytes)))
+    log.log("string class instance unpickling")
 
-    print("string class instance unpickling",
-          file=sys.stderr, flush=True)
     self = dill.loads(bytes(self_in_bytes))
-    print("class instance unpickled, type: ", type(self),
-          file=sys.stderr, flush=True)
-    print("string class instance function unpickling",
-          file=sys.stderr, flush=True)
+
+    log.log("class instance unpickled, type: {}".format(type(self)))
+    log.log("string class instance function unpickling")
+
     action = dill.loads(bytes(action_in_bytes))
-    print("class instance function unpickled, type: ",
-          type(action), file=sys.stderr, flush=True)
+
+    log.log("class instance function unpickled, type: {}".format(type(action)))
 
     action_args.insert(0, self)
 
     dependencies = action_kwargs.get("dependencies", {})
-    print("cached external methods found: ", len(dependencies) > 0,
-          file=sys.stderr, flush=True)
+    log.log("cached external methods found: {0}".format(len(dependencies) > 0))
     for name, method_in_bytes in dependencies.items():
         dependencies[name] = dill.loads(bytes(method_in_bytes))
 
     action_kwargs["dependencies"] = dependencies
 
-    print("cached dependencies unpickled", file=sys.stderr, flush=True)
+    log.log("cached dependencies unpickled")
 
     try:
         res = action(*action_args, **action_kwargs)
     except Exception as ex:
-        print("call failed", file=sys.stderr, flush=True)
+        log.log("call failed")
         return response.RawResponse(
-            context,
+            ctx,
             status_code=500,
             response_data=str(ex))
 
-    print("call result: {}".format(res), file=sys.stderr, flush=True)
+    log.log("call result: {}".format(res))
 
     return response.RawResponse(
-        context,
+        ctx,
         status_code=200,
         response_data=res)
 
