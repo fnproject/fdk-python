@@ -54,9 +54,7 @@ class Application(object):
 
 
 if __name__ == "__main__":
-    app = Application(
-        config={"FDK_DEBUG": "1"}, syslog_url=
-        "tcp+tls://logs7.papertrailapp.com:40277")
+    app = Application(config={"FDK_DEBUG": "1"})
 
     res, err = app.square(10, 20)
     if err:

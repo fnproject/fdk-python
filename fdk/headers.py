@@ -109,7 +109,7 @@ class GoLikeHeaders(object):
 
 def decap_headers(hdsr):
     ctx_headers = GoLikeHeaders({})
-    for k, v in dict(hdsr).items():
+    for k, v in hdsr.items():
         if k.startswith(constants.FN_HTTP_PREFIX):
             ctx_headers.set(k.lstrip(constants.FN_HTTP_PREFIX), v)
         else:

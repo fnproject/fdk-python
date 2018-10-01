@@ -150,13 +150,15 @@ def fn(gpi_image=None, fn_timeout=60,
                         resp.raise_for_status()
                     # create a trigger
                     fn_id = resp.json().get("id")
-                    resp = requests.post("{0}/v2/triggers".format(fn_api_url), json={
-                        "app_id": app_id,
-                        "fn_id": fn_id,
-                        "type": "http",
-                        "name": "{}-trigger".format(fn_path),
-                        "source": "/{}".format(fn_path),
-                    })
+                    resp = requests.post(
+                        "{0}/v2/triggers".format(fn_api_url), json={
+                            "app_id": app_id,
+                            "fn_id": fn_id,
+                            "type": "http",
+                            "name": "{}-trigger".format(fn_path),
+                            "source": "/{}".format(fn_path),
+                        }
+                    )
                     if resp.status_code != 200 and resp.status_code != 409:
                         resp.raise_for_status()
                 except requests.HTTPError as ex:
