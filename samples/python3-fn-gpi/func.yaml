@@ -1,7 +1,10 @@
-name: fnproject/python3-fn-gpi
-version: 0.0.2
-runtime: docker
-type: sync
-memory: 512
+schema_version: 20180708
+name: python3-fn-gpi
+version: 0.0.6
+runtime: python3.7
+entrypoint: python3 func.py
 format: json
-path: /python3-fn-gpi
+triggers:
+- name: python3-fn-gpi-trigger
+  type: http
+  source: /python3-fn-gpi-trigger

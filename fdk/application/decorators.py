@@ -17,9 +17,22 @@ import functools
 import os
 import requests
 
+from fdk import constants
 from fdk.application import errors
 
-GPI_IMAGE = "denismakogon/python3-fn-gpi:0.0.2"
+
+TRIGGER_ATTR = "__trigger_created"
+
+
+def get_app_id_by_name(app_name, fn_api_url):
+    list_apps = "{0}/v2/apps".format(fn_api_url)
+    resp = requests.get(list_apps)
+    resp.raise_for_status()
+    apps = resp.json().get("items", [])
+    for app_dct in apps:
+        if app_dct["name"] == app_name:
+            return app_dct["id"]
+    return
 
 
 def fn_app(fn_app_class):
@@ -33,10 +46,8 @@ def fn_app(fn_app_class):
             pass
 
         @fn_route(
-            fn_image="denismakogon/fdk-python-echo:0.0.1",
-            fn_type="sync",
+            fn_image="<your-image>",
             fn_memory=256,
-            fn_format="json",
             fn_timeout=60,
             fn_idle_timeout=200,
         )
@@ -48,30 +59,27 @@ def fn_app(fn_app_class):
     """
     @functools.wraps(fn_app_class)
     def wrapper(*args, **kwargs):
-        app_name = fn_app_class.__name__
+        app_name = fn_app_class.__name__.lower()
         fn_api_url = os.environ.get("FN_API_URL")
         requests.get(fn_api_url).raise_for_status()
-        fn_app_url = "{}/v1/apps/{}".format(
-            fn_api_url, app_name.lower())
-        del_resp = requests.delete(fn_app_url)
-        if del_resp.status_code != 404:
-            del_resp.close()
-            del_resp.raise_for_status()
-        requests.post(
-            "{}/v1/apps".format(fn_api_url),
-            json={
-                "app": {
+
+        app_id = get_app_id_by_name(app_name, fn_api_url)
+        if app_id is None:
+            resp = requests.post(
+                "{}/v2/apps".format(fn_api_url),
+                json={
                     "name": app_name.lower(),
                     "config": kwargs.get("config"),
-                },
-            }
-        ).raise_for_status()
+                    "syslog_url": kwargs.get("syslog_url"),
+                }
+            )
+            resp.raise_for_status()
         return fn_app_class(*args)
 
     return wrapper
 
 
-def fn(fn_type=None, fn_timeout=60,
+def fn(gpi_image=None, fn_timeout=60,
        fn_idle_timeout=200, fn_memory=256,
        dependencies=None):
     """
@@ -98,8 +106,6 @@ def fn(fn_type=None, fn_timeout=60,
        represented as serialized functions, no matter if they are module-level,
        class-level Python objects
 
-    :param fn_type: Fn function call type
-    :type fn_type: str
     :param fn_timeout: Fn function call timeout
     :type fn_timeout: int
     :param fn_idle_timeout: Fn function call idle timeout
@@ -110,7 +116,6 @@ def fn(fn_type=None, fn_timeout=60,
     :type dependencies: dict
     :return:
     """
-    fn_method = "POST"
     dependencies = dependencies if dependencies else {}
 
     def ext_wrapper(action):
@@ -120,33 +125,61 @@ def fn(fn_type=None, fn_timeout=60,
             requests.get(fn_api_url).raise_for_status()
             self = f_args[0]
             fn_path = action.__name__.lower()
-            if not hasattr(action, "__path_created"):
-                fn_routes_url = "{}/v1/apps/{}/routes".format(
-                    fn_api_url, self.__class__.__name__.lower())
-                resp = requests.post(fn_routes_url, json={
-                    "route": {
-                        "path": "/{}".format(fn_path),
-                        "image": GPI_IMAGE,
-                        "memory": fn_memory if fn_memory else 256,
-                        "type": fn_type if fn_type else "sync",
-                        "format": "json",
-                        "timeout": fn_timeout if fn_timeout else 60,
-                        "idle_timeout": (fn_idle_timeout if
-                                         fn_idle_timeout else 120),
-                    },
-                })
-
+            app_name = self.__class__.__name__.lower()
+            app_id = get_app_id_by_name(app_name, fn_api_url)
+            if not hasattr(action, TRIGGER_ATTR):
                 try:
-                    resp.raise_for_status()
-                except requests.HTTPError:
-                    resp.close()
-                    return Exception(resp.content)
+                    # create a function
+                    fn_id = None
+                    resp = requests.post(
+                        "{0}/v2/fns".format(fn_api_url), json={
+                            "name": fn_path,
+                            "app_id": app_id,
+                            "image": gpi_image,
+                            "memory": fn_memory if fn_memory else 256,
+                            "format": constants.HTTPSTREAM,
+                            "timeout": fn_timeout if fn_timeout else 60,
+                            "idle_timeout": (fn_idle_timeout if
+                                             fn_idle_timeout else 120),
+                        }
+                    )
+                    if resp.status_code == 409:
+                        # look for fn_id using fn name and app ID
+                        fns_resp = requests.get(
+                            "{0}/v2/fns?app_id={1}".format(fn_api_url, app_id))
+                        fns_resp.raise_for_status()
 
-                setattr(action, "__path_created", True)
+                        fns = fns_resp.json().get("items", [])
+                        for fn_dct in fns:
+                            if fn_path == fn_dct.get("name"):
+                                fn_id = fn_dct.get("id")
 
-            fn_path = action.__name__.lower()
-            fn_exec_url = "{}/r/{}/{}".format(
-                fn_api_url, self.__class__.__name__.lower(), fn_path)
+                    if resp.status_code != 200 and resp.status_code != 409:
+                        resp.raise_for_status()
+                    if resp.status_code == 200:
+                        fn_id = resp.json().get("id")
+
+                    # create a trigger
+                    resp = requests.post(
+                        "{0}/v2/triggers".format(fn_api_url), json={
+                            "app_id": app_id,
+                            "fn_id": fn_id,
+                            "type": "http",
+                            "name": "{}-trigger".format(fn_path),
+                            "source": "/{}".format(fn_path),
+                        }
+                    )
+                    if resp.status_code != 200 and resp.status_code != 409:
+                        resp.raise_for_status()
+                except requests.HTTPError as ex:
+                    return None, Exception(ex.response.text)
+
+                setattr(action, TRIGGER_ATTR, True)
+
+            fn_trigger_url = "{}/t/{}/{}".format(
+                fn_api_url, app_name, fn_path)
+
+            # fn_trigger_url = "{}/invoke/{}".format(fn_api_url, fn_id)
 
             action_in_bytes = dill.dumps(action, recurse=True)
             self_in_bytes = dill.dumps(self, recurse=True)
@@ -155,28 +188,23 @@ def fn(fn_type=None, fn_timeout=60,
                 dependencies[name] = list(dill.dumps(method, recurse=True))
 
             f_kwargs.update(dependencies=dependencies)
-            req = requests.Request(
-                method=fn_method, url=fn_exec_url,
-                json={
+            try:
+
+                resp = requests.post(fn_trigger_url, json={
                     "action": list(action_in_bytes),
                     "self": list(self_in_bytes),
                     "args": f_args[1:],
                     "kwargs": f_kwargs,
-                }
-            )
-            session = requests.Session()
-            resp = session.send(req.prepare())
-
-            try:
+                })
                 resp.raise_for_status()
-            except requests.HTTPError:
-                resp.close()
+            except requests.HTTPError as ex:
+                ex.response.close()
                 return None, errors.FnError(
-                    "{}/{}".format(self.__class__.__name__.lower(), fn_path),
-                    resp.content)
+                    "{}/{}".format(app_name, fn_path),
+                    ex.response.content)
 
-            resp.close()
-            return resp.json(), None
+            content_len = int(resp.headers.get("Content-Length", 0))
+            return resp.json() if content_len > 0 else resp.text, None
 
         return inner_wrapper
 
@@ -210,87 +238,6 @@ def with_type_cast(return_type=lambda x: x):
                 return None, err
 
             return return_type(result), None
-
-        return inner_wrapper
-
-    return ext_wrapper
-
-
-def with_fn(fn_image=None, fn_type=None,
-            fn_memory=256, fn_timeout=60,
-            fn_idle_timeout=200, fn_method="POST"):
-    """
-    Sets up Fn app route based on parameters given above
-    :param fn_image: Docker image
-    :type fn_image: str
-    :param fn_type: Fn route type (async/sync)
-    :type fn_type: str
-    :param fn_memory: Fn RAM to allocate
-    :type fn_memory: int
-    :param fn_timeout: Fn route call timeout
-    :type fn_timeout: int
-    :param fn_idle_timeout: Fn route idle timeout (timeout between calls)
-    :type fn_idle_timeout: int
-    :param fn_method: HTTP method to use when calling Fn function
-    :type fn_method: str
-    :return: monkey-patched action (almost the same as decorated)
-    """
-
-    def ext_wrapper(action):
-        @functools.wraps(action)
-        def inner_wrapper(*f_args, **f_kwargs):
-            fn_api_url = os.environ.get("FN_API_URL")
-            requests.get(fn_api_url).raise_for_status()
-            self = f_args[0]
-            fn_path = action.__name__.lower()
-            # TODO(xxx): hate code duplicates but extracting common function
-            # to create a route breaks dill routine somehow
-            # need to figure out how and fix that!
-            if not hasattr(action, "__path_created"):
-                fn_routes_url = "{}/v1/apps/{}/routes".format(
-                    fn_api_url, self.__class__.__name__.lower())
-                resp = requests.post(fn_routes_url, json={
-                    "route": {
-                        "path": "/{}".format(fn_path),
-                        "image": fn_image,
-                        "memory": fn_memory if fn_memory else 256,
-                        "type": fn_type if fn_type else "sync",
-                        "format": "json",
-                        "timeout": fn_timeout if fn_timeout else 60,
-                        "idle_timeout": (fn_idle_timeout if
-                                         fn_idle_timeout else 120),
-                    },
-                })
-
-                try:
-                    resp.raise_for_status()
-                except requests.HTTPError:
-                    resp.close()
-                    return Exception(resp.content)
-
-                setattr(action, "__path_created", True)
-
-            fn_path = action.__name__.lower()
-            fn_exec_url = "{}/r/{}/{}".format(
-                fn_api_url, self.__class__.__name__.lower(), fn_path)
-            req = requests.Request(method=fn_method,
-                                   url=fn_exec_url,
-                                   json=f_kwargs)
-            session = requests.Session()
-            resp = session.send(req.prepare())
-
-            try:
-                resp.raise_for_status()
-            except requests.HTTPError:
-                resp.close()
-                return None, errors.FnError(
-                    "{}/{}".format(self.__class__.__name__.lower(), fn_path),
-                    resp.content)
-
-            f_kwargs.update(fn_data=resp.text)
-
-            resp.close()
-            return action(*f_args, **f_kwargs), None
 
         return inner_wrapper
 

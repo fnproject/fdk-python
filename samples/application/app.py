@@ -18,33 +18,32 @@ import ujson
 from fdk.application import decorators
 
 
+GPI_IMAGE = "denismakogon/python3-fn-gpi:0.0.6"
+
+
 @decorators.fn_app
 class Application(object):
 
     def __init__(self, *args, **kwargs):
         pass
 
-    @decorators.with_fn(fn_image="denismakogon/fdk-python-echo:0.0.1")
-    def env(self, fn_data=None, **kwargs):
-        return fn_data
-
-    @decorators.fn(fn_type="sync")
+    @decorators.fn(gpi_image=GPI_IMAGE)
     def dummy(*args, **kwargs) -> str:
         return ""
 
-    @decorators.fn(fn_type="sync")
+    @decorators.fn(gpi_image=GPI_IMAGE)
     def square(self, x: int, y: int, *args, **kwargs) -> bytes:
         return x * y
 
     @decorators.with_type_cast(
         return_type=lambda x: {"power": x})
-    @decorators.fn(fn_type="sync")
+    @decorators.fn(gpi_image=GPI_IMAGE)
     def power(self, x: int, y: int, *args, **kwargs) -> dict:
         return x ** y
 
     @decorators.with_type_cast(
         return_type=lambda x: ujson.loads(x))
-    @decorators.fn(fn_type="sync", dependencies={
+    @decorators.fn(gpi_image=GPI_IMAGE, dependencies={
         "requests_get": requests.get
     })
     def request(self, *args, **kwargs) -> dict:
@@ -55,12 +54,7 @@ class Application(object):
 
 
 if __name__ == "__main__":
-    app = Application(config={})
-
-    res, err = app.env(name="Denis")
-    if err:
-        raise err
-    print(res)
+    app = Application(config={"FDK_DEBUG": "1"})
 
     res, err = app.square(10, 20)
     if err:
