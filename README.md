@@ -28,7 +28,7 @@ Unittest your functions
 --------------------------
 
 Starting v0.0.33 FDK-Python provides a testing framework that allows performing unit tests of your function's code.
-The framework is an extension to [testtools](https://testtools.readthedocs.io/en/latest/) testing framework, coding style remain the same, so, write your tests as you've got used to.
+The unit test framework is the [pytest](https://pytest.org/). Coding style remain the same, so, write your tests as you've got used to.
 Here's the example of the test suite:
 ```python
 import fdk
@@ -61,13 +61,7 @@ if __name__ == "__main__":
 
 ```
 
-As you may see, the framework provides new assertion methods like:
-
- * assertInHeaders - allows asserting header(s) presence in response
- * assertInTime - allows asserting the time necessary for a function to finish
- * assertNotInTime - allows asserting the time within a function was not able to finish
- * assertResponseConsistent - allows asserting function's response content consistency by accepting a callable object that must return a boolean value that states the consistency
-
+As you may see all assertions being performed with native assertion command.
 
 In order to run tests, use the following command:
 ```bash
