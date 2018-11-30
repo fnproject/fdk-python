@@ -12,36 +12,53 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
 import datetime as dt
 
 from fdk import constants
-from fdk import headers as hs
-from fdk import http_stream
 
 
-async def process_response(fn_call_coro):
+class stream(object):
+
+    def __init__(self, data):
+        if data is None:
+            self.data = b''
+        else:
+            self.data = data
+
+    async def read(self, n=-1):
+        if n < 0:
+            return self.data
+        if n >= len(self.data):
+            return self.data
+
+        return self.data[n:]
+
+    async def readall(self):
+        return await self.read()
+
+
+async def process_response(fn_call):
+    from fdk import headers as hs
     new_headers = {}
-    resp = await fn_call_coro
-    for k, v in dict(resp.headers).items():
+    resp = await fn_call
+    headers = resp.context().GetResponseHeaders()
+    for k, v in dict(headers).items():
         new_headers.update({
             k.lstrip(constants.FN_HTTP_PREFIX): v
         })
-    content = await resp.content.read()
-    resp_headers = hs.decap_headers(resp.headers)
-    status = int(resp.headers.get(constants.FN_HTTP_STATUS))
-    resp_headers.delete(constants.FN_HTTP_STATUS)
+    content = resp.body()
+    resp_headers = hs.decap_headers(headers)
+    status = int(headers.get(constants.FN_HTTP_STATUS))
+    del resp_headers[constants.FN_HTTP_STATUS]
     return content, status, resp_headers
 
 
-async def setup_fn_call(fn_client, handle_func,
+async def setup_fn_call(handle_func,
                         request_url="/", method="POST",
                         headers=None, json=None,
                         deadline=None):
-    app = http_stream.setup_unix_server(
-        handle_func,
-        loop=asyncio.get_event_loop()
-    )
+    import ujson
+    from fdk import runner
 
     new_headers = {}
     if headers is not None:
@@ -57,8 +74,13 @@ async def setup_fn_call(fn_client, handle_func,
         constants.FN_DEADLINE: deadline,
         constants.FN_HTTP_REQUEST_URL: request_url,
         constants.FN_HTTP_METHOD: method,
+        constants.FN_CALL_ID: "py.test"
     })
+    sr = stream(None)
+    if json:
+        sr.data = ujson.dumps(json).encode("utf-8")
 
-    client = await fn_client(app)
-    return process_response(
-        client.post("/call", headers=new_headers, json=json))
+    return await runner.handle_request(
+        handle_func, constants.HTTPSTREAM,
+        headers=new_headers, data=sr
+    )

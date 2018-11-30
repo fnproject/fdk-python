@@ -20,6 +20,7 @@ import iso8601
 import types
 
 from fdk import context
+from fdk import constants
 from fdk import errors
 from fdk import response
 
@@ -52,6 +53,15 @@ async def with_deadline(ctx, handle_func, data):
         raise ex
 
 
+def guess_mime_type(data):
+    if isinstance(data, dict):
+        return "application/json"
+    if isinstance(data, bytearray):
+        return "application/octet-stream"
+    if isinstance(data, (str, int, float, list)):
+        return "text/plain"
+
+
 async def handle_request(handle_func, format_def, **kwargs):
 
     ctx, body = context.context_from_format(format_def, **kwargs)
@@ -63,8 +73,15 @@ async def handle_request(handle_func, format_def, **kwargs):
             return response_data
 
         resp_class = response.response_class_from_context(ctx)
+        headers = {
+            constants.CONTENT_TYPE: "application/json",
+        }
+        if response_data is not None:
+            headers[constants.CONTENT_LENGTH] = len(response_data)
         return resp_class(
-            ctx, response_data=response_data, headers={}, status_code=200)
+            ctx, response_data=response_data,
+            headers=headers, status_code=200
+        )
 
     except (Exception, TimeoutError) as ex:
         traceback.print_exc(file=sys.stderr)

@@ -157,7 +157,6 @@ class ChunkedStream(object):
         """
         Chunked stream reader
         :param base_stream: byte stream
-        :type base_stream: io.BytesIO
         """
         self.base_stream = base_stream
         self.closed = False

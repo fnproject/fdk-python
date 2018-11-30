@@ -14,6 +14,8 @@
 
 import http
 
+from fdk import constants
+
 
 def from_code(status_code):
     for status in list(http.HTTPStatus):
@@ -46,12 +48,12 @@ class RawResponse(object):
         self.verbose_status = from_code(status_code)
         self.response_data, content_len = self.__encode_data(response_data)
         if self.response_data:
-            if not http_headers.get("Content-Type"):
+            if not http_headers.get(constants.CONTENT_TYPE):
                 http_headers.update({
-                    "Content-Type": "text/plain; charset=utf-8",
+                    constants.CONTENT_TYPE: "application/json",
                 })
             http_headers.update({
-                "Content-Length": content_len,
+                constants.CONTENT_LENGTH: content_len,
             })
         self.headers = http_headers
 
@@ -72,12 +74,12 @@ class RawResponse(object):
     def set_response_content(self, data):
         self.response_data, content_len = self.__encode_data(data)
         if self.response_data:
-            if not self.headers.get("Content-Type"):
+            if not self.headers.get(constants.CONTENT_TYPE):
                 self.headers.update({
-                    "Content-Type": "text/plain; charset=utf-8",
+                    constants.CONTENT_TYPE: "application/json",
                 })
             self.headers.update({
-                "Content-Length": content_len,
+                constants.CONTENT_LENGTH: content_len,
             })
 
     async def dump(self, stream, flush=True):

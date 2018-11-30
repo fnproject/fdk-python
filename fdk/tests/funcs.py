@@ -30,12 +30,13 @@ xml = """<!DOCTYPE mensaje SYSTEM "record.dtd">
 </record>"""
 
 
-def dummy_func(ctx, data=None):
-    if data is not None and len(data) > 0:
-        body = ujson.loads(data)
-    else:
-        body = {"name": "World"}
-    return "Hello {0}".format(body.get("name"))
+async def dummy_func(ctx, data=None):
+    body = {}
+    input = await data.readall()
+    if len(input) > 0:
+        body = ujson.loads(input)
+    name = body.get("name", "World")
+    return {"message": "Hello {0}".format(name)}
 
 
 def encaped_header(ctx, **kwargs):
@@ -54,9 +55,12 @@ def content_type(ctx, data=None):
         headers={"Content-Type": "text/plain"})
 
 
-def custom_response(ctx, data=None):
+async def custom_response(ctx, data=None):
     return response.RawResponse(
-        ctx, response_data=dummy_func(ctx, data=data), status_code=201)
+        ctx,
+        response_data=(await dummy_func(ctx, data=data)),
+        status_code=201
+    )
 
 
 def expectioner(ctx, data=None):
