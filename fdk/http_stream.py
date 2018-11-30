@@ -14,32 +14,12 @@
 
 import asyncio
 import os
-import ujson
-
-from xml.etree import ElementTree
 
 from fdk import constants
 from fdk import log
 from fdk import runner
 from fdk.http import request
 from fdk.http import response
-
-
-def serialize_response_data(data, content_type):
-    log.log("in serialize_response_data")
-    if data:
-        if "application/json" in content_type:
-            return bytes(ujson.dumps(data), "utf8")
-        if "text/plain" in content_type:
-            return bytes(str(data), "utf8")
-        if "application/xml" in content_type:
-            # returns a bytearray
-            if isinstance(data, str):
-                return bytes(data, "utf8")
-            return ElementTree.tostring(data, encoding='utf8', method='xml')
-        if "application/octet-stream" in content_type:
-            return data
-    return
 
 
 def handle(handle_func):
@@ -77,9 +57,7 @@ def handle(handle_func):
             protocol,
             status_code=resp.status(),
             headers=hs,
-            response_data=serialize_response_data(
-                resp.body(), hs.get(
-                    constants.CONTENT_TYPE, "application/json")))
+            response_data=resp.body())
         await rsp.dump(writer, flush=True)
 
     return pure_handler
