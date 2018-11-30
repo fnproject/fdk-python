@@ -13,7 +13,6 @@
 #    under the License.
 
 from fdk import constants
-from fdk import headers
 from fdk import response
 
 
@@ -30,9 +29,11 @@ class HTTPStreamDispatchException(Exception):
         self.ctx = ctx
 
     def response(self):
-        resp_headers = headers.GoLikeHeaders({})
-        resp_headers.set(
-            "content-type", "application/json; charset=utf-8")
+        resp_headers = {
+            constants.CONTENT_TYPE: (
+                "application/json; charset=utf-8"
+            )
+        }
         return response.HTTPStreamResponse(
             self.ctx,
             response_data=self.message,

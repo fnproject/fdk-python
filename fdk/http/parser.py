@@ -13,14 +13,24 @@
 #    under the License.
 
 
-class FnError(Exception):
+async def readline(stream):
+    """Read a line up until the \r\n termination
+    Return the line with that terminator included"""
+    l = bytes()
+    ret = False
 
-    def __init__(self, fn_name, fn_raw_error):
-        self.fn_name = fn_name
-        self.fn_raw_error = fn_raw_error.decode("utf-8")
-        self.message = "error at Fn: {}.".format(fn_name)
-
-        super(FnError, self).__init__(self.message)
-
-    def __str__(self):
-        return "{}\n{}".format(self.message, self.fn_raw_error)
+    while True:
+        c = await stream.read(1)
+        if c is None:
+            continue
+        if len(c) == 0:
+            return l.decode('ascii')
+        elif c == b'\r':
+            l += c
+            ret = True
+        elif c == b'\n' and ret:
+            l += c
+            return l.decode('ascii')
+        else:
+            ret = False
+            l += c

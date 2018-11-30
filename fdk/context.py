@@ -21,23 +21,13 @@ from fdk import headers as hs
 
 def set_response_headers(current_headers, new_headers,
                          status_code, content_type=None):
-    if isinstance(new_headers, dict):
-        new_headers = hs.GoLikeHeaders(new_headers)
-    elif isinstance(new_headers, hs.GoLikeHeaders):
-        pass
-    else:
-        raise TypeError(
-            "Invalid headers type: {}, only dict allowed."
-            .format(type(new_headers))
-        )
-
     new_headers = hs.encap_headers(
         new_headers,
         status=status_code,
         content_type=content_type
     )
     for k, v in new_headers.items():
-        current_headers.set(k, v)
+        current_headers[k] = v
 
     return current_headers
 
@@ -64,7 +54,7 @@ class InvokeContext(object):
         self.__content_type = content_type
         self._request_url = request_url
         self._method = method
-        self.__response_headers = hs.GoLikeHeaders({})
+        self.__response_headers = {}
         self.__fn_format = fn_format
 
     def AppID(self):
@@ -108,7 +98,7 @@ class HTTPGatewayContext(object):
     def __init__(self, invoke_context: InvokeContext):
         self.__headers = hs.decap_headers(invoke_context.Headers())
         self.__invoke_context = invoke_context
-        self.__response_headers = hs.GoLikeHeaders({})
+        self.__response_headers = {}
 
     def RequestURL(self):
         return self.__invoke_context._request_url
@@ -137,21 +127,21 @@ def context_from_format(format_def, **kwargs) -> (InvokeContext, object):
 
     if format_def == constants.HTTPSTREAM:
         data = kwargs.get("data")
-        request = kwargs.get("request")
+        headers = kwargs.get("headers")
 
-        method = request.headers.get(constants.FN_HTTP_METHOD)
-        request_url = request.headers.get(
+        method = headers.get(constants.FN_HTTP_METHOD)
+        request_url = headers.get(
             constants.FN_HTTP_REQUEST_URL)
-        deadline = request.headers.get(constants.FN_DEADLINE)
-        call_id = request.headers.get(constants.FN_CALL_ID)
-        content_type = request.content_type
+        deadline = headers.get(constants.FN_DEADLINE)
+        call_id = headers.get(constants.FN_CALL_ID)
+        content_type = headers.get(constants.CONTENT_TYPE)
 
         ctx = InvokeContext(
             app_id, fn_id, call_id,
             content_type=content_type,
             deadline=deadline,
             config=os.environ,
-            headers=hs.GoLikeHeaders(dict(request.headers)),
+            headers=headers,
             method=method,
             request_url=request_url,
             fn_format=constants.HTTPSTREAM,

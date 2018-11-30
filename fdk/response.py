@@ -12,34 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import ujson
-
 from fdk import constants
 
 APP_JSON = "application/json"
-
-
-def setup_data(response_data, headers):
-    content_type = headers.get(
-        "content-type",
-        default=APP_JSON
-    )
-    # if response data is an HTML data JSON
-    # decoding will make it malformed
-    # so, we need to tread data with
-    # respect according to content type header
-
-    if content_type.startswith(APP_JSON):
-        # dump to JSON only in case of explicitly declared type
-        data = ujson.dumps(response_data)
-    else:
-        # any other type like HTML/XML must
-        # be returned as native strings
-        # JSON-encoded HTML/XML would be recognized
-        # by modern browsers as a string
-        data = response_data
-
-    return content_type, data
 
 
 class HTTPStreamResponse(object):
@@ -52,7 +27,7 @@ class HTTPStreamResponse(object):
         :param response_data: response data
         :type response_data: object
         :param headers: HTTP headers
-        :type headers: fdk.headers.GoLikeHeaders
+        :type headers: dict
         :param status_code: HTTP status code
         :type status_code: int
         """
@@ -71,9 +46,6 @@ class HTTPStreamResponse(object):
 
     def body(self):
         return self.response_data
-
-    def dump(self):
-        pass
 
     def context(self):
         return self.ctx
@@ -105,9 +77,6 @@ class RawResponse(object):
 
     def body(self):
         return self.__resp.response_data
-
-    def dump(self):
-        self.__resp.dump()
 
     def context(self):
         return self.__resp.context()
