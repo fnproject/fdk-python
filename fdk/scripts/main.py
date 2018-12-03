@@ -22,6 +22,10 @@ def main():
     if len(sys.argv) < 1:
         raise Exception("at least func module must be specified")
 
-    handler = customer_code.Function(
-        sys.argv[1], entrypoint=sys.argv[2])
+    if len(sys.argv) > 2:
+        handler = customer_code.Function(
+            sys.argv[1], entrypoint=sys.argv[2])
+    else:
+        handler = customer_code.Function(sys.argv[1])
+
     fdk.handle(handler)
