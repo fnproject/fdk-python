@@ -22,7 +22,7 @@ from fdk.http import request
 from fdk.http import response
 
 
-def handle(handle_func):
+def handle(handler):
     async def pure_handler(reader, writer):
         try:
             raw_r = request.RawRequest(reader)
@@ -48,7 +48,7 @@ def handle(handle_func):
             return
 
         resp = await runner.handle_request(
-            handle_func, constants.HTTPSTREAM,
+            handler, constants.HTTPSTREAM,
             headers=headers, data=body)
 
         resp.body()
@@ -63,7 +63,7 @@ def handle(handle_func):
     return pure_handler
 
 
-def start(handle_func, uds, loop=None):
+def start(handler, uds, loop=None):
     log.log("in http_stream.start")
     socket_path = str(uds).lstrip("unix:")
     log.log("socket file exist? - {0}"
@@ -83,7 +83,7 @@ def start(handle_func, uds, loop=None):
     log.log("starting unix socket site")
     server = loop.run_until_complete(
         asyncio.start_unix_server(
-            handle(handle_func),
+            handle(handler),
             path=phony_socket_path,
             loop=loop
         )

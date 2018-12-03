@@ -26,7 +26,7 @@ from fdk import response
 
 
 # TODO(xxx): use loop.run_in_executor instead
-async def with_deadline(ctx, handle_func, data):
+async def with_deadline(ctx, handler, data):
 
     def timeout_func(*_):
         raise TimeoutError("function timed out")
@@ -41,6 +41,7 @@ async def with_deadline(ctx, handle_func, data):
     signal.alarm(int(delta.total_seconds()))
 
     try:
+        handle_func = handler.handler()
         result = handle_func(ctx, data=data)
         if isinstance(result, types.CoroutineType):
             signal.alarm(0)
@@ -62,12 +63,12 @@ def guess_mime_type(data):
         return "text/plain"
 
 
-async def handle_request(handle_func, format_def, **kwargs):
+async def handle_request(handler, format_def, **kwargs):
 
     ctx, body = context.context_from_format(format_def, **kwargs)
 
     try:
-        response_data = await with_deadline(ctx, handle_func, body)
+        response_data = await with_deadline(ctx, handler, body)
 
         if isinstance(response_data, response.RawResponse):
             return response_data

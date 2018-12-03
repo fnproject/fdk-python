@@ -13,11 +13,13 @@
 #    under the License.
 
 import datetime as dt
+import pytest
 
 from fdk import fixtures
 from fdk.tests import funcs
 
 
+@pytest.mark.asyncio
 async def test_override_content_type():
     call = fixtures.process_response(
         fixtures.setup_fn_call(funcs.content_type)
@@ -30,6 +32,7 @@ async def test_override_content_type():
     assert "text/plain" in headers.get("Content-Type")
 
 
+@pytest.mark.asyncio
 async def test_parse_request_without_data():
     call = fixtures.process_response(
         fixtures.setup_fn_call(funcs.dummy_func)
@@ -43,6 +46,7 @@ async def test_parse_request_without_data():
     assert "application/json" in headers.get("Content-Type")
 
 
+@pytest.mark.asyncio
 async def test_parse_request_with_data():
     d = {"name": "John"}
     call = fixtures.process_response(
@@ -57,6 +61,7 @@ async def test_parse_request_with_data():
     assert "application/json" in headers.get("Content-Type")
 
 
+@pytest.mark.asyncio
 async def test_custom_response_object():
     d = {"name": "John"}
     call = fixtures.process_response(
@@ -67,6 +72,7 @@ async def test_custom_response_object():
     assert 201 == status
 
 
+@pytest.mark.asyncio
 async def test_errored_func():
     call = fixtures.process_response(
         fixtures.setup_fn_call(funcs.expectioner)
@@ -76,6 +82,7 @@ async def test_errored_func():
     assert 500 == status
 
 
+@pytest.mark.asyncio
 async def test_none_func():
     call = fixtures.process_response(
         fixtures.setup_fn_call(funcs.none_func)
@@ -86,6 +93,7 @@ async def test_none_func():
     assert 200 == status
 
 
+@pytest.mark.asyncio
 async def test_coro_func():
     call = fixtures.process_response(
         fixtures.setup_fn_call(funcs.coro)
@@ -96,6 +104,7 @@ async def test_coro_func():
     assert 'hello from coro' == content
 
 
+@pytest.mark.asyncio
 async def test_deadline():
     timeout = 5
     now = dt.datetime.now(dt.timezone.utc).astimezone()
@@ -111,6 +120,7 @@ async def test_deadline():
     assert 502 == status
 
 
+@pytest.mark.asyncio
 async def test_default_deadline():
     timeout = 5
 
@@ -124,6 +134,7 @@ async def test_default_deadline():
     assert 200 == status
 
 
+@pytest.mark.asyncio
 async def test_access_decaped_headers():
     header_key = "custom-header-maybe"
     value = "aloha"
@@ -139,6 +150,7 @@ async def test_access_decaped_headers():
     assert value == headers.get(header_key)
 
 
+@pytest.mark.asyncio
 async def test_access_method_request_url():
     header_key = "Response-Request-URL"
     value = "/hello/can-you-hear-me"

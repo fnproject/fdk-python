@@ -12,9 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import ujson
 import datetime as dt
 
 from fdk import constants
+from fdk import runner
 
 
 class stream(object):
@@ -37,6 +39,15 @@ class stream(object):
         return await self.read()
 
 
+class code_wrapper(object):
+
+    def __init__(self, test_func):
+        self._test_func = test_func
+
+    def handler(self):
+        return self._test_func
+
+
 async def process_response(fn_call):
     from fdk import headers as hs
     new_headers = {}
@@ -57,8 +68,6 @@ async def setup_fn_call(handle_func,
                         request_url="/", method="POST",
                         headers=None, json=None,
                         deadline=None):
-    import ujson
-    from fdk import runner
 
     new_headers = {}
     if headers is not None:
@@ -81,6 +90,6 @@ async def setup_fn_call(handle_func,
         sr.data = ujson.dumps(json).encode("utf-8")
 
     return await runner.handle_request(
-        handle_func, constants.HTTPSTREAM,
+        code_wrapper(handle_func), constants.HTTPSTREAM,
         headers=new_headers, data=sr
     )

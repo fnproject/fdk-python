@@ -22,7 +22,7 @@ from fdk import log
 from fdk import http_stream
 
 
-def handle(handle_func):
+def handle(handler):
     log.log("entering handle")
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     loop = asyncio.get_event_loop()
@@ -37,7 +37,7 @@ def handle(handle_func):
             sys.exit(1)
         log.log("{0} is set, value: {1}".
                 format(constants.FN_LISTENER, lsnr))
-        http_stream.start(handle_func, lsnr, loop=loop)
+        http_stream.start(handler, lsnr, loop=loop)
     else:
         log.log("incompatible function format!")
         print("incompatible function format!", file=sys.stderr, flush=True)
