@@ -42,21 +42,23 @@ def encaped_header(ctx, **kwargs):
     httpctx = ctx.HTTPContext()
     hs = httpctx.Headers()
     v = hs.get("custom-header-maybe")
-    return response.RawResponse(
+    return response.Response(
         httpctx, response_data="OK", status_code=200,
         headers={"Content-Type": "text/plain",
                  "custom-header-maybe": v})
 
 
 def content_type(ctx, data=None):
-    return response.RawResponse(
+    return response.Response(
         ctx, response_data="OK", status_code=200,
         headers={"Content-Type": "text/plain"})
 
 
 def custom_response(ctx, data=None):
-    return response.RawResponse(
-        ctx, response_data=dummy_func(ctx, data=data), status_code=201)
+    return response.Response(
+        ctx,
+        response_data=dummy_func(ctx, data=data),
+        status_code=201)
 
 
 def expectioner(ctx, data=None):
@@ -80,7 +82,7 @@ async def coro(ctx, **kwargs):
 
 
 def valid_xml(ctx, **kwargs):
-    return response.RawResponse(
+    return response.Response(
         ctx, response_data=xml, headers={
             "Content-Type": "application/xml",
         }
@@ -88,7 +90,7 @@ def valid_xml(ctx, **kwargs):
 
 
 def invalid_xml(ctx, **kwargs):
-    return response.RawResponse(
+    return response.Response(
         ctx, response_data=ujson.dumps(xml), headers={
             "Content-Type": "application/xml",
         }
@@ -96,7 +98,7 @@ def invalid_xml(ctx, **kwargs):
 
 
 def verify_request_headers(ctx, **kwargs):
-    return response.RawResponse(
+    return response.Response(
         ctx,
         response_data=ujson.dumps(xml),
         headers=ctx.Headers()
@@ -108,7 +110,7 @@ def access_request_url(ctx, **kwargs):
     hs = httpctx.Headers()
     method = httpctx.Method()
     request_url = hs.get("Fn-Http-Request-Url")
-    return response.RawResponse(
+    return response.Response(
         httpctx, response_data="OK", headers={
             "Response-Request-URL": request_url,
             "Request-Method": method,
