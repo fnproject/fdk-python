@@ -33,4 +33,4 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            tox -epy3.7-http-stream
+            tox -epy3.7

@@ -12,17 +12,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fdk
-import json
+import sys
+import ujson
 
 
-async def handler(ctx, data=None):
-    name = "World"
-    if data and len(data) > 0:
-        body = json.loads(data)
-        name = body.get("name")
-    return "Hello {0}".format(name)
+def handler(ctx, data=None):
+    try:
+        body = ujson.loads(data)
+    except Exception as ex:
+        print(str(ex), flush=True, file=sys.stderr)
+        body = {"name": "World"}
 
-
-if __name__ == "__main__":
-    fdk.handle(handler)
+    return "Hello {0}".format(body.get("name"))

@@ -12,15 +12,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import fdk
+import sys
 
-class FnError(Exception):
+from fdk import customer_code
 
-    def __init__(self, fn_name, fn_raw_error):
-        self.fn_name = fn_name
-        self.fn_raw_error = fn_raw_error.decode("utf-8")
-        self.message = "error at Fn: {}.".format(fn_name)
 
-        super(FnError, self).__init__(self.message)
+def main():
+    if len(sys.argv) < 1:
+        raise Exception("at least func module must be specified")
 
-    def __str__(self):
-        return "{}\n{}".format(self.message, self.fn_raw_error)
+    if len(sys.argv) > 2:
+        handler = customer_code.Function(
+            sys.argv[1], entrypoint=sys.argv[2])
+    else:
+        handler = customer_code.Function(sys.argv[1])
+
+    fdk.handle(handler)

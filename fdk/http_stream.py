@@ -14,34 +14,15 @@
 
 import asyncio
 import os
-import ujson
 
 from aiohttp import web
-from xml.etree import ElementTree
 
 from fdk import constants
 from fdk import log
 from fdk import runner
 
 
-def serialize_response_data(data, content_type):
-    log.log("in serialize_response_data")
-    if data:
-        if "application/json" in content_type:
-            return bytes(ujson.dumps(data), "utf8")
-        if "text/plain" in content_type:
-            return bytes(str(data), "utf8")
-        if "application/xml" in content_type:
-            # returns a bytearray
-            if isinstance(data, str):
-                return bytes(data, "utf8")
-            return ElementTree.tostring(data, encoding='utf8', method='xml')
-        if "application/octet-stream" in content_type:
-            return data
-    return
-
-
-def handle(handle_func):
+def handle(handle_code):
     async def pure_handler(request):
         log.log("in pure_handler")
         data = None
@@ -50,7 +31,7 @@ def handle(handle_func):
             log.log("request comes with data")
             data = await request.content.read()
         response = await runner.handle_request(
-            handle_func, constants.HTTPSTREAM,
+            handle_code, constants.HTTPSTREAM,
             request=request, data=data)
         log.log("request execution completed")
         headers = response.context().GetResponseHeaders()
@@ -63,13 +44,10 @@ def handle(handle_func):
             "headers": headers.http_raw()
         }
 
-        sdata = serialize_response_data(
-            response.body(), response_content_type)
-
         if response.status() >= 500:
-            kwargs.update(reason=sdata, status=500)
+            kwargs.update(reason=response.body(), status=500)
         else:
-            kwargs.update(body=sdata, status=200)
+            kwargs.update(body=response.body(), status=200)
 
         log.log("sending response back")
         try:
@@ -87,18 +65,18 @@ def handle(handle_func):
     return pure_handler
 
 
-def setup_unix_server(handle_func, loop=None):
+def setup_unix_server(handle_code, loop=None):
     log.log("in setup_unix_server")
     app = web.Application(loop=loop)
 
-    app.router.add_post('/{tail:.*}', handle(handle_func))
+    app.router.add_post('/{tail:.*}', handle(handle_code))
 
     return app
 
 
-def start(handle_func, uds, loop=None):
+def start(handle_code, uds, loop=None):
     log.log("in http_stream.start")
-    app = setup_unix_server(handle_func, loop=loop)
+    app = setup_unix_server(handle_code, loop=loop)
 
     socket_path = str(uds).lstrip("unix:")
 
