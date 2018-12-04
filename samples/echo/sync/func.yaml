@@ -1,7 +1,6 @@
-name: fnproject/hot-json-python:0.0.1
-version: 0.0.1
+schema_version: 20180708
+name: hello
+version: 0.0.36
 runtime: docker
-type: sync
+format: http-stream
 memory: 256
-format: json
-path: /hot-json-python
