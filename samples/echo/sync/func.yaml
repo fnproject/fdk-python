@@ -1,6 +1,6 @@
 schema_version: 20180708
 name: hello
-version: 0.0.36
+version: 0.0.41
 runtime: docker
 format: http-stream
 memory: 256
