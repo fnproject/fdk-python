@@ -31,18 +31,20 @@ Starting v0.0.33 FDK-Python provides a testing framework that allows performing 
 The unit test framework is the [pytest](https://pytest.org/). Coding style remain the same, so, write your tests as you've got used to.
 Here's the example of the test suite:
 ```python
-import fdk
+import sys
 import ujson
 
 from fdk import fixtures
 
 
-def handler(ctx, data=None, loop=None):
-    name = "World"
-    if data and len(data) > 0:
+def handler(ctx, data=None):
+    try:
         body = ujson.loads(data)
-        name = body.get("name")
-    return {"message": "Hello {0}".format(name)}
+    except Exception as ex:
+        print(str(ex), flush=True, file=sys.stderr)
+        body = {"name": "World"}
+    
+    return {"message": "Hello {0}".format(body.get("name"))}
 
 
 async def test_parse_request_without_data(aiohttp_client):
@@ -54,10 +56,6 @@ async def test_parse_request_without_data(aiohttp_client):
     assert 200 == status
     assert {"message": "Hello World"} == ujson.loads(content)
     assert "application/json" in headers.get("Content-Type")
-
-
-if __name__ == "__main__":
-    fdk.handle(handler)
 
 ```
 

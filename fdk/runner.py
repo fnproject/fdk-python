@@ -26,7 +26,7 @@ from fdk import response
 
 
 # TODO(xxx): use loop.run_in_executor instead
-async def with_deadline(ctx, handle_func, data):
+async def with_deadline(ctx, handler_code, data):
 
     def timeout_func(*_):
         raise TimeoutError("function timed out")
@@ -41,6 +41,7 @@ async def with_deadline(ctx, handle_func, data):
     signal.alarm(int(delta.total_seconds()))
 
     try:
+        handle_func = handler_code.handler()
         result = handle_func(ctx, data=data)
         if isinstance(result, types.CoroutineType):
             signal.alarm(0)

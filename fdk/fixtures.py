@@ -34,12 +34,21 @@ async def process_response(fn_call_coro):
     return content, status, resp_headers
 
 
+class code(object):
+
+    def __init__(self, fn):
+        self.fn = fn
+
+    def handler(self):
+        return self.fn
+
+
 async def setup_fn_call(fn_client, handle_func,
                         request_url="/", method="POST",
                         headers=None, json=None,
                         deadline=None):
     app = http_stream.setup_unix_server(
-        handle_func,
+        code(handle_func),
         loop=asyncio.get_event_loop()
     )
 

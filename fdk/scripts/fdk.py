@@ -12,15 +12,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import fdk
 import sys
-import ujson
+
+from fdk import customer_code
 
 
-def handler(ctx, data=None):
-    try:
-        body = ujson.loads(data)
-    except Exception as ex:
-        print(str(ex), flush=True, file=sys.stderr)
-        body = {"name": "World"}
+def main():
+    if len(sys.argv) < 1:
+        raise Exception("at least func module must be specified")
 
-    return "Hello {0}".format(body.get("name"))
+    if len(sys.argv) > 2:
+        handler = customer_code.Function(
+            sys.argv[1], entrypoint=sys.argv[2])
+    else:
+        handler = customer_code.Function(sys.argv[1])
+
+    fdk.handle(handler)

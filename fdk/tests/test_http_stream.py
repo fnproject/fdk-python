@@ -13,10 +13,6 @@
 #    under the License.
 
 import datetime as dt
-import pytest
-import ujson
-
-from xml.etree import ElementTree
 
 from fdk import fixtures
 from fdk.tests import funcs
@@ -28,7 +24,7 @@ async def test_override_content_type(aiohttp_client):
     content, status, headers = await call
 
     assert 200 == status
-    assert "OK" == content.decode("utf8")
+    assert "OK" == content.decode("utf-8")
     assert "text/plain" in headers.get("Content-Type")
 
 
@@ -39,7 +35,7 @@ async def test_parse_request_without_data(aiohttp_client):
     content, status, headers = await call
 
     assert 200 == status
-    assert "Hello World" == ujson.loads(content)
+    assert "Hello World" == content.decode("utf-8")
     assert "application/json" in headers.get("Content-Type")
 
 
@@ -49,7 +45,7 @@ async def test_parse_request_with_data(aiohttp_client):
     content, status, headers = await call
 
     assert 200 == status
-    assert "Hello John" == ujson.loads(content)
+    assert "Hello John" == content.decode("utf-8")
     assert "application/json" in headers.get("Content-Type")
 
 
@@ -84,7 +80,7 @@ async def test_coro_func(aiohttp_client):
     content, status, headers = await call
 
     assert 200 == status
-    assert 'hello from coro' == ujson.loads(content)
+    assert 'hello from coro' == content.decode('utf-8')
 
 
 async def test_deadline(aiohttp_client):
@@ -108,25 +104,6 @@ async def test_default_deadline(aiohttp_client):
     _, status, _ = await call
 
     assert 200 == status
-
-
-async def test_valid_xml(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.valid_xml)
-    content, status, headers = await call
-
-    ElementTree.fromstring(content)
-
-    assert "application/xml" in headers.get("Content-Type")
-
-
-async def test_invalid_xml(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.invalid_xml)
-    content, status, headers = await call
-
-    with pytest.raises(ElementTree.ParseError):
-        ElementTree.fromstring(content)
 
 
 async def test_access_decaped_headers(aiohttp_client):
