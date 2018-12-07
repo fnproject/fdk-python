@@ -16,7 +16,6 @@ import asyncio
 import h11
 import io
 import os
-import ujson
 
 from fdk import constants
 from fdk import log
