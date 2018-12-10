@@ -22,8 +22,15 @@ if __name__ == "__main__":
     from fdk import fixtures
 
     async def hello(ctx, data=None):
-        print(len(data.read()))
-        return "hello"
+        name = "world"
+        try:
+            import json
+            body = json.loads(data.getvalue())
+            name = body.get("name")
+        except (Exception, ValueError) as ex:
+            print(str(ex))
+
+        return "hello " + name
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(

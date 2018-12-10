@@ -2,4 +2,5 @@ pbr!=2.1.0,>=2.0.0 # Apache-2.0
 uvloop==0.11.3
 iso8601==0.1.12
 h11==0.8.1
+pytest==4.0.1
 pytest-asyncio==0.9.0

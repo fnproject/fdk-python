@@ -13,8 +13,7 @@ In order to utilise this, you can write your `app.py` as follows:
 
 ```python
 def handler(context, data=None):
-    return data
-
+    return data.getvalue()
 ```
 
 Unittest your functions
@@ -24,31 +23,32 @@ Starting v0.0.33 FDK-Python provides a testing framework that allows performing 
 The unit test framework is the [pytest](https://pytest.org/). Coding style remain the same, so, write your tests as you've got used to.
 Here's the example of the test suite:
 ```python
-import sys
 import json
+import pytest
 
 from fdk import fixtures
 
 
-def handler(ctx, data=None):
+async def handler(ctx, data=None):
+    name = "World"
     try:
-        body = json.loads(data)
-    except Exception as ex:
-        print(str(ex), flush=True, file=sys.stderr)
-        body = {"name": "World"}
-    
-    return {"message": "Hello {0}".format(body.get("name"))}
+        body = json.loads(data.getvalue())
+        name = body.get("name")
+    except (Exception, ValueError) as ex:
+        print(str(ex))
+        pass
+
+    return {"message": "Hello {0}".format(name)}
 
 
-async def test_parse_request_without_data(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, handler)
+@pytest.mark.asyncio
+async def test_parse_request_without_data():
+    call = await fixtures.setup_fn_call(handler)
 
     content, status, headers = await call
 
     assert 200 == status
-    assert {"message": "Hello World"} == json.loads(content)
-    assert "application/json" in headers.get("Content-Type")
+    assert {"message": "Hello World"} == content
 
 ```
 
@@ -60,20 +60,21 @@ pytest -v -s --tb=long func.py
 ```
 
 ```bash
-$ pytest -v -s --tb=long func.py
-pytest -v -s --tb=long func.py
 ========================================================================================= test session starts ==========================================================================================
-platform darwin -- Python 3.7.1, pytest-3.5.1, py-1.5.3, pluggy-0.6.0 -- /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/fdk-python/.venv/bin/python3.6
+platform darwin -- Python 3.7.1, pytest-4.0.1, py-1.7.0, pluggy-0.8.0 -- /Users/denismakogon/go/src/github.com/fnproject/fdk-python/.venv/bin/python3
 cachedir: .pytest_cache
-rootdir: /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/test, inifile:
-plugins: cov-2.4.0, aiohttp-0.3.0
+rootdir: /Users/denismakogon/go/src/github.com/fnproject/test, inifile:
+plugins: cov-2.4.0, asyncio-0.9.0, aiohttp-0.3.0
 collected 1 item                                                                                                                                                                                       
 
-func.py::test_parse_request_without_data[pyloop] 2018-10-01 17:58:22,552 - asyncio - DEBUG - Using selector: KqueueSelector
-2018-10-01 17:58:22,559 - aiohttp.access - INFO - 127.0.0.1 [01/Oct/2018:14:58:22 +0000] "POST /call HTTP/1.1" 200 188 "-" "Python/3.6 aiohttp/3.4.4"
+func.py::test_parse_request_without_data 2018-12-10 15:42:30,029 - asyncio - DEBUG - Using selector: KqueueSelector
+2018-12-10 15:42:30,029 - asyncio - DEBUG - Using selector: KqueueSelector
+'NoneType' object has no attribute 'getvalue'
+{'Fn-Http-Status': '200', 'Content-Type': 'application/json'}
 PASSED
 
-======================================================================================= 1 passed in 0.04 seconds =======================================================================================```
+======================================================================================= 1 passed in 0.02 seconds =======================================================================================
+```
 
 To add coverage first install one more package:
 ```bash
@@ -87,21 +88,23 @@ pytest -v -s --tb=long --cov=func func.py
 ```bash
 pytest -v -s --tb=long --cov=func func.py
 ========================================================================================= test session starts ==========================================================================================
-platform darwin -- Python 3.7.1, pytest-3.5.1, py-1.5.3, pluggy-0.6.0 -- /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/fdk-python/.venv/bin/python3.6
+platform darwin -- Python 3.7.1, pytest-4.0.1, py-1.7.0, pluggy-0.8.0 -- /Users/denismakogon/go/src/github.com/fnproject/fdk-python/.venv/bin/python3
 cachedir: .pytest_cache
-rootdir: /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/test, inifile:
-plugins: cov-2.4.0, aiohttp-0.3.0
+rootdir: /Users/denismakogon/go/src/github.com/fnproject/test, inifile:
+plugins: cov-2.4.0, asyncio-0.9.0, aiohttp-0.3.0
 collected 1 item                                                                                                                                                                                       
 
-func.py::test_parse_request_without_data[pyloop] 2018-10-01 17:58:49,475 - asyncio - DEBUG - Using selector: KqueueSelector
-2018-10-01 17:58:49,491 - aiohttp.access - INFO - 127.0.0.1 [01/Oct/2018:14:58:49 +0000] "POST /call HTTP/1.1" 200 188 "-" "Python/3.6 aiohttp/3.4.4"
+func.py::test_parse_request_without_data 2018-12-10 15:43:10,339 - asyncio - DEBUG - Using selector: KqueueSelector
+2018-12-10 15:43:10,339 - asyncio - DEBUG - Using selector: KqueueSelector
+'NoneType' object has no attribute 'getvalue'
+{'Fn-Http-Status': '200', 'Content-Type': 'application/json'}
 PASSED
 
----------- coverage: platform darwin, python 3.6.2-final-0 -----------
+---------- coverage: platform darwin, python 3.7.1-final-0 -----------
 Name      Stmts   Miss  Cover
 -----------------------------
-func.py      17      3    82%
+func.py      19      1    95%
 
 
-======================================================================================= 1 passed in 0.08 seconds =======================================================================================
+======================================================================================= 1 passed in 0.06 seconds =======================================================================================
 ```
