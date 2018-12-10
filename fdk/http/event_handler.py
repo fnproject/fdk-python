@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import io
+import h11
 
 from fdk import context
 from fdk import constants
@@ -23,20 +23,18 @@ from fdk import runner
 from fdk.http import routine
 
 
-def event_handle(connection, handle_code):
+def event_handle(handle_code):
     async def pure_handler(request_reader, response_writer):
         log.log("in pure_handler")
+        connection = h11.Connection(h11.SERVER)
         try:
             request, body = await routine.read_request(
                 connection, request_reader)
-            data = None
-            if body:
-                data = body.data
             headers = dict(request.headers)
 
             func_response = await runner.handle_request(
                 handle_code, constants.HTTPSTREAM,
-                headers=headers, data=io.BytesIO(data))
+                headers=headers, data=body)
             log.log("request execution completed")
 
             await routine.write_response(

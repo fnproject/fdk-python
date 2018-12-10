@@ -12,11 +12,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import asyncio
 import datetime as dt
-import pytest
+import h11
 import json
+import io
+import pytest
+import os
 
+from fdk import constants
 from fdk import fixtures
+from fdk.http import routine
+
 from fdk.tests import funcs
 
 
@@ -107,40 +114,49 @@ async def test_deadline():
 
 
 @pytest.mark.asyncio
-async def test_default_deadline():
-    timeout = 5
+async def test_io_limit_exceeded():
+    con = h11.Connection(h11.CLIENT)
+    data = os.urandom(5 * constants.IO_LIMIT)
+    headers = {
+        'host': 'localhost:5000',
+        'user-agent': 'curl/7.54.0',
+        'accept': '*/*',
+        'content-length': str(len(data)),
+        'content-type': 'application/x-www-form-urlencoded',
+        'expect': '100-continue',
+        'connection': 'keep-alive',
+    }
 
-    call = await fixtures.setup_fn_call(
-        funcs.timed_sleepr(timeout))
-    _, status, _ = await call
+    stream = asyncio.StreamReader(
+        loop=asyncio.get_event_loop())
+    stream.feed_data(
+        con.send(
+            h11.Request(
+                method="POST",
+                target="/call",
+                headers=headers.items()
+            )
+        )
+    )
+    d = con.send(h11.Data(data=data))
+    print(len(d))
+    stream.feed_data(d)
+    stream.feed_data(con.send(h11.EndOfMessage()))
+    stream.feed_eof()
+    rq, rq_data = await routine.read_request(
+        h11.Connection(h11.SERVER), stream)
 
-    assert 200 == status
+    assert rq is not None
+    assert rq_data is not None
+    assert rq_data.seek(0, io.SEEK_END) == len(data)
 
 
 @pytest.mark.asyncio
-async def test_access_decaped_headers():
-    header_key = "custom-header-maybe"
-    value = "aloha"
-
-    call = await fixtures.setup_fn_call(
-        funcs.encaped_header, headers={
-            header_key: value
-        }
-    )
-    content, status, headers = await call
-    assert value == headers.get(header_key)
-
-
-@pytest.mark.asyncio
-async def test_access_method_request_url():
-    header_key = "Response-Request-URL"
-    value = "/hello/can-you-hear-me"
-
-    call = await fixtures.setup_fn_call(
-        funcs.access_request_url,
-        request_url=value
-    )
-    _, _, headers = await call
-
-    assert header_key in headers
-    assert value == headers.get(header_key)
+async def test_connection_closed():
+    stream = asyncio.StreamReader(loop=asyncio.get_event_loop())
+    stream.feed_eof()
+    try:
+        await routine.read_request(
+            h11.Connection(h11.SERVER), stream)
+    except Exception as ex:
+        assert "connection closed" in str(ex)

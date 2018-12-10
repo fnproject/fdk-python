@@ -13,7 +13,6 @@
 #    under the License.
 
 import asyncio
-import h11
 
 from fdk import constants
 from fdk.http import event_handler
@@ -23,14 +22,13 @@ if __name__ == "__main__":
     from fdk import fixtures
 
     async def hello(ctx, data=None):
+        print(len(data.read()))
         return "hello"
 
-    connection = h11.Connection(h11.SERVER)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         asyncio.start_server(
-            event_handler.event_handle(
-                connection, fixtures.code(hello)),
+            event_handler.event_handle(fixtures.code(hello)),
             host="localhost", port=5000,
             limit=constants.IO_LIMIT, loop=loop)
     )

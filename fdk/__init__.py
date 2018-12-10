@@ -13,7 +13,6 @@
 #    under the License.
 
 import asyncio
-import h11
 import os
 import uvloop
 import sys
@@ -40,10 +39,9 @@ def start(handle_code, uds, loop=None):
         pass
 
     log.log("starting unix socket site")
-    connection = h11.Connection(h11.SERVER)
     unix_srv = loop.run_until_complete(
         asyncio.start_unix_server(
-            event_handler.event_handle(connection, handle_code),
+            event_handler.event_handle(handle_code),
             path=phony_socket_path,
             loop=loop, limit=constants.IO_LIMIT
         )

@@ -13,33 +13,34 @@
 #    under the License.
 
 import h11
+import io
 
 from fdk import constants
 from fdk import log
 
 
-def process_chunk(connection):
-    request, body = None, None
+async def process_chunk(connection, request_reader):
+    request, body = None, io.BytesIO()
     while True:
-        event = connection.next_event()
-        if isinstance(event, h11.Request):
-            request = event
-        if isinstance(event, h11.Data):
-            body = event
-        if isinstance(event, h11.EndOfMessage):
-            return request, body
-        if isinstance(event, (h11.NEED_DATA, h11.PAUSED)):
-            break
-        if isinstance(event, h11.ConnectionClosed):
-            raise Exception("connection closed")
+        buf = await request_reader.read(constants.IO_LIMIT)
+        connection.receive_data(buf)
+        while True:
+            event = connection.next_event()
+            if isinstance(event, h11.Request):
+                request = event
+            if isinstance(event, h11.Data):
+                body.write(event.data)
+            if isinstance(event, h11.EndOfMessage):
+                return request, body
+            if isinstance(event, (h11.NEED_DATA, h11.PAUSED)):
+                break
+            if isinstance(event, h11.ConnectionClosed):
+                raise Exception("connection closed")
 
 
 async def read_request(connection, request_reader):
-    raw_data = b""
     while True:
-        raw_data += await request_reader.read(constants.IO_LIMIT)
-        connection.receive_data(raw_data)
-        request, body = process_chunk(connection)
+        request, body = await process_chunk(connection, request_reader)
         if request is None:
             raise Exception("unable to read incoming request")
         return request, body
