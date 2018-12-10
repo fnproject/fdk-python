@@ -14,127 +14,116 @@
 
 import datetime as dt
 import pytest
-import ujson
-
-from xml.etree import ElementTree
+import json
 
 from fdk import fixtures
 from fdk.tests import funcs
 
 
-async def test_override_content_type(aiohttp_client):
+@pytest.mark.asyncio
+async def test_override_content_type():
     call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.content_type)
+        funcs.content_type)
     content, status, headers = await call
 
     assert 200 == status
-    assert "OK" == content.decode("utf8")
+    assert "OK" == content
     assert "text/plain" in headers.get("Content-Type")
 
 
-async def test_parse_request_without_data(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.dummy_func)
+@pytest.mark.asyncio
+async def test_parse_request_without_data():
+    call = await fixtures.setup_fn_call(funcs.dummy_func)
 
     content, status, headers = await call
-
+    print(headers)
     assert 200 == status
-    assert "Hello World" == ujson.loads(content)
+    assert "Hello World" == content
     assert "application/json" in headers.get("Content-Type")
 
 
-async def test_parse_request_with_data(aiohttp_client):
+@pytest.mark.asyncio
+async def test_parse_request_with_data():
+    input_content = json.dumps(
+        {"name": "John"}).encode("utf-8")
     call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.dummy_func, json={"name": "John"})
+        funcs.dummy_func, content=input_content)
     content, status, headers = await call
 
     assert 200 == status
-    assert "Hello John" == ujson.loads(content)
+    assert "Hello John" == content
     assert "application/json" in headers.get("Content-Type")
 
 
-async def test_custom_response_object(aiohttp_client):
+@pytest.mark.asyncio
+async def test_custom_response_object():
+    input_content = json.dumps(
+        {"name": "John"}).encode("utf-8")
     call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.custom_response, json={"name": "John"})
+        funcs.custom_response, input_content)
     content, status, headers = await call
 
     assert 201 == status
 
 
-async def test_errored_func(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.expectioner)
+@pytest.mark.asyncio
+async def test_errored_func():
+    call = await fixtures.setup_fn_call(funcs.expectioner)
     content, status, headers = await call
 
     assert 500 == status
 
 
-async def test_none_func(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.none_func)
+@pytest.mark.asyncio
+async def test_none_func():
+    call = await fixtures.setup_fn_call(funcs.none_func)
     content, status, headers = await call
 
     assert 0 == len(content)
     assert 200 == status
 
 
-async def test_coro_func(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.coro)
+@pytest.mark.asyncio
+async def test_coro_func():
+    call = await fixtures.setup_fn_call(funcs.coro)
     content, status, headers = await call
 
     assert 200 == status
-    assert 'hello from coro' == ujson.loads(content)
+    assert 'hello from coro' == content
 
 
-async def test_deadline(aiohttp_client):
+@pytest.mark.asyncio
+async def test_deadline():
     timeout = 5
     now = dt.datetime.now(dt.timezone.utc).astimezone()
     now += dt.timedelta(0, float(timeout))
 
     call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.timed_sleepr(timeout + 1),
+        funcs.timed_sleepr(timeout + 1),
         deadline=now.isoformat())
     _, status, _ = await call
 
     assert 502 == status
 
 
-async def test_default_deadline(aiohttp_client):
+@pytest.mark.asyncio
+async def test_default_deadline():
     timeout = 5
 
     call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.timed_sleepr(timeout))
+        funcs.timed_sleepr(timeout))
     _, status, _ = await call
 
     assert 200 == status
 
 
-async def test_valid_xml(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.valid_xml)
-    content, status, headers = await call
-
-    ElementTree.fromstring(content)
-
-    assert "application/xml" in headers.get("Content-Type")
-
-
-async def test_invalid_xml(aiohttp_client):
-    call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.invalid_xml)
-    content, status, headers = await call
-
-    with pytest.raises(ElementTree.ParseError):
-        ElementTree.fromstring(content)
-
-
-async def test_access_decaped_headers(aiohttp_client):
+@pytest.mark.asyncio
+async def test_access_decaped_headers():
     header_key = "custom-header-maybe"
     value = "aloha"
 
     call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.encaped_header, headers={
+        funcs.encaped_header, headers={
             header_key: value
         }
     )
@@ -142,14 +131,14 @@ async def test_access_decaped_headers(aiohttp_client):
     assert value == headers.get(header_key)
 
 
-async def test_access_method_request_url(aiohttp_client):
+@pytest.mark.asyncio
+async def test_access_method_request_url():
     header_key = "Response-Request-URL"
     value = "/hello/can-you-hear-me"
-    method = "PUT"
 
     call = await fixtures.setup_fn_call(
-        aiohttp_client, funcs.access_request_url,
-        request_url=value, method=method,
+        funcs.access_request_url,
+        request_url=value
     )
     _, _, headers = await call
 

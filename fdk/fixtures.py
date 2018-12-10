@@ -12,36 +12,43 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
 import datetime as dt
 
 from fdk import constants
 from fdk import headers as hs
-from fdk import http_stream
+from fdk import runner
 
 
 async def process_response(fn_call_coro):
     new_headers = {}
     resp = await fn_call_coro
-    for k, v in dict(resp.headers).items():
+    response_data = resp.body()
+    response_status = resp.status()
+    response_headers = resp.context().GetResponseHeaders()
+    for k, v in response_headers.items():
         new_headers.update({
             k.lstrip(constants.FN_HTTP_PREFIX): v
         })
-    content = await resp.content.read()
-    resp_headers = hs.decap_headers(resp.headers)
-    status = int(resp.headers.get(constants.FN_HTTP_STATUS))
-    resp_headers.delete(constants.FN_HTTP_STATUS)
-    return content, status, resp_headers
+    print(response_headers)
+    resp_headers = hs.decap_headers(response_headers)
+    del resp_headers[constants.FN_HTTP_STATUS]
+
+    return response_data, response_status, resp_headers
 
 
-async def setup_fn_call(fn_client, handle_func,
-                        request_url="/", method="POST",
-                        headers=None, json=None,
-                        deadline=None):
-    app = http_stream.setup_unix_server(
-        handle_func,
-        loop=asyncio.get_event_loop()
-    )
+class code(object):
+
+    def __init__(self, fn):
+        self.fn = fn
+
+    def handler(self):
+        return self.fn
+
+
+async def setup_fn_call(
+        handle_func, request_url="/",
+        method="POST", headers=None,
+        content=None, deadline=None):
 
     new_headers = {}
     if headers is not None:
@@ -59,6 +66,7 @@ async def setup_fn_call(fn_client, handle_func,
         constants.FN_HTTP_METHOD: method,
     })
 
-    client = await fn_client(app)
-    return process_response(
-        client.post("/call", headers=new_headers, json=json))
+    return process_response(runner.handle_request(
+        code(handle_func), constants.HTTPSTREAM,
+        headers=new_headers, data=content,
+    ))

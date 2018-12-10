@@ -13,13 +13,63 @@
 #    under the License.
 
 import asyncio
+import h11
 import os
 import uvloop
 import sys
 
 from fdk import constants
 from fdk import log
-from fdk import http_stream
+from fdk.http import event_handler
+
+
+def start(handle_code, uds, loop=None):
+    log.log("in http_stream.start")
+    socket_path = str(uds).lstrip("unix:")
+
+    # try to remove pre-existing UDS: ignore errors here
+    socket_dir, socket_file = os.path.split(socket_path)
+    phony_socket_path = os.path.join(
+        socket_dir, "phony" + socket_file)
+
+    log.log("deleting socket files if they exist")
+    try:
+        os.remove(socket_path)
+        os.remove(phony_socket_path)
+    except (FileNotFoundError, Exception, BaseException):
+        pass
+
+    log.log("starting unix socket site")
+    connection = h11.Connection(h11.SERVER)
+    unix_srv = loop.run_until_complete(
+        asyncio.start_unix_server(
+            event_handler.event_handle(connection, handle_code),
+            path=phony_socket_path,
+            loop=loop, limit=constants.IO_LIMIT
+        )
+    )
+    try:
+        try:
+            log.log("CHMOD 666 {0}".format(phony_socket_path))
+            os.chmod(phony_socket_path, 0o666)
+            log.log("phony socket permissions: {0}"
+                    .format(oct(os.stat(phony_socket_path).st_mode)))
+            log.log("sym-linking {0} to {1}".format(
+                socket_path, phony_socket_path))
+            os.symlink(os.path.basename(phony_socket_path), socket_path)
+            log.log("socket permissions: {0}"
+                    .format(oct(os.stat(socket_path).st_mode)))
+            log.log("starting infinite loop")
+            loop.run_forever()
+        except (Exception, BaseException) as ex:
+            log.log(str(ex))
+            raise ex
+    finally:
+        if hasattr(loop, 'shutdown_asyncgens'):
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        unix_srv.close()
+        loop.run_until_complete(unix_srv.wait_closed())
+        loop.close()
 
 
 def handle(handle_func):
@@ -37,8 +87,7 @@ def handle(handle_func):
             sys.exit(1)
         log.log("{0} is set, value: {1}".
                 format(constants.FN_LISTENER, lsnr))
-        http_stream.start(handle_func, lsnr, loop=loop)
+        start(handle_func, lsnr, loop=loop)
     else:
-        log.log("incompatible function format!")
         print("incompatible function format!", file=sys.stderr, flush=True)
         sys.exit("incompatible function format!")

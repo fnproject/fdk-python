@@ -12,15 +12,8 @@ A main loop is supplied that can repeatedly call a user function with a series o
 In order to utilise this, you can write your `app.py` as follows:
 
 ```python
-import fdk
-
-
-def handler(context, data=None, loop=None):
+def handler(context, data=None):
     return data
-
-
-if __name__ == "__main__":
-    fdk.handle(handler)
 
 ```
 
@@ -31,18 +24,20 @@ Starting v0.0.33 FDK-Python provides a testing framework that allows performing 
 The unit test framework is the [pytest](https://pytest.org/). Coding style remain the same, so, write your tests as you've got used to.
 Here's the example of the test suite:
 ```python
-import fdk
-import ujson
+import sys
+import json
 
 from fdk import fixtures
 
 
-def handler(ctx, data=None, loop=None):
-    name = "World"
-    if data and len(data) > 0:
-        body = ujson.loads(data)
-        name = body.get("name")
-    return {"message": "Hello {0}".format(name)}
+def handler(ctx, data=None):
+    try:
+        body = json.loads(data)
+    except Exception as ex:
+        print(str(ex), flush=True, file=sys.stderr)
+        body = {"name": "World"}
+    
+    return {"message": "Hello {0}".format(body.get("name"))}
 
 
 async def test_parse_request_without_data(aiohttp_client):
@@ -52,12 +47,8 @@ async def test_parse_request_without_data(aiohttp_client):
     content, status, headers = await call
 
     assert 200 == status
-    assert {"message": "Hello World"} == ujson.loads(content)
+    assert {"message": "Hello World"} == json.loads(content)
     assert "application/json" in headers.get("Content-Type")
-
-
-if __name__ == "__main__":
-    fdk.handle(handler)
 
 ```
 
@@ -72,7 +63,7 @@ pytest -v -s --tb=long func.py
 $ pytest -v -s --tb=long func.py
 pytest -v -s --tb=long func.py
 ========================================================================================= test session starts ==========================================================================================
-platform darwin -- Python 3.6.2, pytest-3.5.1, py-1.5.3, pluggy-0.6.0 -- /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/fdk-python/.venv/bin/python3.6
+platform darwin -- Python 3.7.1, pytest-3.5.1, py-1.5.3, pluggy-0.6.0 -- /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/fdk-python/.venv/bin/python3.6
 cachedir: .pytest_cache
 rootdir: /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/test, inifile:
 plugins: cov-2.4.0, aiohttp-0.3.0
@@ -96,7 +87,7 @@ pytest -v -s --tb=long --cov=func func.py
 ```bash
 pytest -v -s --tb=long --cov=func func.py
 ========================================================================================= test session starts ==========================================================================================
-platform darwin -- Python 3.6.2, pytest-3.5.1, py-1.5.3, pluggy-0.6.0 -- /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/fdk-python/.venv/bin/python3.6
+platform darwin -- Python 3.7.1, pytest-3.5.1, py-1.5.3, pluggy-0.6.0 -- /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/fdk-python/.venv/bin/python3.6
 cachedir: .pytest_cache
 rootdir: /Users/denismakogon/Documents/oracle/go/src/github.com/fnproject/test, inifile:
 plugins: cov-2.4.0, aiohttp-0.3.0

@@ -12,15 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-import json
+import asyncio
+import h11
+
+from fdk import constants
+from fdk.http import event_handler
 
 
-def handler(ctx, data=None):
-    try:
-        body = json.loads(data)
-    except Exception as ex:
-        print(str(ex), flush=True, file=sys.stderr)
-        body = {"name": "World"}
+if __name__ == "__main__":
+    from fdk import fixtures
 
-    return "Hello {0}".format(body.get("name"))
+    async def hello(ctx, data=None):
+        return "hello"
+
+    connection = h11.Connection(h11.SERVER)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
+        asyncio.start_server(
+            event_handler.event_handle(
+                connection, fixtures.code(hello)),
+            host="localhost", port=5000,
+            limit=constants.IO_LIMIT, loop=loop)
+    )
+    loop.run_forever()

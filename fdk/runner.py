@@ -20,13 +20,14 @@ import iso8601
 import types
 
 from fdk import context
+from fdk import constants
 from fdk import errors
 from fdk import log
 from fdk import response
 
 
 # TODO(xxx): use loop.run_in_executor instead
-async def with_deadline(ctx, handle_func, data):
+async def with_deadline(ctx, handler_code, data):
 
     def timeout_func(*_):
         raise TimeoutError("function timed out")
@@ -41,6 +42,7 @@ async def with_deadline(ctx, handle_func, data):
     signal.alarm(int(delta.total_seconds()))
 
     try:
+        handle_func = handler_code.handler()
         result = handle_func(ctx, data=data)
         if isinstance(result, types.CoroutineType):
             signal.alarm(0)
@@ -60,16 +62,20 @@ async def handle_request(handle_func, format_def, **kwargs):
     try:
         response_data = await with_deadline(ctx, handle_func, body)
 
-        if isinstance(response_data, response.RawResponse):
+        if isinstance(response_data, response.Response):
             return response_data
 
-        resp_class = response.response_class_from_context(ctx)
-        return resp_class(
-            ctx, response_data=response_data, headers={}, status_code=200)
+        headers = ctx.GetResponseHeaders()
+        response_content_type = headers.get(
+            constants.CONTENT_TYPE, "application/json"
+        )
+        headers[constants.CONTENT_TYPE] = response_content_type
+
+        return response.Response(
+            ctx, response_data=response_data,
+            headers=headers, status_code=200)
 
     except (Exception, TimeoutError) as ex:
         log.log("exception appeared")
         traceback.print_exc(file=sys.stderr)
-        status = 502 if isinstance(ex, TimeoutError) else 500
-        err_class = errors.error_class_from_format(format_def)
-        return err_class(ctx, status, str(ex), ).response()
+        return errors.DispatchException(ctx, 502, str(ex), ).response()

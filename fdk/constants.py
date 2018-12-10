@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+IO_LIMIT = 6291456
 DEFAULT_DEADLINE = 30
 HTTPSTREAM = "http-stream"
 FN_FORMAT = "FN_FORMAT"
@@ -25,3 +26,4 @@ FN_HTTP_METHOD = "Fn-Http-Method"
 FN_APP_ID = "FN_APP_ID"
 FN_ID = "FN_FN_ID"
 CONTENT_TYPE = "Content-Type"
+CONTENT_LENGTH = "Content-Length"
