@@ -71,7 +71,7 @@ async def test_errored_func():
     call = await fixtures.setup_fn_call(funcs.expectioner)
     content, status, headers = await call
 
-    assert 500 == status
+    assert 502 == status
 
 
 @pytest.mark.asyncio
