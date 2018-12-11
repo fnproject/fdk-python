@@ -18,11 +18,24 @@ import uvloop
 import sys
 
 from fdk import constants
+from fdk import customer_code
 from fdk import log
 from fdk.http import event_handler
 
 
-def start(handle_code, uds, loop=None):
+def start(handle_code: customer_code.Function,
+          uds: str,
+          loop: asyncio.AbstractEventLoop=None):
+    """
+    Unix domain socket HTTP server entry point
+    :param handle_code: customer's code
+    :type handle_code: fdk.customer_code.Function
+    :param uds: path to a Unix domain socket
+    :type uds: str
+    :param loop: event loop
+    :type loop: asyncio.AbstractEventLoop
+    :return: None
+    """
     log.log("in http_stream.start")
     socket_path = str(uds).lstrip("unix:")
 
@@ -70,7 +83,13 @@ def start(handle_code, uds, loop=None):
         loop.close()
 
 
-def handle(handle_func):
+def handle(handle_func: customer_code.Function):
+    """
+    FDK entry point
+    :param handle_func: customer's code
+    :type handle_func: fdk.customer_code.Function
+    :return: None
+    """
     log.log("entering handle")
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     loop = asyncio.get_event_loop()

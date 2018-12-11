@@ -16,6 +16,7 @@ import h11
 
 from fdk import context
 from fdk import constants
+from fdk import customer_code
 from fdk import log
 from fdk import response
 from fdk import runner
@@ -23,7 +24,13 @@ from fdk import runner
 from fdk.http import routine
 
 
-def event_handle(handle_code):
+def event_handle(handle_code: customer_code.Function):
+    """
+    Performs HTTP request-response procedure
+    :param handle_code: customer's code
+    :type handle_code: fdk.customer_code.Function
+    :return: None
+    """
     async def pure_handler(request_reader, response_writer):
         log.log("in pure_handler")
         connection = h11.Connection(h11.SERVER)

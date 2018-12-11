@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
 import sys
 import traceback
 import signal
@@ -21,13 +22,25 @@ import types
 
 from fdk import context
 from fdk import constants
+from fdk import customer_code
 from fdk import errors
 from fdk import log
 from fdk import response
 
 
-# TODO(xxx): use loop.run_in_executor instead
-async def with_deadline(ctx, handler_code, data):
+async def with_deadline(ctx: context.InvokeContext,
+                        handler_code: customer_code.Function,
+                        data: io.BytesIO):
+    """
+    Runs function within a timer
+    :param ctx: invoke context
+    :type ctx: fdk.context.InvokeContext
+    :param handler_code: customer's code
+    :type handler_code: fdk.customer_code.Function
+    :param data: request data stream
+    :type data: io.BytesIO
+    :return:
+    """
 
     def timeout_func(*_):
         raise TimeoutError("function timed out")
@@ -55,19 +68,30 @@ async def with_deadline(ctx, handler_code, data):
         raise ex
 
 
-async def handle_request(handle_func, format_def, **kwargs):
+async def handle_request(handler_code, format_def, **kwargs):
+    """
+    Handles a function's request
+    :param handler_code: customer's code
+    :type handler_code: fdk.customer_code.Function
+    :param format_def: function's format
+    :type format_def: str
+    :param kwargs: request-specific parameters
+    :type kwargs: dict
+    :return: function's response
+    :rtype: fdk.response.Response
+    """
 
     ctx, body = context.context_from_format(format_def, **kwargs)
 
     try:
-        response_data = await with_deadline(ctx, handle_func, body)
+        response_data = await with_deadline(ctx, handler_code, body)
 
         if isinstance(response_data, response.Response):
             return response_data
 
         headers = ctx.GetResponseHeaders()
         response_content_type = headers.get(
-            constants.CONTENT_TYPE, "application/json"
+            constants.CONTENT_TYPE, "text/plain"
         )
         headers[constants.CONTENT_TYPE] = response_content_type
 

@@ -12,13 +12,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from fdk import context
 from fdk import constants
 
 
 class Response(object):
 
-    def __init__(self, ctx, response_data=None,
-                 headers=None, status_code=200):
+    def __init__(self, ctx: context.InvokeContext,
+                 response_data: str=None,
+                 headers: dict=None,
+                 status_code: int=200):
+        """
+        Creates an FDK-readable response object
+        :param ctx: invoke context
+        :type ctx: fdk.context.InvokeContext
+        :param response_data: function's response data
+        :type response_data: str
+        :param headers: response headers
+        :type headers: dict
+        :param status_code: response code
+        :type status_code: int
+        """
         self.ctx = ctx
         self.status_code = status_code
         self.response_data = response_data if response_data else ""

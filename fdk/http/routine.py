@@ -12,14 +12,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import asyncio
 import h11
 import io
 
 from fdk import constants
 from fdk import log
+from fdk import response
 
 
-async def process_chunk(connection, request_reader):
+async def process_chunk(connection: h11.Connection,
+                        request_reader: asyncio.StreamReader):
+    """
+    Reads the request in chunks until can parse
+    the request successfully
+    :param connection: h11 request parser
+    :type connection: h11.Connection
+    :param request_reader: async stream reader
+    :type request_reader: asyncio.StreamReader
+    :return: request and body
+    :rtype tuple
+    """
     request, body = None, io.BytesIO()
     while True:
         buf = await request_reader.read(constants.IO_LIMIT)
@@ -39,6 +52,14 @@ async def process_chunk(connection, request_reader):
 
 
 async def read_request(connection, request_reader):
+    """
+    Request processor wrapper
+    :param connection: h11 request parser
+    :type connection: h11.Connection
+    :param request_reader: async stream reader
+    :type request_reader: asyncio.StreamReader
+    :return:
+    """
     while True:
         request, body = await process_chunk(connection, request_reader)
         if request is None:
@@ -46,7 +67,20 @@ async def read_request(connection, request_reader):
         return request, body
 
 
-async def write_response(connection, func_response, response_writer):
+async def write_response(
+        connection: h11.Connection,
+        func_response: response.Response,
+        response_writer: asyncio.StreamWriter):
+    """
+    Processes function's response
+    :param connection: h11 request parser
+    :type connection: h11.Connection
+    :param func_response: function's response
+    :type func_response: fdk.response.Response
+    :param response_writer: async stream writer
+    :type response_writer: asyncio.StreamWriter
+    :return: None
+    """
     headers = func_response.ctx.GetResponseHeaders().items()
     status = func_response.status()
     log.log("response headers: {}".format(headers))
