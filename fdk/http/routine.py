@@ -33,6 +33,9 @@ async def process_chunk(connection: h11.Connection,
     :return: request and body
     :rtype tuple
     """
+    # TODO(denismakogon): replace io.BytesIO with asyncio.StreamReader
+    # this change will be required when an FDK will enforce customer's
+    # function to be a coroutine
     request, body = None, io.BytesIO()
     while True:
         buf = await request_reader.read(constants.IO_LIMIT)
