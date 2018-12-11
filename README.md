@@ -1,23 +1,34 @@
-FN development kit for Python
-=============================
+# Function development kit for Python
 
-Purpose of this library to provide simple interface to parse HTTP 1.1 requests represented as string
 
-Following examples are showing how to use API of this library to work with streaming HTTP requests from Fn service.
+While the FDK contract is HTTP, the intention is for that to be somewhat 
+abstracted from the user - they write some Function code , this library helps them do that.
 
-Handling Hot JSON Functions
----------------------------
+## Handling JSON Functions
 
-A main loop is supplied that can repeatedly call a user function with a series of HTTP requests.
-In order to utilise this, you can write your `app.py` as follows:
+
+A main loop is supplied that can repeatedly call a user function with a series of requests.
+In order to utilise this, you can write your `func.py` as follows:
 
 ```python
-def handler(context, data=None):
-    return data.getvalue()
+import io
+import json
+
+
+async def handler(ctx, data: io.BytesIO=None):
+    name = "World"
+    try:
+        body = json.loads(data.getvalue())
+        name = body.get("name")
+    except (Exception, ValueError) as ex:
+        print(str(ex))
+
+    return {"message": "Hello {0}".format(name)}
+
 ```
 
-Unittest your functions
---------------------------
+## Unittest your functions
+
 
 Starting v0.0.33 FDK-Python provides a testing framework that allows performing unit tests of your function's code.
 The unit test framework is the [pytest](https://pytest.org/). Coding style remain the same, so, write your tests as you've got used to.
@@ -36,7 +47,6 @@ async def handler(ctx, data=None):
         name = body.get("name")
     except (Exception, ValueError) as ex:
         print(str(ex))
-        pass
 
     return {"message": "Hello {0}".format(name)}
 
@@ -61,7 +71,7 @@ pytest -v -s --tb=long func.py
 
 ```bash
 ========================================================================================= test session starts ==========================================================================================
-platform darwin -- Python 3.7.1, pytest-4.0.1, py-1.7.0, pluggy-0.8.0 -- /Users/denismakogon/go/src/github.com/fnproject/fdk-python/.venv/bin/python3
+platform darwin -- Python 3.7.1, pytest-4.0.1, py-1.7.0, pluggy-0.8.0 -- /python/bin/python3
 cachedir: .pytest_cache
 rootdir: /Users/denismakogon/go/src/github.com/fnproject/test, inifile:
 plugins: cov-2.4.0, asyncio-0.9.0, aiohttp-0.3.0
@@ -88,7 +98,7 @@ pytest -v -s --tb=long --cov=func func.py
 ```bash
 pytest -v -s --tb=long --cov=func func.py
 ========================================================================================= test session starts ==========================================================================================
-platform darwin -- Python 3.7.1, pytest-4.0.1, py-1.7.0, pluggy-0.8.0 -- /Users/denismakogon/go/src/github.com/fnproject/fdk-python/.venv/bin/python3
+platform darwin -- Python 3.7.1, pytest-4.0.1, py-1.7.0, pluggy-0.8.0 -- /python/bin/python3
 cachedir: .pytest_cache
 rootdir: /Users/denismakogon/go/src/github.com/fnproject/test, inifile:
 plugins: cov-2.4.0, asyncio-0.9.0, aiohttp-0.3.0
