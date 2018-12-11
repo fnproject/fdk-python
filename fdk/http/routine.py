@@ -100,3 +100,37 @@ async def write_response(
     )
     response_writer.write(connection.send(h11.EndOfMessage()))
     await response_writer.drain()
+
+
+async def write_error(ex: Exception,
+                      connection: h11.Connection,
+                      response_writer: asyncio.StreamWriter):
+    """
+    Turns an exception into an error
+    :param ex: an exception
+    :type ex: Exception
+    :param connection: h11 request parser
+    :type connection: h11.Connection
+    :param response_writer: async stream writer
+    :type response_writer: asyncio.StreamWriter
+    :return: None
+    """
+    data = str(ex)
+    headers = {
+        constants.CONTENT_TYPE: "text/plain",
+        constants.CONTENT_LENGTH: len(data)
+    }
+    status = 502
+
+    response_writer.write(
+        connection.send(h11.Response(
+            status_code=status, headers=headers)
+        )
+    )
+
+    response_writer.write(connection.send(
+        h11.Data(
+            data=data.encode("utf-8")))
+    )
+    response_writer.write(connection.send(h11.EndOfMessage()))
+    await response_writer.drain()

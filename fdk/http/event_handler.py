@@ -14,11 +14,9 @@
 
 import h11
 
-from fdk import context
 from fdk import constants
 from fdk import customer_code
 from fdk import log
-from fdk import response
 from fdk import runner
 
 from fdk.http import routine
@@ -47,16 +45,6 @@ def event_handle(handle_code: customer_code.Function):
             await routine.write_response(
                 connection, func_response, response_writer)
         except Exception as ex:
-            ctx, _ = context.context_from_format(
-                constants.HTTPSTREAM, headers={}, data=None)
-            await routine.write_response(connection, response.Response(
-                ctx,
-                response_data=str(ex),
-                headers={
-                    constants.CONTENT_TYPE: "text/plain",
-                    constants.CONTENT_LENGTH: len(str(ex))
-                },
-                status_code=502
-            ), response_writer)
+            await routine.write_error(ex, connection, response_writer)
 
     return pure_handler
