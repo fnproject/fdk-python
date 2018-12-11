@@ -46,7 +46,7 @@ async def test_parse_request_without_data():
     print(headers)
     assert 200 == status
     assert "Hello World" == content
-    assert "application/json" in headers.get("Content-Type")
+    assert "text/plain" in headers.get("Content-Type")
 
 
 @pytest.mark.asyncio
@@ -59,7 +59,7 @@ async def test_parse_request_with_data():
 
     assert 200 == status
     assert "Hello John" == content
-    assert "application/json" in headers.get("Content-Type")
+    assert "text/plain" in headers.get("Content-Type")
 
 
 @pytest.mark.asyncio
