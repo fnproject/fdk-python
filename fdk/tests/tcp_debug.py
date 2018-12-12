@@ -13,30 +13,36 @@
 #    under the License.
 
 import asyncio
+import uvloop
 
 from fdk import constants
+from fdk import customer_code
+from fdk import log
 from fdk.http import event_handler
 
 
-if __name__ == "__main__":
-    from fdk import fixtures
-
-    async def hello(ctx, data=None):
-        name = "world"
-        try:
-            import json
-            body = json.loads(data.getvalue())
-            name = body.get("name")
-        except (Exception, ValueError) as ex:
-            print(str(ex))
-
-        return "hello " + name
+def handle(handle_func: customer_code.Function, port: int=5000):
+    """
+    FDK entry point
+    :param handle_func: customer's code
+    :type handle_func: fdk.customer_code.Function
+    :param port: TCP port to start an FDK at
+    :type port: int
+    :return: None
+    """
+    log.log("entering handle")
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         asyncio.start_server(
-            event_handler.event_handle(fixtures.code(hello)),
-            host="localhost", port=5000,
+            event_handler.event_handle(handle_func),
+            host="localhost", port=port,
             limit=constants.IO_LIMIT, loop=loop)
     )
-    loop.run_forever()
+    try:
+        loop.run_forever()
+    finally:
+        if hasattr(loop, 'shutdown_asyncgens'):
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.stop()

@@ -11,19 +11,26 @@ A main loop is supplied that can repeatedly call a user function with a series o
 In order to utilise this, you can write your `func.py` as follows:
 
 ```python
-import io
 import json
+import io
+
+from fdk import response
 
 
-async def handler(ctx, data: io.BytesIO=None):
+def handler(ctx, data: io.BytesIO=None):
     name = "World"
     try:
         body = json.loads(data.getvalue())
         name = body.get("name")
     except (Exception, ValueError) as ex:
         print(str(ex))
+        pass
 
-    return {"message": "Hello {0}".format(name)}
+    return response.Response(
+        ctx, response_data=json.dumps(
+            {"message": "Hello {0}".format(name)}),
+        headers={"Content-Type": "application/json"}
+    )
 
 ```
 
@@ -35,20 +42,27 @@ The unit test framework is the [pytest](https://pytest.org/). Coding style remai
 Here's the example of the test suite:
 ```python
 import json
+import io
 import pytest
 
 from fdk import fixtures
+from fdk import response
 
 
-async def handler(ctx, data=None):
+def handler(ctx, data: io.BytesIO=None):
     name = "World"
     try:
         body = json.loads(data.getvalue())
         name = body.get("name")
     except (Exception, ValueError) as ex:
         print(str(ex))
+        pass
 
-    return {"message": "Hello {0}".format(name)}
+    return response.Response(
+        ctx, response_data=json.dumps(
+            {"message": "Hello {0}".format(name)}),
+        headers={"Content-Type": "application/json"}
+    )
 
 
 @pytest.mark.asyncio
@@ -58,7 +72,7 @@ async def test_parse_request_without_data():
     content, status, headers = await call
 
     assert 200 == status
-    assert {"message": "Hello World"} == content
+    assert {"message": "Hello World"} == json.loads(content)
 
 ```
 
@@ -88,11 +102,11 @@ PASSED
 
 To add coverage first install one more package:
 ```bash
-pip install pytest-cov
+    pip install pytest-cov
 ```
 then run tests with coverage flag:
 ```bash
-pytest -v -s --tb=long --cov=func func.py
+    pytest -v -s --tb=long --cov=func func.py
 ```
 
 ```bash
@@ -117,4 +131,150 @@ func.py      19      1    95%
 
 
 ======================================================================================= 1 passed in 0.06 seconds =======================================================================================
+```
+
+## FDK tooling
+
+## Installing tools
+
+Create a virtualenv:
+```bash
+    python3 -m venv .venv
+```
+Activate virtualenv:
+```bash
+    source .venv/bin/activate
+```
+All you have to do is:
+```bash
+    pip install fdk
+```
+Now you have a new tools added!
+
+## Tools
+
+With a new FDK release a new set of tooling introduced:
+
+ - `fdk` - CLI tool, an entry point to a function, that's the way you start your function in real life
+ - `fdk-tcp-debug` - CLI tool, an entry point to a function local debugging
+
+## CLI tool: `fdk`
+
+This is an entry point to a function, this tool you'd be using while working with a function that is deployed at Fn server.
+
+### Usage
+
+`fdk` is a Python CLI script that has the following signature:
+
+```bash
+    fdk <path-to-a-function-module> [module-entrypoint]
+```
+
+where:
+    - `fdk` is a CLI script
+    - `<path-to-a-function-module>` is a path to your function's code, for instance, `/function/func.py`
+    - `[module-entrypoint]` is an entry point to a module, basically you need to point to a method that has the following signature:
+    `def <function_name>(ctx, data: io.BytesIO=None)`, as you many notice this is a ordinary signature of Python's function you've used to while working with an FDK,
+
+The parameter `[module-entrypoint]` has a default value: `handler`. It means that if a developer will point an `fdk` CLI to a module `func.py`:
+
+```
+fdk func.py
+```
+
+the CLI will look for `handler` Python function.
+In order to override `[module-entrypoint]` you need to specify your custom entry point.
+
+## CLI tool: `fdk-tcp-debug`
+
+The reason why this tool exists is to give a chance to developers to debug their function on their machines.
+There's no difference between this tool and `fdk` CLI tool, except one thing: `fdk` works on top of the unix socket,
+when this tool works on top of TCP socket, so, the difference is a transport, nothing else.
+
+#### Usage
+
+`fdk-tcp-debug` is a Python CLI script that has the following signature:
+
+```bash
+    fdk-tcp-debug <port> <path-to-a-function-module> [module-entrypoint]
+```
+
+The behaviour of this CLI is the same, but it will start an FDK on top of the TCP socket.
+The only one difference is that this CLI excepts one more parameter: `port` that is required by TCP socket configuration.
+
+Now you can test your functions not only with the unit tests but also see how it works within the FDK before actually deploying them to Fn server.
+
+
+## Developing and testing an FDK
+
+If you decided to develop an FDK please do the following:
+
+ - open an issue with the detailed description of your problem
+ - checkout a new branch with the following signature: `git checkout -b issue-<number>`
+
+In order to test an FDK changes do the following:
+
+ - `python3 -m venv .venv && source .venv/bin/activate`
+ - `pip install tox`
+ - `tox`
+ 
+### Testing with `fdk-tcp-debug`
+
+Test an FDK change with sample function using `fdk-tcp-debug`:
+
+```bash
+    pip install -e .
+    FDK_DEBUG=1 fdk-tcp-debug 5001 samples/echo/func.py handler
+```
+
+Then just do:
+
+```bash
+    curl -v -X POST localhost:5001 -d '{"name":"denis"}'
+```
+
+### Testing within a function
+
+First of all create a test function:
+```bash
+fn init --runtime python3.7.1 test-function
+```
+
+Create a Dockerfile in a function's folder:
+```dockerfile
+FROM fnproject/python:3.7.1-dev as build-stage
+
+ADD . /function
+WORKDIR /function
+
+RUN pip3 install --target /python/  --no-cache --no-cache-dir fdk-test-py3-none-any.whl 
+
+RUN rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv
+
+FROM fnproject/python:3.7.1
+
+COPY --from=build-stage /function /function
+COPY --from=build-stage /python /python
+ENV PYTHONPATH=/python
+
+ENTRYPOINT ["/python/bin/fdk", "/function/func.py", "handler"]
+```
+
+Build an FDK wheel:
+```bash
+    pip install wheel
+    PBR_VERSION=test python setup.py bdist_wheel
+```
+
+Move an FDK wheel (located at `dist/fdk-test-py3-none-any.whl`) into a function's folder.
+
+Do the deploy:
+```bash
+    fn --versbose deploy --app testapp --local --no-bump
+    fn config fn testapp test-function FDK_DEBUG 1
+```
+
+And the last step - invoke it and see how it goes:
+```bash
+fn invoke testapp test-function
 ```
