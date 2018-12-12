@@ -13,6 +13,7 @@
 #    under the License.
 
 import fdk
+import os
 import sys
 
 from fdk import customer_code
@@ -20,7 +21,11 @@ from fdk import customer_code
 
 def main():
     if len(sys.argv) < 1:
-        raise Exception("at least func module must be specified")
+        print("Usage: fdk <func_module> [entrypoint]")
+        sys.exit("at least func module must be specified")
+
+    if not os.path.exists(sys.argv[1]):
+        sys.exit("Module: {0} doesn't exist".format(sys.argv[1]))
 
     if len(sys.argv) > 2:
         handler = customer_code.Function(

@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import sys
 
 from fdk import customer_code
@@ -23,6 +24,9 @@ def main():
     if len(sys.argv) < 3:
         print("Usage: fdk-tcp-debug <port> <func_module> [entrypoint]")
         sys.exit("at least func module must be specified")
+
+    if not os.path.exists(sys.argv[2]):
+        sys.exit("Module: {0} doesn't exist".format(sys.argv[1]))
 
     if len(sys.argv) > 3:
         handler = customer_code.Function(
