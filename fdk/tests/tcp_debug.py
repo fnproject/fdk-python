@@ -30,14 +30,17 @@ def handle(handle_func: customer_code.Function, port: int=5000):
     :type port: int
     :return: None
     """
+    host = "localhost"
     log.log("entering handle")
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
+    log.log("Starting HTTP server on "
+            "TCP socket: {0}:{1}".format(host, port))
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         asyncio.start_server(
             event_handler.event_handle(handle_func),
-            host="localhost", port=port,
+            host=host, port=port,
             limit=constants.IO_LIMIT, loop=loop)
     )
     try:
