@@ -13,12 +13,17 @@
 #    under the License.
 
 import asyncio
-import uvloop
 
 from fdk import constants
 from fdk import customer_code
 from fdk import log
 from fdk.http import event_handler
+
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ImportError:
+    log.log("uvloop is not installed, using default event loop")
 
 
 def handle(handle_func: customer_code.Function, port: int=5000):
@@ -32,7 +37,6 @@ def handle(handle_func: customer_code.Function, port: int=5000):
     """
     host = "localhost"
     log.log("entering handle")
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     log.log("Starting HTTP server on "
             "TCP socket: {0}:{1}".format(host, port))

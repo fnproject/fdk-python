@@ -14,13 +14,18 @@
 
 import asyncio
 import os
-import uvloop
 import sys
 
 from fdk import constants
 from fdk import customer_code
 from fdk import log
 from fdk.http import event_handler
+
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ImportError:
+    log.log("uvloop is not installed, using default event loop")
 
 
 def start(handle_code: customer_code.Function,
@@ -91,7 +96,6 @@ def handle(handle_func: customer_code.Function):
     :return: None
     """
     log.log("entering handle")
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     loop = asyncio.get_event_loop()
 
     format_def = os.environ.get(constants.FN_FORMAT)
