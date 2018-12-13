@@ -278,3 +278,16 @@ And the last step - invoke it and see how it goes:
 ```bash
 fn invoke testapp test-function
 ```
+
+## Speeding up an FDK
+
+FDK is based on the asyncio event loop. Default event loop is not quite fast, but works on all operating systems (including Windows),
+In order to make an FDK to process IO operation at least 4 times faster you need to add another dependency to your function:
+
+```text
+    uvloop
+```
+
+[UVLoop](https://github.com/MagicStack/uvloop) is a CPython wrapper on top of cross-platform [libuv](https://github.com/libuv/libuv).
+Unfortunately, uvloop doesn't support Windows for some reason, so, in order to let developers test their code on Windows
+FDK doesn't install uvloop by default, but still has some checks to see whether it is installed or not.
