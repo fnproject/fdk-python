@@ -88,14 +88,25 @@ def start(handle_code: customer_code.Function,
         loop.close()
 
 
-def handle(handle_func: customer_code.Function):
+def handle(handle_code: customer_code.Function):
     """
     FDK entry point
-    :param handle_func: customer's code
-    :type handle_func: fdk.customer_code.Function
+    :param handle_code: customer's code
+    :type handle_code: fdk.customer_code.Function
     :return: None
     """
     log.log("entering handle")
+    if not isinstance(handle_code, customer_code.Function):
+        sys.exit(
+            '\n\n\nWARNING!\n\n'
+            'Your code is not compatible the the latest FDK!\n\n'
+            'Update Dockerfile entry point to:\n'
+            'ENTRYPOINT["/python/bin/fdk", "<path-to-your-func.py>", {0}]\n\n'
+            'if __name__ == "__main__":\n\tfdk.handle(handler)\n\n'
+            'syntax no longer supported!\n'
+            'Update your code as soon as possible!'
+            '\n\n\n'.format(handle_code.__name__))
+
     loop = asyncio.get_event_loop()
 
     format_def = os.environ.get(constants.FN_FORMAT)
@@ -108,7 +119,7 @@ def handle(handle_func: customer_code.Function):
             sys.exit(1)
         log.log("{0} is set, value: {1}".
                 format(constants.FN_LISTENER, lsnr))
-        start(handle_func, lsnr, loop=loop)
+        start(handle_code, lsnr, loop=loop)
     else:
         print("incompatible function format!", file=sys.stderr, flush=True)
         sys.exit("incompatible function format!")
