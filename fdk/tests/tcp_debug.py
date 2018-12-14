@@ -45,7 +45,7 @@ def handle(handle_func: customer_code.Function, port: int=5000):
         asyncio.start_server(
             event_handler.event_handle(handle_func),
             host=host, port=port,
-            limit=constants.IO_LIMIT, loop=loop)
+            limit=constants.ASYNC_IO_READ_BUFFER, loop=loop)
     )
     try:
         loop.run_forever()

@@ -38,7 +38,7 @@ async def process_chunk(connection: h11.Connection,
     # function to be a coroutine
     request, body = None, io.BytesIO()
     while True:
-        buf = await request_reader.read(constants.IO_LIMIT)
+        buf = await request_reader.read(constants.ASYNC_IO_READ_BUFFER)
         connection.receive_data(buf)
         while True:
             event = connection.next_event()

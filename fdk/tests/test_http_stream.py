@@ -116,7 +116,7 @@ async def test_deadline():
 @pytest.mark.asyncio
 async def test_io_limit_exceeded():
     con = h11.Connection(h11.CLIENT)
-    data = os.urandom(5 * constants.IO_LIMIT)
+    data = os.urandom(5 * constants.ASYNC_IO_READ_BUFFER)
     headers = {
         'host': 'localhost:5000',
         'user-agent': 'curl/7.54.0',

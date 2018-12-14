@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-IO_LIMIT = 6291456
+ASYNC_IO_READ_BUFFER = 65536
 DEFAULT_DEADLINE = 30
 HTTPSTREAM = "http-stream"
 FN_FORMAT = "FN_FORMAT"
