@@ -291,3 +291,74 @@ In order to make an FDK to process IO operation at least 4 times faster you need
 [UVLoop](https://github.com/MagicStack/uvloop) is a CPython wrapper on top of cross-platform [libuv](https://github.com/libuv/libuv).
 Unfortunately, uvloop doesn't support Windows for some reason, so, in order to let developers test their code on Windows
 FDK doesn't install uvloop by default, but still has some checks to see whether it is installed or not.
+
+
+## Migration path
+
+As if you are the one who used Python FDK before and would like to update - please read this section carefully.
+A new FDK is here which means there suppose to be a way to upgrade your code from an old-style FDK to a new-style FDK.
+
+### No `__main__` definition
+
+As you noticed - an entry point a function changed, i.e., func.py no longer considered as the main module (`__main__`) which means that the following section:
+
+```python
+    if __name__ == "__main__":
+        fdk.handle(handler)
+```
+
+has no effect any longer. Please note that FDK will fail-fast with an appropriate message if old-style FDK format used.
+
+### `data` type has changed
+
+With a new FDK, `data` parameter is changing from `str` to `io.BytesIO`.
+The simplest way to migrate is to wrap your data processing code with 1 line of code:
+```python
+data = data.read()
+```
+
+If you've been using json lib to turn an incoming data into a dictionary you need to replace: `json.loads` with `json.load`
+
+```python
+    try:
+        dct = json.load(data)
+    except ValueError as ex:
+        # do here whatever is reasonable
+```
+
+### Dockerfile
+If you've been using CLI to build function without modifying runtime in `func.yaml` to `docker` 
+instead of `python` then the only thing you need is to update the CLI to the latest version and 
+pin your Python runtime version to `python` or `python3.7.1`.
+
+If you've been using custom multi-stage Dockerfile (derived from what Fn CLI generates) 
+the only thing that is necessary to change is an `ENTRYPOINT` from:
+
+```text
+    ENTRYPOINT["python", "func.py"]
+```
+
+to:
+
+```text
+    ENTRYPOINT["/python/bin/fdk", "func.py", "handler"]
+```
+
+If you've been using your own Dockerfile that wasn't derived from the Dockerfile 
+that CLI is generating, then you need to search in your `$PATH` where CLI fdk was installed 
+(on Linux, it will be installed to `/usr/local/bin/fdk`). At most of the times, if you've been using:
+
+```text
+pip install --target <location> ...
+```
+
+then you need to search fdk CLI at `<location>/bin/fdk`, this is what Fn CLI does by calling the following command:
+
+```text
+pip install --target /python ...
+```
+
+## Notes
+
+A new FDK will abort a function execution if old-style function definition is used.
+Make sure you check you migrated your code wisely.
