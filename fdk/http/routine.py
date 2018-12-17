@@ -15,10 +15,24 @@
 import asyncio
 import h11
 import io
+import traceback
+import sys
 
 from fdk import constants
 from fdk import log
 from fdk import response
+
+
+def ensure_connection_is_safe_to_write(action):
+    async def inner(*args, **kwargs):
+        try:
+            return await action(*args, **kwargs)
+        except h11.ProtocolError as ex:
+            log.log(str(ex))
+            traceback.print_exc(file=sys.stderr)
+            sys.exit("Fn <-> FDK connectivity issue: ".format(str(ex)))
+
+    return inner
 
 
 async def process_chunk(connection: h11.Connection,
@@ -77,6 +91,7 @@ async def read_request(connection, request_reader):
         return request, body
 
 
+@ensure_connection_is_safe_to_write
 async def write_response(
         connection: h11.Connection,
         func_response: response.Response,
@@ -110,6 +125,7 @@ async def write_response(
     response_writer.write(connection.send(h11.EndOfMessage()))
 
 
+@ensure_connection_is_safe_to_write
 async def write_error(ex: Exception,
                       connection: h11.Connection,
                       response_writer: asyncio.StreamWriter):
