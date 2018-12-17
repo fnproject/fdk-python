@@ -18,6 +18,7 @@ import sys
 
 
 def __setup_logger():
+    logging.getLogger("asyncio").setLevel(logging.DEBUG)
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stderr)

@@ -42,10 +42,12 @@ def start(handle_code: customer_code.Function,
     :return: None
     """
     log.log("in http_stream.start")
-    socket_path = str(uds).lstrip("unix:")
-
-    # try to remove pre-existing UDS: ignore errors here
+    socket_path = os.path.normpath(str(uds).lstrip("unix:"))
     socket_dir, socket_file = os.path.split(socket_path)
+    if socket_file == "":
+        sys.exit("malformed FN_LISTENER env var "
+                 "value: {0}".format(socket_path))
+
     phony_socket_path = os.path.join(
         socket_dir, "phony" + socket_file)
 
@@ -110,15 +112,16 @@ def handle(handle_code: customer_code.Function):
 
     format_def = os.environ.get(constants.FN_FORMAT)
     lsnr = os.environ.get(constants.FN_LISTENER)
-    log.log("format: {0}".format(format_def))
+    log.log("{0} is set, value: {1}".
+            format(constants.FN_FORMAT, format_def))
+
+    if lsnr is None:
+        sys.exit("{0} is not set".format(constants.FN_LISTENER))
+
+    log.log("{0} is set, value: {1}".
+            format(constants.FN_LISTENER, lsnr))
 
     if format_def == constants.HTTPSTREAM:
-        if lsnr is None:
-            log.log("{0} is not set".format(constants.FN_LISTENER))
-            sys.exit(1)
-        log.log("{0} is set, value: {1}".
-                format(constants.FN_LISTENER, lsnr))
         start(handle_code, lsnr, loop=loop)
     else:
-        print("incompatible function format!", file=sys.stderr, flush=True)
         sys.exit("incompatible function format!")

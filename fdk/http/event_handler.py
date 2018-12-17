@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import asyncio
 import h11
 
 from fdk import constants
@@ -29,7 +30,8 @@ def event_handle(handle_code: customer_code.Function):
     :type handle_code: fdk.customer_code.Function
     :return: None
     """
-    async def pure_handler(request_reader, response_writer):
+    async def pure_handler(request_reader: asyncio.StreamReader,
+                           response_writer: asyncio.StreamWriter):
         log.log("in pure_handler")
         connection = h11.Connection(h11.SERVER)
         try:
@@ -46,5 +48,8 @@ def event_handle(handle_code: customer_code.Function):
                 connection, func_response, response_writer)
         except Exception as ex:
             await routine.write_error(ex, connection, response_writer)
+        finally:
+            await response_writer.drain()
+            response_writer.close()
 
     return pure_handler

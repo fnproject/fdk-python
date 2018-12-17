@@ -37,11 +37,17 @@ async def process_chunk(connection: h11.Connection,
     # this change will be required when an FDK will enforce customer's
     # function to be a coroutine
     request, body = None, io.BytesIO()
+    log.log("starting process_chunk")
     while True:
+        log.log("process_chunk: reading chunk of data from async reader")
         buf = await request_reader.read(constants.ASYNC_IO_READ_BUFFER)
+        log.log("process_chunk: buffer filled")
         connection.receive_data(buf)
+        log.log("process_chunk: sending data to h11")
         while True:
             event = connection.next_event()
+            log.log("process_chunk: event type {0}"
+                    .format(type(event)))
             if isinstance(event, h11.Request):
                 request = event
             if isinstance(event, h11.Data):
@@ -49,6 +55,7 @@ async def process_chunk(connection: h11.Connection,
             if isinstance(event, h11.EndOfMessage):
                 return request, body
             if isinstance(event, (h11.NEED_DATA, h11.PAUSED)):
+                log.log("requiring more data or connection paused")
                 break
             if isinstance(event, h11.ConnectionClosed):
                 raise Exception("connection closed")
@@ -84,22 +91,23 @@ async def write_response(
     :type response_writer: asyncio.StreamWriter
     :return: None
     """
-    headers = func_response.ctx.GetResponseHeaders().items()
+    headers = func_response.ctx.GetResponseHeaders()
     status = func_response.status()
     log.log("response headers: {}".format(headers))
     log.log("response status: {}".format(status))
+    resp_data = str(func_response.body()).encode("utf-8")
+    headers.update({constants.CONTENT_LENGTH: str(len(resp_data))})
+
     response_writer.write(
         connection.send(h11.Response(
-            status_code=status, headers=headers)
+            status_code=status, headers=headers.items())
         )
     )
-
     response_writer.write(connection.send(
         h11.Data(
-            data=str(func_response.body()).encode("utf-8")))
+            data=resp_data))
     )
     response_writer.write(connection.send(h11.EndOfMessage()))
-    await response_writer.drain()
 
 
 async def write_error(ex: Exception,
@@ -118,13 +126,11 @@ async def write_error(ex: Exception,
     data = str(ex)
     headers = {
         constants.CONTENT_TYPE: "text/plain",
-        constants.CONTENT_LENGTH: len(data)
+        constants.CONTENT_LENGTH: str(len(data))
     }
-    status = 502
-
     response_writer.write(
         connection.send(h11.Response(
-            status_code=status, headers=headers)
+            status_code=502, headers=headers.items())
         )
     )
 
@@ -133,4 +139,3 @@ async def write_error(ex: Exception,
             data=data.encode("utf-8")))
     )
     response_writer.write(connection.send(h11.EndOfMessage()))
-    await response_writer.drain()
