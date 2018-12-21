@@ -155,3 +155,38 @@ async def write_error(ex: Exception,
             data=data.encode("utf-8")))
     )
     response_writer.write(connection.send(h11.EndOfMessage()))
+
+
+async def close(response_writer: asyncio.StreamWriter):
+    log.log("closing response writer")
+    try:
+        response_writer.close()
+        await response_writer.wait_closed()
+    except Exception as ex:
+        print(str(ex), file=sys.stderr, flush=True)
+
+
+async def maybe_close(connection: h11.Connection,
+                      response_writer: asyncio.StreamWriter):
+    """
+    Ensures whether there's a need to close the connection or keep using it
+    :param connection: h11 server connection object
+    :param response_writer:
+    :return: None
+    """
+    log.log("server state: {0}".format(connection.our_state))
+    if connection.our_state is h11.MUST_CLOSE:
+        log.log("attempting to close connection")
+        if response_writer.can_write_eof():
+            try:
+                log.log("sending EOF")
+                response_writer.write_eof()
+                await response_writer.drain()
+            finally:
+                await close(response_writer)
+    else:
+        try:
+            connection.start_next_cycle()
+        except h11.ProtocolError as ex:
+            print(str(ex), file=sys.stderr, flush=True)
+            await close(response_writer)
