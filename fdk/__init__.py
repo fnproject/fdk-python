@@ -28,6 +28,24 @@ except ImportError:
     log.log("uvloop is not installed, using default event loop")
 
 
+async def create_unix_server(client_connected_cb, path=None, *,
+                             loop=None,
+                             limit=constants.ASYNC_IO_READ_BUFFER,
+                             start_serving=False):
+    """Similar to `start_server` but works with UNIX Domain Sockets."""
+    if loop is None:
+        loop = asyncio.get_event_loop()
+
+    def factory():
+        reader = asyncio.streams.StreamReader(limit=limit, loop=loop)
+        protocol = asyncio.streams.StreamReaderProtocol(
+            reader, client_connected_cb, loop=loop)
+        return protocol
+
+    return await loop.create_unix_server(
+        factory, path, start_serving=start_serving)
+
+
 def start(handle_code: customer_code.Function,
           uds: str,
           loop: asyncio.AbstractEventLoop=None):
@@ -60,10 +78,11 @@ def start(handle_code: customer_code.Function,
 
     log.log("starting unix socket site")
     unix_srv = loop.run_until_complete(
-        asyncio.start_unix_server(
+        create_unix_server(
             event_handler.event_handle(handle_code),
             path=phony_socket_path,
-            loop=loop, limit=constants.ASYNC_IO_READ_BUFFER
+            loop=loop, limit=constants.ASYNC_IO_READ_BUFFER,
+            start_serving=False,
         )
     )
     try:
@@ -77,6 +96,8 @@ def start(handle_code: customer_code.Function,
         log.log("socket permissions: {0}"
                 .format(oct(os.stat(socket_path).st_mode)))
         log.log("starting infinite loop")
+
+        loop.run_until_complete(unix_srv.serve_forever())
         loop.run_forever()
     except (Exception, BaseException) as ex:
         log.log(str(ex))
