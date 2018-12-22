@@ -19,6 +19,7 @@ import sys
 from fdk import constants
 from fdk import customer_code
 from fdk import log
+from fdk.http import routine
 from fdk.http import event_handler
 
 try:
@@ -32,18 +33,12 @@ async def create_unix_server(client_connected_cb, path=None, *,
                              loop=None,
                              limit=constants.ASYNC_IO_READ_BUFFER,
                              start_serving=False):
-    """Similar to `start_server` but works with UNIX Domain Sockets."""
     if loop is None:
         loop = asyncio.get_event_loop()
 
-    def factory():
-        reader = asyncio.streams.StreamReader(limit=limit, loop=loop)
-        protocol = asyncio.streams.StreamReaderProtocol(
-            reader, client_connected_cb, loop=loop)
-        return protocol
-
     return await loop.create_unix_server(
-        factory, path, start_serving=start_serving)
+        routine.protocol_factory(client_connected_cb, loop, limit=limit),
+        path, start_serving=start_serving)
 
 
 def start(handle_code: customer_code.Function,
@@ -98,7 +93,6 @@ def start(handle_code: customer_code.Function,
         log.log("starting infinite loop")
 
         loop.run_until_complete(unix_srv.serve_forever())
-        loop.run_forever()
     except (Exception, BaseException) as ex:
         log.log(str(ex))
         raise ex

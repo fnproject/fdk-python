@@ -17,6 +17,7 @@ import asyncio
 from fdk import constants
 from fdk import customer_code
 from fdk import log
+from fdk.http import routine
 from fdk.http import event_handler
 
 try:
@@ -26,20 +27,16 @@ except ImportError:
     log.log("uvloop is not installed, using default event loop")
 
 
-async def start_server(client_connected_cb, host=None, port=None, *,
-                       loop=None,
-                       limit=constants.ASYNC_IO_READ_BUFFER, **kwds):
-    """Similar to `start_server` but works with UNIX Domain Sockets."""
+async def create_server(client_connected_cb, host=None, port=None, *,
+                        loop=None,
+                        limit=constants.ASYNC_IO_READ_BUFFER, **kwds):
     if loop is None:
         loop = asyncio.get_event_loop()
 
-    def factory():
-        reader = asyncio.streams.StreamReader(limit=limit, loop=loop)
-        protocol = asyncio.streams.StreamReaderProtocol(
-            reader, client_connected_cb, loop=loop)
-        return protocol
-
-    return await loop.create_server(factory, host, port, **kwds)
+    return await loop.create_server(
+        routine.protocol_factory(client_connected_cb, loop, limit=limit),
+        host, port, **kwds
+    )
 
 
 def handle(handle_func: customer_code.Function, port: int=5000):
@@ -58,7 +55,7 @@ def handle(handle_func: customer_code.Function, port: int=5000):
             "TCP socket: {0}:{1}".format(host, port))
     loop = asyncio.get_event_loop()
     tcp_srv = loop.run_until_complete(
-        start_server(
+        create_server(
             event_handler.event_handle(handle_func),
             host=host, port=port,
             limit=constants.ASYNC_IO_READ_BUFFER, loop=loop,
@@ -66,7 +63,6 @@ def handle(handle_func: customer_code.Function, port: int=5000):
     )
     try:
         loop.run_until_complete(tcp_srv.serve_forever())
-        loop.run_forever()
     finally:
         if hasattr(loop, 'shutdown_asyncgens'):
             loop.run_until_complete(loop.shutdown_asyncgens())

@@ -30,11 +30,10 @@ def event_handle(handle_code: customer_code.Function):
     :type handle_code: fdk.customer_code.Function
     :return: None
     """
-    connection = h11.Connection(h11.SERVER)
-
     async def pure_handler(request_reader: asyncio.StreamReader,
                            response_writer: asyncio.StreamWriter):
         log.log("in pure_handler")
+        connection = h11.Connection(h11.SERVER)
         try:
             log.log("server state: {0}".format(connection.our_state))
             request, body = await routine.read_request(

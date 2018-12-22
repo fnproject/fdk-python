@@ -16,6 +16,7 @@ import asyncio
 import h11
 import io
 import traceback
+import typing
 import sys
 
 from fdk import constants
@@ -161,7 +162,9 @@ async def close(response_writer: asyncio.StreamWriter):
     log.log("closing response writer")
     try:
         response_writer.close()
+        log.log("connection closed")
         await response_writer.wait_closed()
+        log.log("awaiting for connection to be closed")
     except Exception as ex:
         print(str(ex), file=sys.stderr, flush=True)
 
@@ -184,9 +187,22 @@ async def maybe_close(connection: h11.Connection,
                 await response_writer.drain()
             finally:
                 await close(response_writer)
-    else:
-        try:
-            connection.start_next_cycle()
-        except h11.ProtocolError as ex:
-            print(str(ex), file=sys.stderr, flush=True)
-            await close(response_writer)
+
+
+def protocol_factory(client_connected_cb: typing.Callable,
+                     loop: asyncio.AbstractEventLoop,
+                     limit=constants.ASYNC_IO_READ_BUFFER):
+    """
+    Turns simple callable into an asyncio streaming protocol
+    :param client_connected_cb: request handler
+    :param loop: asyncio event loop
+    :param limit: read limit
+    :return: an instance of a protocol
+    :rtype: typing.Callable
+    """
+    def factory_method():
+        reader = asyncio.streams.StreamReader(limit=limit, loop=loop)
+        return asyncio.streams.StreamReaderProtocol(
+            reader, client_connected_cb, loop=loop)
+
+    return factory_method
