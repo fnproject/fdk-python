@@ -38,13 +38,10 @@ def event_handle(handle_code: customer_code.Function):
             log.log("server state: {0}".format(connection.our_state))
             request, body = await routine.read_request(
                 connection, request_reader)
-            headers = dict(request.headers)
-
             func_response = await runner.handle_request(
                 handle_code, constants.HTTPSTREAM,
-                headers=headers, data=body)
+                headers=dict(request.headers), data=body)
             log.log("request execution completed")
-
             await routine.write_response(
                 connection, func_response, response_writer)
         except Exception as ex:

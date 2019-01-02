@@ -85,6 +85,8 @@ def start(handle_code: customer_code.Function,
         os.chmod(phony_socket_path, 0o666)
         log.log("phony socket permissions: {0}"
                 .format(oct(os.stat(phony_socket_path).st_mode)))
+        log.log("calling '.start_serving()'")
+        loop.run_until_complete(unix_srv.start_serving())
         log.log("sym-linking {0} to {1}".format(
             socket_path, phony_socket_path))
         os.symlink(os.path.basename(phony_socket_path), socket_path)
