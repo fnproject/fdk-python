@@ -36,9 +36,12 @@ async def create_unix_server(client_connected_cb, path=None, *,
     if loop is None:
         loop = asyncio.get_event_loop()
 
-    return await loop.create_unix_server(
-        routine.protocol_factory(client_connected_cb, loop, limit=limit),
-        path, start_serving=start_serving)
+    return await asyncio.start_unix_server(
+        client_connected_cb,
+        path=path,
+        loop=loop,
+        limit=limit,
+        start_serving=start_serving)
 
 
 def start(handle_code: customer_code.Function,
