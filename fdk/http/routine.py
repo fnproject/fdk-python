@@ -169,6 +169,17 @@ async def close(response_writer: asyncio.StreamWriter):
         print(str(ex), file=sys.stderr, flush=True)
 
 
+async def send_eof_and_close(response_writer, close_writer=True):
+    if response_writer.can_write_eof():
+        try:
+            log.log("sending EOF")
+            response_writer.write_eof()
+            await response_writer.drain()
+        finally:
+            if close_writer:
+                await close(response_writer)
+
+
 async def maybe_close(connection: h11.Connection,
                       response_writer: asyncio.StreamWriter):
     """
@@ -178,15 +189,11 @@ async def maybe_close(connection: h11.Connection,
     :return: None
     """
     log.log("server state: {0}".format(connection.our_state))
-    if connection.our_state is h11.MUST_CLOSE:
-        log.log("attempting to close connection")
-        if response_writer.can_write_eof():
-            try:
-                log.log("sending EOF")
-                response_writer.write_eof()
-                await response_writer.drain()
-            finally:
-                await close(response_writer)
+    log.log("attempting to close connection")
+    await send_eof_and_close(
+        response_writer,
+        close_writer=connection.our_state is h11.MUST_CLOSE
+    )
 
 
 def protocol_factory(client_connected_cb: typing.Callable,
