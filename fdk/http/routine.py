@@ -16,7 +16,6 @@ import asyncio
 import h11
 import io
 import traceback
-import typing
 import sys
 
 from fdk import constants
@@ -194,22 +193,3 @@ async def maybe_close(connection: h11.Connection,
         response_writer,
         close_writer=connection.our_state is h11.MUST_CLOSE
     )
-
-
-def protocol_factory(client_connected_cb: typing.Callable,
-                     loop: asyncio.AbstractEventLoop,
-                     limit=constants.ASYNC_IO_READ_BUFFER):
-    """
-    Turns simple callable into an asyncio streaming protocol
-    :param client_connected_cb: request handler
-    :param loop: asyncio event loop
-    :param limit: read limit
-    :return: an instance of a protocol
-    :rtype: typing.Callable
-    """
-    def factory_method():
-        reader = asyncio.streams.StreamReader(limit=limit, loop=loop)
-        return asyncio.streams.StreamReaderProtocol(
-            reader, client_connected_cb, loop=loop)
-
-    return factory_method

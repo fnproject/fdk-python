@@ -55,7 +55,7 @@ def handle(handle_func: customer_code.Function, port: int=5000):
             "TCP socket: {0}:{1}".format(host, port))
     loop = asyncio.get_event_loop()
     tcp_srv = loop.run_until_complete(
-        create_server(
+        asyncio.start_server(
             event_handler.event_handle(handle_func),
             host=host, port=port,
             limit=constants.ASYNC_IO_READ_BUFFER, loop=loop,

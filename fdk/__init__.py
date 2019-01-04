@@ -19,7 +19,6 @@ import sys
 from fdk import constants
 from fdk import customer_code
 from fdk import log
-from fdk.http import routine
 from fdk.http import event_handler
 
 try:
@@ -27,18 +26,6 @@ try:
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     log.log("uvloop is not installed, using default event loop")
-
-
-async def create_unix_server(client_connected_cb, path=None, *,
-                             loop=None,
-                             limit=constants.ASYNC_IO_READ_BUFFER,
-                             start_serving=False):
-    if loop is None:
-        loop = asyncio.get_event_loop()
-
-    return await loop.create_unix_server(
-        routine.protocol_factory(client_connected_cb, loop, limit=limit),
-        path, start_serving=start_serving)
 
 
 def start(handle_code: customer_code.Function,
@@ -73,11 +60,12 @@ def start(handle_code: customer_code.Function,
 
     log.log("starting unix socket site")
     unix_srv = loop.run_until_complete(
-        create_unix_server(
+        asyncio.start_unix_server(
             event_handler.event_handle(handle_code),
             path=phony_socket_path,
-            loop=loop, limit=constants.ASYNC_IO_READ_BUFFER,
-            start_serving=False,
+            loop=loop,
+            limit=constants.ASYNC_IO_READ_BUFFER,
+            start_serving=False
         )
     )
     try:
