@@ -80,16 +80,17 @@ async def handle_request(handler_code, format_def, **kwargs):
     :return: function's response
     :rtype: fdk.response.Response
     """
-
+    log.log("in handle_request")
     ctx, body = context.context_from_format(format_def, **kwargs)
-
+    log.log("context provisioned")
     try:
         response_data = await with_deadline(ctx, handler_code, body)
-
+        log.log("function result obtained")
         if isinstance(response_data, response.Response):
             return response_data
 
         headers = ctx.GetResponseHeaders()
+        log.log("response headers obtained")
         response_content_type = headers.get(
             constants.CONTENT_TYPE, "text/plain"
         )

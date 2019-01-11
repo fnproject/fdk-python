@@ -12,15 +12,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
-import h11
+import io
+import logging
 
 from fdk import constants
 from fdk import customer_code
-from fdk import log
 from fdk import runner
 
-from fdk.http import routine
+logger = logging.getLogger(__name__)
 
 
 def event_handle(handle_code: customer_code.Function):
@@ -30,24 +29,12 @@ def event_handle(handle_code: customer_code.Function):
     :type handle_code: fdk.customer_code.Function
     :return: None
     """
-    async def pure_handler(request_reader: asyncio.StreamReader,
-                           response_writer: asyncio.StreamWriter):
-        log.log("in pure_handler")
-        connection = h11.Connection(h11.SERVER)
-        try:
-            log.log("server state: {0}".format(connection.our_state))
-            request, body = await routine.read_request(
-                connection, request_reader)
-            func_response = await runner.handle_request(
-                handle_code, constants.HTTPSTREAM,
-                headers=dict(request.headers), data=body)
-            log.log("request execution completed")
-            await routine.write_response(
-                connection, func_response, response_writer)
-        except Exception as ex:
-            await routine.write_error(ex, connection, response_writer)
-        finally:
-            await response_writer.drain()
-            await routine.maybe_close(connection, response_writer)
+    async def pure_handler(request):
+        logger.info("in pure_handler")
+        func_response = await runner.handle_request(
+            handle_code, constants.HTTPSTREAM,
+            headers=dict(request.headers), data=io.BytesIO(request.body))
+        logger.info("request execution completed")
+        return func_response
 
     return pure_handler

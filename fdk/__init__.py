@@ -14,18 +14,15 @@
 
 import asyncio
 import os
+import socket
 import sys
 
 from fdk import constants
 from fdk import customer_code
 from fdk import log
 from fdk.http import event_handler
-
-try:
-    import uvloop
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-except ImportError:
-    log.log("uvloop is not installed, using default event loop")
+from async_http import app
+from async_http import router
 
 
 def start(handle_code: customer_code.Function,
@@ -58,23 +55,23 @@ def start(handle_code: customer_code.Function,
     except OSError:
         pass
 
-    log.log("starting unix socket site")
-    unix_srv = loop.run_until_complete(
-        asyncio.start_unix_server(
-            event_handler.event_handle(handle_code),
-            path=phony_socket_path,
-            loop=loop,
-            limit=constants.ASYNC_IO_READ_BUFFER,
-            start_serving=False
-        )
-    )
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.bind(phony_socket_path)
+
+    rtr = router.Router()
+    rtr.add("/call", frozenset({"POST"}),
+            event_handler.event_handle(handle_code))
+
+    srv = app.AsyncHTTPServer(name="fdk", router=rtr)
+    start_serving, server_forever = srv.run(sock=sock, loop=loop)
+
     try:
         log.log("CHMOD 666 {0}".format(phony_socket_path))
         os.chmod(phony_socket_path, 0o666)
         log.log("phony socket permissions: {0}"
                 .format(oct(os.stat(phony_socket_path).st_mode)))
         log.log("calling '.start_serving()'")
-        loop.run_until_complete(unix_srv.start_serving())
+        start_serving()
         log.log("sym-linking {0} to {1}".format(
             socket_path, phony_socket_path))
         os.symlink(os.path.basename(phony_socket_path), socket_path)
@@ -82,16 +79,11 @@ def start(handle_code: customer_code.Function,
                 .format(oct(os.stat(socket_path).st_mode)))
         log.log("starting infinite loop")
 
-        loop.run_until_complete(unix_srv.serve_forever())
     except (Exception, BaseException) as ex:
         log.log(str(ex))
         raise ex
-    finally:
-        if hasattr(loop, 'shutdown_asyncgens'):
-            loop.run_until_complete(loop.shutdown_asyncgens())
-        unix_srv.close()
-        loop.run_until_complete(unix_srv.wait_closed())
-        loop.close()
+
+    server_forever()
 
 
 def handle(handle_code: customer_code.Function):

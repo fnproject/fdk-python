@@ -13,37 +13,21 @@
 #    under the License.
 
 import asyncio
+import socket
 
-from fdk import constants
 from fdk import customer_code
 from fdk import log
-from fdk.http import routine
 from fdk.http import event_handler
 
-try:
-    import uvloop
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-except ImportError:
-    log.log("uvloop is not installed, using default event loop")
+from async_http import app
+from async_http import router
 
 
-async def create_server(client_connected_cb, host=None, port=None, *,
-                        loop=None,
-                        limit=constants.ASYNC_IO_READ_BUFFER, **kwds):
-    if loop is None:
-        loop = asyncio.get_event_loop()
-
-    return await loop.create_server(
-        routine.protocol_factory(client_connected_cb, loop, limit=limit),
-        host, port, **kwds
-    )
-
-
-def handle(handle_func: customer_code.Function, port: int=5000):
+def handle(handle_code: customer_code.Function, port: int=5000):
     """
     FDK entry point
-    :param handle_func: customer's code
-    :type handle_func: fdk.customer_code.Function
+    :param handle_code: customer's code
+    :type handle_code: fdk.customer_code.Function
     :param port: TCP port to start an FDK at
     :type port: int
     :return: None
@@ -54,16 +38,14 @@ def handle(handle_func: customer_code.Function, port: int=5000):
     log.log("Starting HTTP server on "
             "TCP socket: {0}:{1}".format(host, port))
     loop = asyncio.get_event_loop()
-    tcp_srv = loop.run_until_complete(
-        asyncio.start_server(
-            event_handler.event_handle(handle_func),
-            host=host, port=port,
-            limit=constants.ASYNC_IO_READ_BUFFER, loop=loop,
-            start_serving=False)
-    )
-    try:
-        loop.run_until_complete(tcp_srv.serve_forever())
-    finally:
-        if hasattr(loop, 'shutdown_asyncgens'):
-            loop.run_until_complete(loop.shutdown_asyncgens())
-        loop.stop()
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("localhost", port))
+
+    rtr = router.Router()
+    rtr.add("/call", frozenset({"POST"}),
+            event_handler.event_handle(handle_code))
+    srv = app.AsyncHTTPServer(name="fdk-tcp-debug", router=rtr)
+    start_serving, server_forever = srv.run(sock=sock, loop=loop)
+    start_serving()
+    server_forever()

@@ -12,18 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import asyncio
 import datetime as dt
-import h11
 import json
-import io
 import pytest
-import os
 
-from fdk import constants
 from fdk import fixtures
-from fdk.http import routine
-from fdk.http import event_handler
 
 from fdk.tests import funcs
 
@@ -112,117 +105,3 @@ async def test_deadline():
     _, status, _ = await call
 
     assert 502 == status
-
-
-@pytest.mark.asyncio
-async def test_io_limit_exceeded():
-    con = h11.Connection(h11.CLIENT)
-    data = os.urandom(5 * constants.ASYNC_IO_READ_BUFFER)
-    headers = {
-        'host': 'localhost:5000',
-        'user-agent': 'curl/7.54.0',
-        'accept': '*/*',
-        'content-length': str(len(data)),
-        'content-type': 'application/x-www-form-urlencoded',
-        'expect': '100-continue',
-        'connection': 'keep-alive',
-    }
-
-    stream = asyncio.StreamReader(
-        loop=asyncio.get_event_loop())
-    stream.feed_data(
-        con.send(
-            h11.Request(
-                method="POST",
-                target="/call",
-                headers=headers.items()
-            )
-        )
-    )
-    d = con.send(h11.Data(data=data))
-    stream.feed_data(d)
-    stream.feed_data(con.send(h11.EndOfMessage()))
-    stream.feed_eof()
-    rq, rq_data = await routine.read_request(
-        h11.Connection(h11.SERVER), stream)
-
-    assert rq is not None
-    assert rq_data is not None
-    assert rq_data.seek(0, io.SEEK_END) == len(data)
-
-
-class asyncWriterStub(io.BytesIO):
-
-    async def drain(self):
-        pass
-
-    def can_write_eof(self):
-        return True
-
-    def write_eof(self):
-        return
-
-    async def wait_closed(self):
-        return
-
-
-async def connection_with(data, headers):
-    loop = asyncio.get_event_loop()
-    request_reader = asyncio.StreamReader(loop=loop)
-    client = h11.Connection(h11.CLIENT)
-    rq = h11.Request(
-        method="POST", target="/call",
-        headers=headers,
-    )
-    data = h11.Data(data=data.encode("utf-8"))
-    OEM = h11.EndOfMessage()
-    for event in [rq, data, OEM]:
-        request_reader.feed_data(client.send(event))
-    buf = asyncWriterStub()
-    request_reader.feed_eof()
-
-    pure_runner = event_handler.event_handle(
-        fixtures.code(funcs.coro))
-
-    await pure_runner(request_reader, buf)
-
-    return buf
-
-
-@pytest.mark.asyncio
-async def test_connection_closed():
-    stream = asyncio.StreamReader(loop=asyncio.get_event_loop())
-    stream.feed_eof()
-    try:
-        await routine.read_request(
-            h11.Connection(h11.SERVER), stream)
-    except Exception as ex:
-        assert "connection closed" in str(ex)
-
-
-@pytest.mark.asyncio
-async def test_keep_alive():
-    data = '{"name:"denis"}'
-    buf = await connection_with(
-        data, [
-            ("Host", "pytest"),
-            ("Connection", "keep-alive"),
-            ("Content-Length", str(len(data)))
-        ]
-    )
-
-    assert buf.closed is False
-
-
-@pytest.mark.asyncio
-async def test_no_keep_alive():
-    data = '{"name:"denis"}'
-    buf = await connection_with(
-        data, [
-            ("Host", "pytest"),
-            ("Connection", "close"),
-            ("Content-Length", str(len(data))),
-        ]
-    )
-
-    assert buf.closed is True
