@@ -20,9 +20,131 @@ import sys
 from fdk import constants
 from fdk import customer_code
 from fdk import log
-from fdk.http import event_handler
-from async_http import app
-from async_http import router
+
+MAX_RECV = 2 ** 16 # Byte
+TIMEOUT = 10 # Second
+
+# NOTE: we do not need pipelining or ASGI
+# TODO(reed): figure out how to get an HTTPProtocol that has handle_code in it
+# TODO(reed): handle streaming
+# TODO(reed): handle 100 continue
+# TODO(reed): handle keep alives is done-ish? ensure
+# TODO(reed): handle errors
+
+class HTTPProtocol(asyncio.Protocol):
+
+    def __init__(self):
+        self.connection = h11.Connection(h11.SERVER)
+        # handle timeouts
+        loop = asyncio.get_running_loop()
+        self.timeout_handle = loop.call_later(TIMEOUT, self._timeout)
+        # flow control
+        self._can_write = asyncio.Event()
+        self._can_write.set()
+
+    def connection_made(self, transport):
+        self.transport = transport
+
+    def connection_lost(self, error: Optional[Exception]):
+        if error is not None:
+            self.connection.send_failed()  # Set our state to error, prevents recycling
+
+    def eof_received(self):
+        self.data_received(b"")
+        self._deliver_events()
+        return True
+
+    def data_received(self, data):
+        self.connection.receive_data(data)
+        self._deliver_events()
+
+    # Internal helper function -- deliver all pending events
+    def _deliver_events(self):
+        self.timeout_handle.cancel() # stop keep alive timeout
+        while True:
+            event = self.connection.next_event()
+            if isinstance(event, h11.Request):
+                self.handle_request(event)
+            elif event is h11.PAUSED:
+                self.transport.pause_reading() # back pressure
+                break
+            elif (
+                isinstance(event, h11.ConnectionClosed)
+                or event is h11.NEED_DATA
+            ):
+                break
+
+        if self.connection.our_state in {h11.ERROR, h11.MUST_CLOSE}:
+            self.close()
+        else: # TODO(reed): check h11.DONE?
+            self.start_next_cycle()
+            self.timeout_handle = loop.call_later(TIMEOUT, self._timeout) # TODO(reed): extract function
+
+    # Called by your code when its ready to start a new
+    # request/response cycle
+    def start_next_cycle(self):
+        self.connection.start_next_cycle()
+        # New events might have been buffered internally, and only
+        # become deliverable after calling start_next_cycle
+        self._deliver_events()
+        # Remove back-pressure
+        self.transport.resume_reading()
+
+    # TODO async?
+    def handle_request(self, request):
+        # TODO(reed): if we want to be pedantic we could check POST /call
+
+        # TODO(reed): handle code
+        # logger.info("running user code")
+        # func_response = await runner.handle_request(
+            # handle_code, constants.HTTPSTREAM,
+            # headers=dict(request.headers), data=io.BytesIO(request.body))
+        # logger.info("user code execution completed")
+
+        # TODO we need to gather the body in deliver events for flow control?
+        data = b""
+        while True:
+            event = self.connection.next_event()
+            if type(event) is h11.EndOfMessage:
+                break
+            assert type(event) is h11.Data
+            data += event.data # TODO(reed): decode?
+
+        body = b"%s %s %s" % (event.method.upper(), event.target, data)
+        headers = [
+            ('content-type', 'text/plain'),
+            ('content-length', str(len(body))),
+        ]
+        response = h11.Response(status_code=200, headers=headers)
+        self.send(response)
+        self.send(h11.Data(data=body))
+        self.send(h11.EndOfMessage())
+
+    def send(self, event):
+        data = self.connection.send(event)
+        self.transport.write(data)
+
+    def _timeout(self):
+        self.close()
+
+    def close(self):
+        self.transport.close()
+        self.resume_writing()
+        self.timeout_handle.cancel() # stop keep alive timeout
+
+    # flow control methods
+    def pause_writing(self):
+        # Will be called whenever the transport crosses the
+        # high-water mark.
+        self._can_write.clear()
+
+    def resume_writing(self):
+        # Will be called whenever the transport drops back below the
+        # low-water mark.
+        self._can_write.set()
+
+    async def drain(self):
+        await self._can_write.wait()
 
 
 def start(handle_code: customer_code.Function,
@@ -55,15 +177,8 @@ def start(handle_code: customer_code.Function,
     except OSError:
         pass
 
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.bind(phony_socket_path)
-
-    rtr = router.Router()
-    rtr.add("/call", frozenset({"POST"}),
-            event_handler.event_handle(handle_code))
-
-    srv = app.AsyncHTTPServer(name="fdk", router=rtr)
-    start_serving, server_forever = srv.run(sock=sock, loop=loop)
+    loop = asyncio.get_running_loop()
+    server = await loop.create_unix_server(HTTPProtocol, path=phony_socket_path)
 
     try:
         log.log("CHMOD 666 {0}".format(phony_socket_path))
@@ -83,7 +198,7 @@ def start(handle_code: customer_code.Function,
         log.log(str(ex))
         raise ex
 
-    server_forever()
+    await server.serve_forever()
 
 
 def handle(handle_code: customer_code.Function):
