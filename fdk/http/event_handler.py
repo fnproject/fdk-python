@@ -16,13 +16,11 @@ import io
 import logging
 
 from fdk import constants
-from fdk import customer_code
-from fdk import runner
 
 logger = logging.getLogger(__name__)
 
 
-def event_handle(handle_code: customer_code.Function):
+def event_handle(handle_code):
     """
     Performs HTTP request-response procedure
     :param handle_code: customer's code
@@ -30,11 +28,18 @@ def event_handle(handle_code: customer_code.Function):
     :return: None
     """
     async def pure_handler(request):
+        from fdk import runner
         logger.info("in pure_handler")
         func_response = await runner.handle_request(
             handle_code, constants.HTTPSTREAM,
             headers=dict(request.headers), data=io.BytesIO(request.body))
         logger.info("request execution completed")
-        return func_response
+
+        from async_http import response
+        return response.HTTPResponse(
+            func_response.body(),
+            headers=func_response.context().GetResponseHeaders(),
+            status=func_response.status(),
+        )
 
     return pure_handler

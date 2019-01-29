@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from importlib import util
-
 
 class Function(object):
 
@@ -24,6 +22,7 @@ class Function(object):
 
     @staticmethod
     def import_from_source(func_module_path):
+        from importlib import util
         func_module_spec = util.spec_from_file_location(
             "func", func_module_path
         )
