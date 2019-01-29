@@ -36,10 +36,12 @@ def event_handle(handle_code):
         logger.info("request execution completed")
 
         from async_http import response
+        headers = func_response.context().GetResponseHeaders()
         return response.HTTPResponse(
-            func_response.body(),
-            headers=func_response.context().GetResponseHeaders(),
+            headers=headers,
             status=func_response.status(),
+            content_type=headers.get(constants.CONTENT_TYPE),
+            body_bytes=func_response.body(),
         )
 
     return pure_handler
