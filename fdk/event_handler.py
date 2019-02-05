@@ -17,6 +17,8 @@ import logging
 
 from fdk import constants
 
+from fdk.async_http import response
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +37,6 @@ def event_handle(handle_code):
             headers=dict(request.headers), data=io.BytesIO(request.body))
         logger.info("request execution completed")
 
-        from async_http import response
         headers = func_response.context().GetResponseHeaders()
         return response.HTTPResponse(
             headers=headers,
