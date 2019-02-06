@@ -13,31 +13,36 @@
 #    under the License.
 
 import datetime as dt
+import io
 import os
 
 from fdk import constants
 from fdk import headers as hs
 
 
-def set_response_headers(current_headers, new_headers,
-                         status_code, content_type=None):
-    if isinstance(new_headers, dict):
-        new_headers = hs.GoLikeHeaders(new_headers)
-    elif isinstance(new_headers, hs.GoLikeHeaders):
-        pass
-    else:
-        raise TypeError(
-            "Invalid headers type: {}, only dict allowed."
-            .format(type(new_headers))
-        )
-
+def set_response_headers(
+        current_headers: dict, new_headers: dict,
+        status_code: int, content_type: str=None):
+    """
+    Sets Fn-readable headers
+    :param current_headers: current HTTP headers
+    :type current_headers: dict
+    :param new_headers: new HTTP headers to add
+    :type new_headers: dict
+    :param status_code: HTTP status code
+    :type status_code: int
+    :param content_type: response content type
+    :type content_type: str
+    :return: updated headers
+    :rtype: dict
+    """
     new_headers = hs.encap_headers(
         new_headers,
         status=status_code,
         content_type=content_type
     )
     for k, v in new_headers.items():
-        current_headers.set(k, v)
+        current_headers[k] = v
 
     return current_headers
 
@@ -47,24 +52,42 @@ class InvokeContext(object):
     def __init__(self, app_id, fn_id, call_id,
                  content_type="application/octet-stream",
                  deadline=None, config=None,
-                 headers=None, arguments=None,
-                 request_url=None, method="POST",
-                 fn_format=None):
+                 headers=None, request_url=None,
+                 method="POST", fn_format=None):
         """
         Request context here to be a placeholder
         for request-specific attributes
+        :param app_id: Fn App ID
+        :type app_id: str
+        :param fn_id: Fn App Fn ID
+        :type fn_id: str
+        :param call_id: Fn call ID
+        :type call_id: str
+        :param content_type: request content type
+        :type content_type: str
+        :param deadline: request deadline
+        :type deadline: str
+        :param config: an app/fn config
+        :type config: dict
+        :param headers: request headers
+        :type headers: dict
+        :param request_url: request URL
+        :type request_url: str
+        :param method: request method
+        :type method: str
+        :param fn_format: function format
+        :type fn_format: str
         """
         self.__app_id = app_id
         self.__fn_id = fn_id
         self.__call_id = call_id
         self.__config = config if config else {}
         self.__headers = headers if headers else {}
-        self._arguments = {} if not arguments else arguments
         self.__deadline = deadline
         self.__content_type = content_type
         self._request_url = request_url
         self._method = method
-        self.__response_headers = hs.GoLikeHeaders({})
+        self.__response_headers = {}
         self.__fn_format = fn_format
 
     def AppID(self):
@@ -106,9 +129,14 @@ class InvokeContext(object):
 
 class HTTPGatewayContext(object):
     def __init__(self, invoke_context: InvokeContext):
+        """
+        Creates an instance of an HTTP context
+        :param invoke_context: invoke context:
+        :type invoke_context: fdk.context.InvokeContext
+        """
         self.__headers = hs.decap_headers(invoke_context.Headers())
         self.__invoke_context = invoke_context
-        self.__response_headers = hs.GoLikeHeaders({})
+        self.__response_headers = {}
 
     def RequestURL(self):
         return self.__invoke_context._request_url
@@ -131,27 +159,37 @@ class HTTPGatewayContext(object):
         return self.__invoke_context.Format()
 
 
-def context_from_format(format_def, **kwargs) -> (InvokeContext, object):
+def context_from_format(format_def: str, **kwargs) -> (
+        InvokeContext, io.BytesIO):
+    """
+    Creates a context from request
+    :param format_def: function format
+    :type format_def: str
+    :param kwargs: request-specific map of parameters
+    :return: invoke context and data
+    :rtype: tuple
+    """
+
     app_id = os.environ.get(constants.FN_APP_ID)
     fn_id = os.environ.get(constants.FN_ID)
 
     if format_def == constants.HTTPSTREAM:
         data = kwargs.get("data")
-        request = kwargs.get("request")
+        headers = kwargs.get("headers")
 
-        method = request.headers.get(constants.FN_HTTP_METHOD)
-        request_url = request.headers.get(
+        method = headers.get(constants.FN_HTTP_METHOD)
+        request_url = headers.get(
             constants.FN_HTTP_REQUEST_URL)
-        deadline = request.headers.get(constants.FN_DEADLINE)
-        call_id = request.headers.get(constants.FN_CALL_ID)
-        content_type = request.content_type
+        deadline = headers.get(constants.FN_DEADLINE)
+        call_id = headers.get(constants.FN_CALL_ID)
+        content_type = headers.get(constants.CONTENT_TYPE)
 
         ctx = InvokeContext(
             app_id, fn_id, call_id,
             content_type=content_type,
             deadline=deadline,
             config=os.environ,
-            headers=hs.GoLikeHeaders(dict(request.headers)),
+            headers=headers,
             method=method,
             request_url=request_url,
             fn_format=constants.HTTPSTREAM,

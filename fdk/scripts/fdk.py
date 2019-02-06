@@ -12,18 +12,25 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-ASYNC_IO_READ_BUFFER = 65536
-DEFAULT_DEADLINE = 30
-HTTPSTREAM = "http-stream"
-FN_FORMAT = "FN_FORMAT"
-FN_LISTENER = "FN_LISTENER"
-FN_HTTP_PREFIX = "Fn-Http-H-"
-FN_HTTP_STATUS = "Fn-Http-Status"
-FN_DEADLINE = "Fn-Deadline"
-FN_HTTP_REQUEST_URL = "Fn-Http-Request-Url"
-FN_CALL_ID = "Fn-Call-Id"
-FN_HTTP_METHOD = "Fn-Http-Method"
-FN_APP_ID = "FN_APP_ID"
-FN_ID = "FN_FN_ID"
-CONTENT_TYPE = "Content-Type"
-CONTENT_LENGTH = "Content-Length"
+import fdk
+import os
+import sys
+
+from fdk import customer_code
+
+
+def main():
+    if len(sys.argv) < 1:
+        print("Usage: fdk <func_module> [entrypoint]")
+        sys.exit("at least func module must be specified")
+
+    if not os.path.exists(sys.argv[1]):
+        sys.exit("Module: {0} doesn't exist".format(sys.argv[1]))
+
+    if len(sys.argv) > 2:
+        handler = customer_code.Function(
+            sys.argv[1], entrypoint=sys.argv[2])
+    else:
+        handler = customer_code.Function(sys.argv[1])
+
+    fdk.handle(handler)

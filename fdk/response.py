@@ -12,57 +12,36 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import ujson
-
+from fdk import context
 from fdk import constants
 
-APP_JSON = "application/json"
 
+class Response(object):
 
-def setup_data(response_data, headers):
-    content_type = headers.get(
-        "content-type",
-        default=APP_JSON
-    )
-    # if response data is an HTML data JSON
-    # decoding will make it malformed
-    # so, we need to tread data with
-    # respect according to content type header
-
-    if content_type.startswith(APP_JSON):
-        # dump to JSON only in case of explicitly declared type
-        data = ujson.dumps(response_data)
-    else:
-        # any other type like HTML/XML must
-        # be returned as native strings
-        # JSON-encoded HTML/XML would be recognized
-        # by modern browsers as a string
-        data = response_data
-
-    return content_type, data
-
-
-class HTTPStreamResponse(object):
-    def __init__(self, ctx, response_data=None,
-                 headers=None, status_code=200):
+    def __init__(self, ctx: context.InvokeContext,
+                 response_data: str=None,
+                 headers: dict=None,
+                 status_code: int=200):
         """
-        HTTPStream response object
-        :param ctx: request context
-        :type ctx: fdk.context.HTTPStreamContext
-        :param response_data: response data
-        :type response_data: object
-        :param headers: HTTP headers
-        :type headers: fdk.headers.GoLikeHeaders
-        :param status_code: HTTP status code
+        Creates an FDK-readable response object
+        :param ctx: invoke context
+        :type ctx: fdk.context.InvokeContext
+        :param response_data: function's response data
+        :type response_data: str
+        :param headers: response headers
+        :type headers: dict
+        :param status_code: response code
         :type status_code: int
         """
-
+        self.ctx = ctx
         self.status_code = status_code
         self.response_data = response_data if response_data else ""
-
+        if headers is None:
+            headers = {}
         ctx.SetResponseHeaders(
             headers, status_code,
-            content_type=headers.get(constants.CONTENT_TYPE)
+            content_type=headers.get(
+                constants.CONTENT_TYPE, "text/plain")
         )
         self.ctx = ctx
 
@@ -72,42 +51,5 @@ class HTTPStreamResponse(object):
     def body(self):
         return self.response_data
 
-    def dump(self):
-        pass
-
     def context(self):
         return self.ctx
-
-
-def response_class_from_context(context):
-    """
-    :param context: request context
-    :type context: fdk.context.RequestContext
-    """
-    format_def = context.Format()
-    if format_def == constants.HTTPSTREAM:
-        return HTTPStreamResponse
-
-
-class RawResponse(object):
-
-    def __init__(self, ctx, response_data=None,
-                 headers=None, status_code=200):
-        cls = response_class_from_context(ctx)
-        self.__resp = cls(
-            ctx, response_data=response_data,
-            headers=headers if headers else {},
-            status_code=status_code
-        )
-
-    def status(self):
-        return self.__resp.status_code
-
-    def body(self):
-        return self.__resp.response_data
-
-    def dump(self):
-        self.__resp.dump()
-
-    def context(self):
-        return self.__resp.context()

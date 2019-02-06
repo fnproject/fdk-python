@@ -1,6 +1,5 @@
 pbr!=2.1.0,>=2.0.0 # Apache-2.0
-uvloop==0.11.3
-ujson==1.35
 iso8601==0.1.12
-aiohttp==3.4.4
-pytest-aiohttp==0.3.0
+pytest==4.0.1
+pytest-asyncio==0.9.0
+httptools>=0.0.10

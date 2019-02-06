@@ -12,14 +12,35 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fdk
 import json
+import io
+import pytest
+
+from fdk import fixtures
+from fdk import response
 
 
-def handler(ctx, data=None):
-    body = json.loads(data) if len(data) > 0 else {"name": "World"}
-    return "Hello {0}".format(body.get("name"))
+def handler(ctx, data: io.BytesIO=None):
+    name = "World"
+    try:
+        body = json.loads(data.getvalue())
+        name = body.get("name")
+    except (Exception, ValueError) as ex:
+        print(str(ex))
+        pass
+
+    return response.Response(
+        ctx, response_data=json.dumps(
+            {"message": "Hello {0}".format(name)}),
+        headers={"Content-Type": "application/json"}
+    )
 
 
-if __name__ == "__main__":
-    fdk.handle(handler)
+@pytest.mark.asyncio
+async def test_parse_request_without_data():
+    call = await fixtures.setup_fn_call(handler)
+
+    content, status, headers = await call
+
+    assert 200 == status
+    assert {"message": "Hello World"} == json.loads(content)
