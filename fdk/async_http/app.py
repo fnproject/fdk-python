@@ -97,11 +97,11 @@ class AsyncHTTPServer(object):
                     "Error while handling error: {}\nStack: {}".format(
                         e, format_exc()
                     ),
-                    status=500,
+                    status=502,
                 )
             else:
                 response = HTTPResponse(
-                    "An error occurred while handling an error", status=500
+                    "An error occurred while handling an error", status=502
                 )
         finally:
             if cancelled:

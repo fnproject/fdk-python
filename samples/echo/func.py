@@ -30,7 +30,7 @@ def handler(ctx, data: io.BytesIO=None):
         pass
 
     return response.Response(
-        ctx, response_data=json.dumps(
+        ctx, status_code=202, response_data=json.dumps(
             {"message": "Hello {0}".format(name)}),
         headers={"Content-Type": "application/json"}
     )
@@ -42,5 +42,5 @@ async def test_parse_request_without_data():
 
     content, status, headers = await call
 
-    assert 200 == status
+    assert 202 == status
     assert {"message": "Hello World"} == json.loads(content)
