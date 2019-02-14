@@ -16,6 +16,8 @@ import datetime as dt
 import json
 import pytest
 
+from fdk import constants
+from fdk import event_handler
 from fdk import fixtures
 
 from fdk.tests import funcs
@@ -105,3 +107,39 @@ async def test_deadline():
     _, status, _ = await call
 
     assert 502 == status
+
+
+@pytest.mark.asyncio
+async def test_default_enforced_response_code():
+
+    event_coro = event_handler.event_handle(
+        fixtures.code(funcs.code404))
+
+    http_resp = await event_coro(fixtures.fake_request())
+
+    assert http_resp.status == 200
+    assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "404"
+
+
+@pytest.mark.asyncio
+async def test_enforced_response_codes_502():
+
+    event_coro = event_handler.event_handle(
+        fixtures.code(funcs.code502))
+
+    http_resp = await event_coro(fixtures.fake_request())
+
+    assert http_resp.status == 502
+    assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "502"
+
+
+@pytest.mark.asyncio
+async def test_enforced_response_codes_504():
+
+    event_coro = event_handler.event_handle(
+        fixtures.code(funcs.code504))
+
+    http_resp = await event_coro(fixtures.fake_request())
+
+    assert http_resp.status == 504
+    assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "504"

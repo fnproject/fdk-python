@@ -38,9 +38,13 @@ def event_handle(handle_code):
         logger.info("request execution completed")
 
         headers = func_response.context().GetResponseHeaders()
+        status = func_response.status()
+        if status not in constants.FN_ENFORCED_RESPONSE_CODES:
+            status = constants.FN_DEFAULT_RESPONSE_CODE
+
         return response.HTTPResponse(
             headers=headers,
-            status=func_response.status(),
+            status=status,
             content_type=headers.get(constants.CONTENT_TYPE),
             body_bytes=func_response.body(),
         )

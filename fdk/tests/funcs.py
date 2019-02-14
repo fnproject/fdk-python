@@ -30,6 +30,18 @@ xml = """<!DOCTYPE mensaje SYSTEM "record.dtd">
 </record>"""
 
 
+def code404(ctx, **kwargs):
+    return response.Response(ctx, status_code=404)
+
+
+def code502(ctx, **kwargs):
+    return response.Response(ctx, status_code=502)
+
+
+def code504(ctx, **kwargs):
+    return response.Response(ctx, status_code=504)
+
+
 def dummy_func(ctx, data=None):
     if data is not None and len(data) > 0:
         body = json.loads(data)

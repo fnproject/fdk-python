@@ -36,6 +36,13 @@ async def process_response(fn_call_coro):
     return response_data, response_status, resp_headers
 
 
+class fake_request(object):
+
+    def __init__(self):
+        self.headers = setup_headers()
+        self.body = b''
+
+
 class code(object):
 
     def __init__(self, fn):
@@ -45,11 +52,8 @@ class code(object):
         return self.fn
 
 
-async def setup_fn_call(
-        handle_func, request_url="/",
-        method="POST", headers=None,
-        content=None, deadline=None):
-
+def setup_headers(deadline=None, headers=None,
+                  request_url="/", method="POST"):
     new_headers = {}
     if headers is not None:
         for k, v in headers.items():
@@ -65,6 +69,18 @@ async def setup_fn_call(
         constants.FN_HTTP_REQUEST_URL: request_url,
         constants.FN_HTTP_METHOD: method,
     })
+    return new_headers
+
+
+async def setup_fn_call(
+        handle_func, request_url="/",
+        method="POST", headers=None,
+        content=None, deadline=None):
+
+    new_headers = setup_headers(
+        deadline=deadline, headers=headers,
+        method=method, request_url=request_url
+    )
 
     return process_response(runner.handle_request(
         code(handle_func), constants.HTTPSTREAM,
