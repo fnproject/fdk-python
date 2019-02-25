@@ -31,7 +31,7 @@ async def test_override_content_type():
 
     assert 200 == status
     assert "OK" == content
-    assert "text/plain" in headers.get("Content-Type")
+    assert "text/plain" in headers.get("content-type")
 
 
 @pytest.mark.asyncio
@@ -42,7 +42,7 @@ async def test_parse_request_without_data():
     print(headers)
     assert 200 == status
     assert "Hello World" == content
-    assert "text/plain" in headers.get("Content-Type")
+    assert "text/plain" in headers.get("content-type")
 
 
 @pytest.mark.asyncio
@@ -55,7 +55,7 @@ async def test_parse_request_with_data():
 
     assert 200 == status
     assert "Hello John" == content
-    assert "text/plain" in headers.get("Content-Type")
+    assert "text/plain" in headers.get("content-type")
 
 
 @pytest.mark.asyncio
