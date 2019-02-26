@@ -12,26 +12,81 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
+from fdk import constants
+
+
+def get_delayed_module_init_class():
+    if constants.is_py37():
+        return Python37DelayedImport
+    else:
+        return Python35plusDelayedImport
+
+
+class PythonDelayedImportAbstraction(object):
+
+    def __init__(self, func_module_path):
+        self._mod_path = func_module_path
+        self._executed = False
+
+    @property
+    def executed(self):
+        return self._executed
+
+    @executed.setter
+    def executed(self, exec_flag):
+        self._executed = exec_flag
+
+    def get_module(self):
+        raise Exception("Not implemented")
+
+
+class Python35plusDelayedImport(PythonDelayedImportAbstraction):
+
+    def __init__(self, func_module_path):
+        self._func_module = None
+        super(Python35plusDelayedImport, self).__init__(func_module_path)
+
+    def get_module(self):
+        if not self.executed:
+            import imp
+            fname, ext = os.path.splitext(
+                os.path.basename(self._mod_path))
+            self._func_module = imp.load_source(fname, self._mod_path)
+            self.executed = True
+
+        return self._func_module
+
+
+class Python37DelayedImport(PythonDelayedImportAbstraction):
+
+    def import_from_source(self):
+        from importlib import util
+        func_module_spec = util.spec_from_file_location(
+            "func", self._mod_path
+        )
+        func_module = util.module_from_spec(func_module_spec)
+        self._func_module_spec = func_module_spec
+        self._func_module = func_module
+
+    def get_module(self):
+        if not self.executed:
+            self.import_from_source()
+            self._func_module_spec.loader.exec_module(
+                self._func_module)
+            self.executed = True
+
+        return self._func_module
+
 
 class Function(object):
 
     def __init__(self, func_module_path, entrypoint="handler"):
-        self.spec, self.mod = self.import_from_source(func_module_path)
-        self._executed = False
+        dm = get_delayed_module_init_class()
+        self._delayed_module_class = dm(func_module_path)
         self._entrypoint = entrypoint
 
-    @staticmethod
-    def import_from_source(func_module_path):
-        from importlib import util
-        func_module_spec = util.spec_from_file_location(
-            "func", func_module_path
-        )
-        func_module = util.module_from_spec(func_module_spec)
-        return func_module_spec, func_module
-
     def handler(self):
-        if self._executed is False:
-            self.spec.loader.exec_module(self.mod)
-            self._executed = True
-
-        return getattr(self.mod, self._entrypoint)
+        mod = self._delayed_module_class.get_module()
+        return getattr(mod, self._entrypoint)
