@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
+
 ASYNC_IO_READ_BUFFER = 65536
 DEFAULT_DEADLINE = 30
 HTTPSTREAM = "http-stream"
@@ -29,3 +31,9 @@ CONTENT_TYPE = "content-type"
 CONTENT_LENGTH = "Content-Length"
 FN_ENFORCED_RESPONSE_CODES = [200, 502, 504]
 FN_DEFAULT_RESPONSE_CODE = 200
+
+
+# todo: python 3.8 is on its way, make more flexible
+def is_py37():
+    py_version = sys.version_info
+    return (py_version.major, py_version.minor) == (3, 7)

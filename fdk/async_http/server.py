@@ -25,6 +25,8 @@ from signal import signal as signal_func
 
 from .protocol import HttpProtocol
 
+from fdk import constants
+
 
 class Signal(object):
     stopped = False
@@ -149,13 +151,20 @@ def serve(
         debug=debug,
     )
 
-    server_coroutine = loop.create_server(
-        server,
+    create_server_kwargs = dict(
         ssl=ssl,
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog,
-        start_serving=False
+    )
+
+    if constants.is_py37():
+        create_server_kwargs.update(
+            start_serving=False
+        )
+
+    server_coroutine = loop.create_server(
+        server, **create_server_kwargs
     )
 
     # Instead of pulling time at the end of every request,
@@ -188,14 +197,17 @@ def serve(
                 )
 
     def start_serving():
-        loop.run_until_complete(http_server.start_serving())
+        if constants.is_py37():
+            loop.run_until_complete(http_server.start_serving())
 
     def start():
         pid = os.getpid()
         try:
             logger.info("Starting worker [%s]", pid)
-            loop.run_until_complete(http_server.serve_forever())
-            # loop.run_forever()
+            if constants.is_py37():
+                loop.run_until_complete(http_server.serve_forever())
+            else:
+                loop.run_forever()
         finally:
             http_server.close()
             loop.run_until_complete(http_server.wait_closed())
