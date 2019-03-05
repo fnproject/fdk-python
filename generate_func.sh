@@ -9,7 +9,12 @@ pip${PY_VERSION} install wheel
 
 python${PY_VERSION} setup.py bdist_wheel
 
+rm -fr test_function
 fn init --runtime python test_function || true
+
+echo "build_image: fnproject/python:${PY_VERSION}-dev" >> test_function/func.yaml
+echo "run_image: fnproject/python:${PY_VERSION}" >> test_function/func.yaml
+
 pip${PY_VERSION} download -r test_function/requirements.txt -d test_function/.pip_cache
 
 rm -fr test_function/.pip_cache/fdk*
