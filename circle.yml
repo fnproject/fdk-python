@@ -12,8 +12,7 @@ jobs:
           docker_layer_caching: true
       - run:
           command: |
-            apt-get install build-essential nodejs -qy
-            node -v
+            sudo apt-get install build-essential nodejs -qy
             npm -v
             npm install -g snyk
       - run:
