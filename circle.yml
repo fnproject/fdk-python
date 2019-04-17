@@ -16,7 +16,7 @@ jobs:
             curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
             sudo apt-get install build-essential nodejs -qy
             npm -v
-            npm install -g snyk
+            sudo npm install -g snyk
       - run:
           command: |
             python3 -m venv venv
@@ -37,10 +37,12 @@ jobs:
           command: |
             . venv/bin/activate
             tox -epy3.7
-      - run:
-          command: |
-            ./build-images.sh 3.7.1
-            ./test-images.sh 3.7.1
+      # TODO: add SNYK_TOKEN to CI config,
+      # enable two checks after that.
+      # - run:
+      #     command: |
+      #       ./build-images.sh 3.7.1
+      #       ./test-images.sh 3.7.1
       # - run:
       #     command: |
       #       ./build-images.sh 3.6
