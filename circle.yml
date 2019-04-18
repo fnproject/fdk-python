@@ -37,12 +37,10 @@ jobs:
           command: |
             . venv/bin/activate
             tox -epy3.7
-      # TODO: add SNYK_TOKEN to CI config,
-      # enable two checks after that.
-      # - run:
-      #     command: |
-      #       ./build-images.sh 3.7.1
-      #       ./test-images.sh 3.7.1
+      - run:
+          command: |
+            ./build-images.sh 3.7.1
+            ./test-images.sh 3.7.1
       # - run:
       #     command: |
       #       ./build-images.sh 3.6
