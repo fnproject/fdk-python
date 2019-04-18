@@ -41,7 +41,14 @@ jobs:
           command: |
             ./build-images.sh 3.7.1
             ./test-images.sh 3.7.1
-      # - run:
-      #     command: |
-      #       ./build-images.sh 3.6
-      #       ./test-images.sh 3.6
+      - run:
+          command: |
+            ./build-images.sh 3.6
+            ./test-images.sh 3.6
+      - deploy:
+          command: |
+            if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
+              printenv DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+              ./build-images.sh 3.6
+              ./build-images.sh 3.7.1
+              ./release_images.sh
