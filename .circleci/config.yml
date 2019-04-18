@@ -46,9 +46,11 @@ jobs:
             ./build-images.sh 3.6
             ./test-images.sh 3.6
       - deploy:
+        # TODO: add pypi release here as well
           command: |
             if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
               printenv DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
               ./build-images.sh 3.6
               ./build-images.sh 3.7.1
               ./release_images.sh
+            fi
