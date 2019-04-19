@@ -114,7 +114,6 @@ python-troveclient.iml
 # Files created by releasenotes build
 releasenotes/build
 .coverage.*
-*.json
 .cache
 *.log*
 *.csv
