@@ -44,13 +44,16 @@ jobs:
 
   "python36_security_check":
     executor: anchore/anchore_engine
-    working_directory: ~/go/src/github.com/fnproject/fdk-python
+    working_directory: ~/fdk-python
     steps:
       - checkout
       - run:
           name: Python 3.6 build
           command: |
             ./build-images.sh 3.6
+            mkdir -p /home/circleci/project/.circleci/.anchore/
+            cp ~/fdk-python/.circleci/.anchore/policy_bundle.json /home/circleci/project/.circleci/.anchore/policy_bundle.json
+            cat /home/circleci/project/.circleci/.anchore/policy_bundle.json
       - anchore/analyze_local_image:
           image_name: fnproject/python:3.6-dev
           timeout: '500'
@@ -63,13 +66,16 @@ jobs:
 
   "python371_security_check":
     executor: anchore/anchore_engine
-    working_directory: ~/go/src/github.com/fnproject/fdk-python
+    working_directory: ~/fdk-python
     steps:
       - checkout
       - run:
           name: Python 3.7.1 build
           command: |
             ./build-images.sh 3.7.1
+            mkdir -p /home/circleci/project/.circleci/.anchore/
+            cp ~/fdk-python/.circleci/.anchore/policy_bundle.json /home/circleci/project/.circleci/.anchore/policy_bundle.json
+            cat /home/circleci/project/.circleci/.anchore/policy_bundle.json
       - anchore/analyze_local_image:
           image_name: fnproject/python:3.7.1-dev
           timeout: '500'
