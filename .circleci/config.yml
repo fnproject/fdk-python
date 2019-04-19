@@ -31,7 +31,7 @@ jobs:
             . venv/bin/activate
             tox -epy3.7
       - deploy:
-        # TODO: add pypi release here as well
+        # TODO(denismakogon): add pypi release here as well
           command: |
             if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
               printenv DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
