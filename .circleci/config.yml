@@ -55,6 +55,7 @@ jobs:
           image_name: fnproject/python:3.6-dev
           timeout: '500'
           policy_failure: true
+          policy_bundle_file_path: ~/fdk-python/.circleci/.anchore/policy_bundle.json
       - anchore/parse_reports
 
   "python36runtime_security_check":
