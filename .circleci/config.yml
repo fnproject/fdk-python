@@ -42,7 +42,7 @@ jobs:
               ./release_images.sh
             fi
 
-  "python36_security_check":
+  "python36dev_security_check":
     executor: anchore/anchore_engine
     working_directory: ~/fdk-python
     steps:
@@ -55,6 +55,17 @@ jobs:
           image_name: fnproject/python:3.6-dev
           timeout: '500'
           policy_failure: true
+      - anchore/parse_reports
+
+  "python36runtime_security_check":
+    executor: anchore/anchore_engine
+    working_directory: ~/fdk-python
+    steps:
+      - checkout
+      - run:
+          name: Python 3.6 build
+          command: |
+            ./build-images.sh 3.6
       - anchore/analyze_local_image:
           image_name: fnproject/python:3.6
           timeout: '500'
@@ -62,7 +73,7 @@ jobs:
           policy_bundle_file_path: ~/fdk-python/.circleci/.anchore/policy_bundle.json
       - anchore/parse_reports
 
-  "python371_security_check":
+  "python371dev_security_check":
     executor: anchore/anchore_engine
     working_directory: ~/fdk-python
     steps:
@@ -76,6 +87,17 @@ jobs:
           timeout: '500'
           policy_failure: true
           policy_bundle_file_path: ~/fdk-python/.circleci/.anchore/policy_bundle.json
+      - anchore/parse_reports
+
+  "python371runtime_security_check":
+    executor: anchore/anchore_engine
+    working_directory: ~/fdk-python
+    steps:
+      - checkout
+      - run:
+          name: Python 3.7.1 build
+          command: |
+            ./build-images.sh 3.7.1
       - anchore/analyze_local_image:
           image_name: fnproject/python:3.7.1
           timeout: '500'
@@ -88,5 +110,7 @@ workflows:
   build:
     jobs:
       - "fdk"
-      - "python36_security_check"
-      - "python371_security_check"
+      - "python36dev_security_check"
+      - "python36runtime_security_check"
+      - "python371dev_security_check"
+      - "python371runtime_security_check"
