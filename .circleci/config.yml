@@ -50,6 +50,7 @@ jobs:
       - run:
           name: Python 3.6 build
           command: |
+            apk add bash
             ./build-images.sh 3.6
       - anchore/analyze_local_image:
           image_name: "fnproject/python:3.6-dev fnproject/python:3.6"
@@ -66,6 +67,7 @@ jobs:
       - run:
           name: Python 3.7.1 build
           command: |
+            apk add bash
             ./build-images.sh 3.7.1
       - anchore/analyze_local_image:
           image_name: "fnproject/python:3.7.1-dev fnproject/python:3.7.1"
