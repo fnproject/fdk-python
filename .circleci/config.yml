@@ -46,6 +46,8 @@ jobs:
     executor: anchore/anchore_engine
     working_directory: ~/fdk-python
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - checkout
       - run:
           name: Python 3.6 build
@@ -56,13 +58,15 @@ jobs:
           image_name: "fnproject/python:3.6-dev fnproject/python:3.6"
           timeout: '500'
           policy_failure: true
-          policy_bundle_file_path: ~/fdk-python/.circleci/.anchore/policy_bundle.json
+          policy_bundle_file_path: .circleci/.anchore/policy_bundle.json
       - anchore/parse_reports
 
   "python371_security_check":
     executor: anchore/anchore_engine
     working_directory: ~/fdk-python
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - checkout
       - run:
           name: Python 3.7.1 build
@@ -73,7 +77,7 @@ jobs:
           image_name: "fnproject/python:3.7.1-dev fnproject/python:3.7.1"
           timeout: '500'
           policy_failure: true
-          policy_bundle_file_path: ~/fdk-python/.circleci/.anchore/policy_bundle.json
+          policy_bundle_file_path: .circleci/.anchore/policy_bundle.json
       - anchore/parse_reports
 
 workflows:
