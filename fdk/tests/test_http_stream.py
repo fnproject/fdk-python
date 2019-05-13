@@ -146,8 +146,8 @@ async def test_enforced_response_codes_504():
 
 
 def test_log_frame_header(monkeypatch, capsys):
-    monkeypatch.setenv("FN_LOGFRAME_NAME", "foo")
-    monkeypatch.setenv("FN_LOGFRAME_HDR", "Fn-Call-Id")
+    monkeypatch.setattr("fdk.event_handler.fn_logframe_name", "foo")
+    monkeypatch.setattr("fdk.event_handler.fn_logframe_hdr", "Fn-Call-Id")
     headers = {"fn-call-id": 12345}
 
     event_handler.log_frame_header(headers)

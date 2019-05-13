@@ -23,6 +23,9 @@ from fdk.async_http import response
 
 logger = logging.getLogger(__name__)
 
+fn_logframe_name = os.environ.get(constants.FN_LOGFRAME_NAME)
+fn_logframe_hdr = os.environ.get(constants.FN_LOGFRAME_HDR)
+
 
 def event_handle(handle_code):
     """
@@ -57,13 +60,9 @@ def event_handle(handle_code):
 
 
 def log_frame_header(headers):
-    framer = os.environ.get(constants.FN_LOGFRAME_NAME)
-    if framer is None:
-        return
-    value_src = os.environ.get(constants.FN_LOGFRAME_HDR)
-    if value_src is None:
-        return
-    id = headers.get(value_src.lower())
-    if id is not None:
-        sys.stderr.write("\n{}={}\n".format(framer, id))
-        sys.stdout.write("\n{}={}\n".format(framer, id))
+    if fn_logframe_name is not None and fn_logframe_hdr is not None:
+        if fn_logframe_hdr.lower() in headers:
+            id = headers.get(fn_logframe_hdr.lower())
+            frm = "\n{}={}\n".format(fn_logframe_name, id)
+            print(frm, file=sys.stderr, flush=True)
+            print(frm, file=sys.stdout, flush=True)
