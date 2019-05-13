@@ -60,9 +60,10 @@ def event_handle(handle_code):
 
 
 def log_frame_header(headers):
-    if fn_logframe_name is not None and fn_logframe_hdr is not None:
-        if fn_logframe_hdr.lower() in headers:
-            id = headers.get(fn_logframe_hdr.lower())
+    if all((fn_logframe_name, fn_logframe_hdr)):
+        frm = fn_logframe_hdr.lower()
+        if frm in headers:
+            id = headers.get(frm)
             frm = "\n{}={}\n".format(fn_logframe_name, id)
             print(frm, file=sys.stderr, flush=True)
             print(frm, file=sys.stdout, flush=True)
