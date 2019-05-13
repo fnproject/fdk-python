@@ -19,6 +19,7 @@ import pytest
 from fdk import constants
 from fdk import event_handler
 from fdk import fixtures
+from fdk import version
 
 from fdk.tests import funcs
 
@@ -32,6 +33,7 @@ async def test_override_content_type():
     assert 200 == status
     assert "OK" == content
     assert "application/json" in headers.get("Content-Type")
+    assert version.VERSION == headers.get(constants.FN_FDK_VERSION)
 
 
 @pytest.mark.asyncio
