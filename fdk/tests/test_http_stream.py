@@ -143,3 +143,15 @@ async def test_enforced_response_codes_504():
 
     assert http_resp.status == 504
     assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "504"
+
+
+def test_log_frame_header(monkeypatch, capsys):
+    monkeypatch.setenv("FN_LOGFRAME_NAME", "foo")
+    monkeypatch.setenv("FN_LOGFRAME_HDR", "Fn-Call-Id")
+    headers = {"fn-call-id": 12345}
+
+    event_handler.log_frame_header(headers)
+
+    captured = capsys.readouterr()
+    assert "\nfoo=12345\n" in captured.out
+    assert "\nfoo=12345\n" in captured.err
