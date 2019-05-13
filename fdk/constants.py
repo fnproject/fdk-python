@@ -31,6 +31,8 @@ CONTENT_TYPE = "content-type"
 CONTENT_LENGTH = "Content-Length"
 FN_ENFORCED_RESPONSE_CODES = [200, 502, 504]
 FN_DEFAULT_RESPONSE_CODE = 200
+FN_LOGFRAME_NAME = "FN_LOGFRAME_NAME"
+FN_LOGFRAME_HDR = "FN_LOGFRAME_HDR"
 
 
 # todo: python 3.8 is on its way, make more flexible

@@ -14,12 +14,17 @@
 
 import io
 import logging
+import os
+import sys
 
 from fdk import constants
 
 from fdk.async_http import response
 
 logger = logging.getLogger(__name__)
+
+fn_logframe_name = os.environ.get(constants.FN_LOGFRAME_NAME)
+fn_logframe_hdr = os.environ.get(constants.FN_LOGFRAME_HDR)
 
 
 def event_handle(handle_code):
@@ -32,9 +37,11 @@ def event_handle(handle_code):
     async def pure_handler(request):
         from fdk import runner
         logger.info("in pure_handler")
+        headers = dict(request.headers)
+        log_frame_header(headers)
         func_response = await runner.handle_request(
             handle_code, constants.HTTPSTREAM,
-            headers=dict(request.headers), data=io.BytesIO(request.body))
+            headers=headers, data=io.BytesIO(request.body))
         logger.info("request execution completed")
 
         headers = func_response.context().GetResponseHeaders()
@@ -50,3 +57,13 @@ def event_handle(handle_code):
         )
 
     return pure_handler
+
+
+def log_frame_header(headers):
+    if all((fn_logframe_name, fn_logframe_hdr)):
+        frm = fn_logframe_hdr.lower()
+        if frm in headers:
+            id = headers.get(frm)
+            frm = "\n{}={}\n".format(fn_logframe_name, id)
+            print(frm, file=sys.stderr, flush=True)
+            print(frm, file=sys.stdout, flush=True)
