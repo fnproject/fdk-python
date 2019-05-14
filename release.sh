@@ -1,8 +1,33 @@
-#!/usr/bin/env bash
+#!/bin/bash
+set -ex
 
+# ensure working dir is clean
+git status
+if [[ -z $(git status -s) ]]
+then
+  echo "tree is clean"
+else
+  echo "tree is dirty, please commit changes before running this"
+  exit 1
+fi
 
-git checkout -b v${FDK_VERSION}-stable
-git push origin v${FDK_VERSION}-stable
-PBR_VERSION=${FDK_VERSION} python setup.py sdist bdist_wheel
-twine upload dist/fdk-${FDK_VERSION}*
-git checkout master
+git pull
+
+version_file="fdk/version.py"
+current_version=$(grep -m1 -Eo "[0-9]+\.[0-9]+\.[0-9]+" ${version_file})
+new_version=$(docker run --rm marcelocorreia/semver semver -c -i patch ${current_version})
+
+echo "Current version: $current_version"
+echo "New version: $new_version"
+
+sed -i '' -e 's/'"$current_version"'/'"$new_version"'/g' fdk/version.py
+
+PBR_VERSION=${new_version} python setup.py sdist bdist_wheel
+twine upload -u ${FN_PYPI_USER} -p ${FN_PYPI_PSWD} dist/fdk-${new_version}*
+
+tag="$new_version"
+git add -u
+git commit -m "FDK Python: $new_version release [skip ci]"
+git tag -f -a $tag -m "version $new_version"
+git push
+git push origin $tag
