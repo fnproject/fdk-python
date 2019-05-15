@@ -85,5 +85,15 @@ workflows:
   build:
     jobs:
       - "fdk"
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+                - beta
+    jobs:
       - "python36_security_check"
       - "python371_security_check"
