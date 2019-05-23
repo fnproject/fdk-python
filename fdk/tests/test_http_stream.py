@@ -31,7 +31,7 @@ async def test_override_content_type():
 
     assert 200 == status
     assert "OK" == content
-    assert "text/plain" in headers.get("content-type")
+    assert "application/json" in headers.get("Content-Type")
 
 
 @pytest.mark.asyncio
@@ -42,7 +42,6 @@ async def test_parse_request_without_data():
     print(headers)
     assert 200 == status
     assert "Hello World" == content
-    assert "text/plain" in headers.get("content-type")
 
 
 @pytest.mark.asyncio
@@ -55,7 +54,6 @@ async def test_parse_request_with_data():
 
     assert 200 == status
     assert "Hello John" == content
-    assert "text/plain" in headers.get("content-type")
 
 
 @pytest.mark.asyncio
@@ -67,6 +65,42 @@ async def test_custom_response_object():
     content, status, headers = await call
 
     assert 201 == status
+
+
+@pytest.mark.asyncio
+async def test_encap_headers_gw():
+    call = await fixtures.setup_fn_call(
+        funcs.encaped_header,
+        headers={
+            "Custom-Header-Maybe": "yo",
+            "Content-Type": "application/yo"
+        },
+        gateway=True,
+    )
+    content, status, headers = await call
+
+    # make sure that content type is not encaped, and custom header is
+    # when coming out of the fdk
+    assert 200 == status
+    assert "application/yo" in headers.get("Content-Type")
+    assert "yo" in headers.get("Fn-Http-H-Custom-Header-Maybe")
+
+
+@pytest.mark.asyncio
+async def test_encap_headers():
+    call = await fixtures.setup_fn_call(
+        funcs.encaped_header,
+        headers={
+            "Custom-Header-Maybe": "yo",
+            "Content-Type": "application/yo"
+        }
+    )
+    content, status, headers = await call
+
+    # make sure that custom header is not encaped out of fdk
+    assert 200 == status
+    assert "application/yo" in headers.get("Content-Type")
+    assert "yo" in headers.get("Custom-Header-Maybe")
 
 
 @pytest.mark.asyncio
@@ -115,7 +149,7 @@ async def test_default_enforced_response_code():
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code404))
 
-    http_resp = await event_coro(fixtures.fake_request())
+    http_resp = await event_coro(fixtures.fake_request(gateway=True))
 
     assert http_resp.status == 200
     assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "404"
@@ -127,7 +161,7 @@ async def test_enforced_response_codes_502():
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code502))
 
-    http_resp = await event_coro(fixtures.fake_request())
+    http_resp = await event_coro(fixtures.fake_request(gateway=True))
 
     assert http_resp.status == 502
     assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "502"
@@ -139,7 +173,7 @@ async def test_enforced_response_codes_504():
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code504))
 
-    http_resp = await event_coro(fixtures.fake_request())
+    http_resp = await event_coro(fixtures.fake_request(gateway=True))
 
     assert http_resp.status == 504
     assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "504"

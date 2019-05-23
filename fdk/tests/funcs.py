@@ -51,19 +51,15 @@ def dummy_func(ctx, data=None):
 
 
 def encaped_header(ctx, **kwargs):
-    httpctx = ctx.HTTPContext()
-    hs = httpctx.Headers()
-    v = hs.get("custom-header-maybe")
     return response.Response(
-        httpctx, response_data="OK", status_code=200,
-        headers={"Content-Type": "text/plain",
-                 "custom-header-maybe": v})
+        ctx, response_data="OK", status_code=200,
+        headers=ctx.Headers())
 
 
 def content_type(ctx, data=None):
     return response.Response(
         ctx, response_data="OK", status_code=200,
-        headers={"Content-Type": "text/plain"})
+        headers={"Content-Type": "application/json"})
 
 
 def custom_response(ctx, data=None):
@@ -118,12 +114,11 @@ def verify_request_headers(ctx, **kwargs):
 
 
 def access_request_url(ctx, **kwargs):
-    httpctx = ctx.HTTPContext()
-    hs = httpctx.Headers()
-    method = httpctx.Method()
+    hs = ctx.Headers()
+    method = ctx.Method()
     request_url = hs.get("Fn-Http-Request-Url")
     return response.Response(
-        httpctx, response_data="OK", headers={
+        ctx, response_data="OK", headers={
             "Response-Request-URL": request_url,
             "Request-Method": method,
         }

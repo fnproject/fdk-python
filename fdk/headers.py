@@ -17,23 +17,25 @@ from fdk import constants
 
 def decap_headers(hdsr):
     ctx_headers = {}
-    for k, v in hdsr.items():
-        if k.startswith(constants.FN_HTTP_PREFIX):
-            ctx_headers[k.lstrip(constants.FN_HTTP_PREFIX)] = v
-        else:
-            ctx_headers[k] = v
+    if hdsr is not None:
+        for k, v in hdsr.items():
+            if k.startswith(constants.FN_HTTP_PREFIX):
+                ctx_headers[k.lstrip(constants.FN_HTTP_PREFIX)] = v
+            else:
+                ctx_headers[k] = v
     return ctx_headers
 
 
-def encap_headers(headers, status=None, content_type=None):
+def encap_headers(headers, status=None):
     new_headers = {}
-    for k, v in headers.items():
-        if (not k.startswith(constants.CONTENT_TYPE) and
-                not k.startswith(constants.CONTENT_TYPE)):
-            new_headers[constants.FN_HTTP_PREFIX + k] = v
+    if headers is not None:
+        for k, v in headers.items():
+            if (k == constants.CONTENT_TYPE or
+                    k.startswith(constants.FN_HTTP_PREFIX)):
+                new_headers[k] = v
+            else:
+                new_headers[constants.FN_HTTP_PREFIX + k] = v
 
     if status is not None:
         new_headers[constants.FN_HTTP_STATUS] = str(status)
-    if content_type is not None:
-        new_headers[constants.CONTENT_TYPE] = content_type
     return new_headers

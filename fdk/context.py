@@ -20,33 +20,6 @@ from fdk import constants
 from fdk import headers as hs
 
 
-def set_response_headers(
-        current_headers: dict, new_headers: dict,
-        status_code: int, content_type: str=None):
-    """
-    Sets Fn-readable headers
-    :param current_headers: current HTTP headers
-    :type current_headers: dict
-    :param new_headers: new HTTP headers to add
-    :type new_headers: dict
-    :param status_code: HTTP status code
-    :type status_code: int
-    :param content_type: response content type
-    :type content_type: str
-    :return: updated headers
-    :rtype: dict
-    """
-    new_headers = hs.encap_headers(
-        new_headers,
-        status=status_code,
-        content_type=content_type
-    )
-    for k, v in new_headers.items():
-        current_headers[k] = v
-
-    return current_headers
-
-
 class InvokeContext(object):
 
     def __init__(self, app_id, fn_id, call_id,
@@ -90,6 +63,9 @@ class InvokeContext(object):
         self.__response_headers = {}
         self.__fn_format = fn_format
 
+        if self.__is_gateway():
+            self.__headers = hs.decap_headers(self.__headers)
+
     def AppID(self):
         return self.__app_id
 
@@ -115,28 +91,15 @@ class InvokeContext(object):
             return now.isoformat()
         return self.__deadline
 
-    def SetResponseHeaders(self, headers, status_code, content_type=None):
-        self.__response_headers = set_response_headers(
-            self.GetResponseHeaders(), headers, status_code,
-            content_type=content_type)
+    def SetResponseHeaders(self, headers, status_code):
+        if self.__is_gateway():
+            headers = hs.encap_headers(headers, status=status_code)
+
+        for k, v in headers.items():
+            self.__response_headers[k] = v
 
     def GetResponseHeaders(self):
         return self.__response_headers
-
-    def HTTPContext(self):
-        return HTTPGatewayContext(self)
-
-
-class HTTPGatewayContext(object):
-    def __init__(self, invoke_context: InvokeContext):
-        """
-        Creates an instance of an HTTP context
-        :param invoke_context: invoke context:
-        :type invoke_context: fdk.context.InvokeContext
-        """
-        self.__headers = hs.decap_headers(invoke_context.Headers())
-        self.__invoke_context = invoke_context
-        self.__response_headers = {}
 
     def RequestURL(self):
         return self.__invoke_context._request_url
@@ -144,19 +107,10 @@ class HTTPGatewayContext(object):
     def Method(self):
         return self.__invoke_context._method
 
-    def Headers(self):
-        return self.__headers
-
-    def SetResponseHeaders(self, headers, status_code, content_type=None):
-        self.__response_headers = set_response_headers(
-            self.GetResponseHeaders(), headers, status_code,
-            content_type=content_type)
-
-    def GetResponseHeaders(self):
-        return self.__response_headers
-
-    def Format(self):
-        return self.__invoke_context.Format()
+    def __is_gateway(self):
+        return (constants.FN_INTENT in self.__headers and
+                self.__headers.get(constants.FN_INTENT) ==
+                constants.INTENT_HTTP_REQUEST)
 
 
 def context_from_format(format_def: str, **kwargs) -> (
