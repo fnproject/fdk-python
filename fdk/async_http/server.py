@@ -186,8 +186,8 @@ def serve(
 
     # Register signals for graceful termination
     if register_sys_signals:
-        _singals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
-        for _signal in _singals:
+        _signals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
+        for _signal in _signals:
             try:
                 loop.add_signal_handler(_signal, loop.stop)
             except NotImplementedError:

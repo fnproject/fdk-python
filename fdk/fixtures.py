@@ -15,31 +15,24 @@
 import datetime as dt
 
 from fdk import constants
-from fdk import headers as hs
 from fdk import runner
+from fdk import headers as hs
 
 
 async def process_response(fn_call_coro):
-    new_headers = {}
     resp = await fn_call_coro
     response_data = resp.body()
     response_status = resp.status()
     response_headers = resp.context().GetResponseHeaders()
-    for k, v in response_headers.items():
-        new_headers.update({
-            k.lstrip(constants.FN_HTTP_PREFIX): v
-        })
     print(response_headers)
-    resp_headers = hs.decap_headers(response_headers)
-    del resp_headers[constants.FN_HTTP_STATUS]
 
-    return response_data, response_status, resp_headers
+    return response_data, response_status, response_headers
 
 
 class fake_request(object):
 
-    def __init__(self):
-        self.headers = setup_headers()
+    def __init__(self, gateway=False):
+        self.headers = setup_headers(gateway=gateway)
         self.body = b''
 
 
@@ -53,35 +46,43 @@ class code(object):
 
 
 def setup_headers(deadline=None, headers=None,
-                  request_url="/", method="POST"):
+                  request_url="/", method="POST", gateway=False):
     new_headers = {}
-    if headers is not None:
+
+    if gateway:
+        new_headers = hs.encap_headers(headers)
+        new_headers.update({
+            constants.FN_INTENT: constants.INTENT_HTTP_REQUEST,
+            constants.FN_HTTP_REQUEST_URL: request_url,
+            constants.FN_HTTP_METHOD: method,
+        })
+    elif headers is not None:
         for k, v in headers.items():
-            new_headers.update({constants.FN_HTTP_PREFIX + k: v})
+            new_headers.update({k: v})
 
     if deadline is None:
         now = dt.datetime.now(dt.timezone.utc).astimezone()
         now += dt.timedelta(0, float(constants.DEFAULT_DEADLINE))
         deadline = now.isoformat()
 
-    new_headers.update({
-        constants.FN_DEADLINE: deadline,
-        constants.FN_HTTP_REQUEST_URL: request_url,
-        constants.FN_HTTP_METHOD: method,
-    })
+    new_headers.update({constants.FN_DEADLINE: deadline})
     return new_headers
 
 
 async def setup_fn_call(
         handle_func, request_url="/",
         method="POST", headers=None,
-        content=None, deadline=None):
+        content=None, deadline=None,
+        gateway=False):
 
     new_headers = setup_headers(
         deadline=deadline, headers=headers,
-        method=method, request_url=request_url
+        method=method, request_url=request_url,
+        gateway=gateway
     )
 
+    # don't decap headers, so we can test them
+    # (just like they come out of fdk)
     return process_response(runner.handle_request(
         code(handle_func), constants.HTTPSTREAM,
         headers=new_headers, data=content,

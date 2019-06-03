@@ -13,7 +13,6 @@
 #    under the License.
 
 from fdk import context
-from fdk import constants
 
 
 class Response(object):
@@ -38,11 +37,7 @@ class Response(object):
         self.response_data = response_data if response_data else ""
         if headers is None:
             headers = {}
-        ctx.SetResponseHeaders(
-            headers, status_code,
-            content_type=headers.get(
-                constants.CONTENT_TYPE, "text/plain")
-        )
+        ctx.SetResponseHeaders(headers, status_code)
         self.ctx = ctx
 
     def status(self):
