@@ -14,6 +14,7 @@
 
 from fdk import context
 from fdk import constants
+from fdk import version
 
 
 class Response(object):
