@@ -43,13 +43,13 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - deploy:
-        # TODO(denismakogon): add pypi release here as well
           command: |
             if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
               printenv DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
               ./build-images.sh 3.6
               ./build-images.sh 3.7.1
               ./release_images.sh
+              ./release.sh
             fi
 
   "python36_security_check":
