@@ -31,6 +31,7 @@ def encap_headers(headers, status=None):
     if headers is not None:
         for k, v in headers.items():
             if (k == constants.CONTENT_TYPE or
+                    k == constants.FN_FDK_VERSION or
                     k.startswith(constants.FN_HTTP_PREFIX)):
                 new_headers[k] = v
             else:
@@ -38,4 +39,5 @@ def encap_headers(headers, status=None):
 
     if status is not None:
         new_headers[constants.FN_HTTP_STATUS] = str(status)
+
     return new_headers
