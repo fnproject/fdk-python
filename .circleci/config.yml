@@ -50,6 +50,7 @@ jobs:
               ./build-images.sh 3.6
               ./build-images.sh 3.7.1
               ./release_images.sh
+              ./release.sh
             fi
 
   "python36_security_check":
