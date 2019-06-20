@@ -32,7 +32,7 @@ async def test_override_content_type():
 
     assert 200 == status
     assert "OK" == content
-    assert "application/json" in headers.get("Content-Type")
+    assert "application/json" in headers.get("content-type")
     assert version.VERSION == headers.get(constants.FN_FDK_VERSION)
 
 
@@ -74,8 +74,8 @@ async def test_encap_headers_gw():
     call = await fixtures.setup_fn_call(
         funcs.encaped_header,
         headers={
-            "Custom-Header-Maybe": "yo",
-            "Content-Type": "application/yo"
+            "custom-header-maybe": "yo",
+            "content-type": "application/yo"
         },
         gateway=True,
     )
@@ -84,8 +84,8 @@ async def test_encap_headers_gw():
     # make sure that content type is not encaped, and custom header is
     # when coming out of the fdk
     assert 200 == status
-    assert "application/yo" in headers.get("Content-Type")
-    assert "yo" in headers.get("Fn-Http-H-Custom-Header-Maybe")
+    assert "application/yo" in headers.get("content-type")
+    assert "yo" in headers.get("fn-http-h-custom-header-maybe")
 
 
 @pytest.mark.asyncio
@@ -93,16 +93,16 @@ async def test_encap_headers():
     call = await fixtures.setup_fn_call(
         funcs.encaped_header,
         headers={
-            "Custom-Header-Maybe": "yo",
-            "Content-Type": "application/yo"
+            "custom-header-maybe": "yo",
+            "content-type": "application/yo"
         }
     )
     content, status, headers = await call
 
     # make sure that custom header is not encaped out of fdk
     assert 200 == status
-    assert "application/yo" in headers.get("Content-Type")
-    assert "yo" in headers.get("Custom-Header-Maybe")
+    assert "application/yo" in headers.get("content-type")
+    assert "yo" in headers.get("custom-header-maybe")
 
 
 @pytest.mark.asyncio
