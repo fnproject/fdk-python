@@ -33,6 +33,9 @@ async def test_override_content_type():
     assert 200 == status
     assert "OK" == content
     assert "application/json" in headers.get("content-type")
+    # we've had issues with 'Content-Type: None' slipping in
+    assert len(headers.get("Content-Type")) == 0
+    assert len(headers.get("content-type")) == 1
     assert version.VERSION == headers.get(constants.FN_FDK_VERSION)
 
 
