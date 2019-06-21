@@ -101,6 +101,6 @@ async def handle_request(handler_code, format_def, **kwargs):
             headers=headers, status_code=200)
 
     except (Exception, TimeoutError) as ex:
-        log.log("exception appeared")
+        log.log("exception appeared: {0}".format(ex))
         traceback.print_exc(file=sys.stderr)
-        return errors.DispatchException(ctx, 502, str(ex), ).response()
+        return errors.DispatchException(ctx, 502, str(ex)).response()

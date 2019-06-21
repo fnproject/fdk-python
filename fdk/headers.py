@@ -19,6 +19,7 @@ def decap_headers(hdsr):
     ctx_headers = {}
     if hdsr is not None:
         for k, v in hdsr.items():
+            k = k.lower()
             if k.startswith(constants.FN_HTTP_PREFIX):
                 ctx_headers[k.lstrip(constants.FN_HTTP_PREFIX)] = v
             else:
@@ -30,6 +31,7 @@ def encap_headers(headers, status=None):
     new_headers = {}
     if headers is not None:
         for k, v in headers.items():
+            k = k.lower()
             if (k == constants.CONTENT_TYPE or
                     k == constants.FN_FDK_VERSION or
                     k.startswith(constants.FN_HTTP_PREFIX)):

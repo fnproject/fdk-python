@@ -16,26 +16,32 @@ import sys
 
 ASYNC_IO_READ_BUFFER = 65536
 DEFAULT_DEADLINE = 30
+
 HTTPSTREAM = "http-stream"
 INTENT_HTTP_REQUEST = "httprequest"
+
+# env vars
 FN_FORMAT = "FN_FORMAT"
 FN_LISTENER = "FN_LISTENER"
-FN_INTENT = "Fn-Intent"
-FN_HTTP_PREFIX = "Fn-Http-H-"
-FN_HTTP_STATUS = "Fn-Http-Status"
+FN_APP_ID = "FN_APP_ID"
+FN_ID = "FN_FN_ID"
+FN_LOGFRAME_NAME = "FN_LOGFRAME_NAME"
+FN_LOGFRAME_HDR = "FN_LOGFRAME_HDR"
+
+# headers are lower case TODO(denis): why?
+FN_INTENT = "fn-intent"
+FN_HTTP_PREFIX = "fn-http-h-"
+FN_HTTP_STATUS = "fn-http-status"
 FN_DEADLINE = "fn-deadline"
-FN_FDK_VERSION = "Fn-Fdk-Version"
+FN_FDK_VERSION = "fn-fdk-version"
 FN_HTTP_REQUEST_URL = "fn-http-request-url"
 FN_CALL_ID = "fn-call-id"
 FN_HTTP_METHOD = "fn-http-method"
-FN_APP_ID = "FN_APP_ID"
-FN_ID = "FN_FN_ID"
-CONTENT_TYPE = "Content-Type"
-CONTENT_LENGTH = "Content-Length"
+CONTENT_TYPE = "content-type"
+CONTENT_LENGTH = "content-length"
+
 FN_ENFORCED_RESPONSE_CODES = [200, 502, 504]
 FN_DEFAULT_RESPONSE_CODE = 200
-FN_LOGFRAME_NAME = "FN_LOGFRAME_NAME"
-FN_LOGFRAME_HDR = "FN_LOGFRAME_HDR"
 
 
 # todo: python 3.8 is on its way, make more flexible

@@ -18,6 +18,7 @@ import os
 
 from fdk import constants
 from fdk import headers as hs
+from fdk import log
 
 
 class InvokeContext(object):
@@ -63,6 +64,8 @@ class InvokeContext(object):
         self.__response_headers = {}
         self.__fn_format = fn_format
 
+        log.log("request headers. gateway: {0} {1}"
+                .format(self.__is_gateway(), headers))
         if self.__is_gateway():
             self.__headers = hs.decap_headers(self.__headers)
 
@@ -92,11 +95,12 @@ class InvokeContext(object):
         return self.__deadline
 
     def SetResponseHeaders(self, headers, status_code):
+        log.log("setting headers. gateway: {0}".format(self.__is_gateway()))
         if self.__is_gateway():
             headers = hs.encap_headers(headers, status=status_code)
 
         for k, v in headers.items():
-            self.__response_headers[k] = v
+            self.__response_headers[k.lower()] = v
 
     def GetResponseHeaders(self):
         return self.__response_headers

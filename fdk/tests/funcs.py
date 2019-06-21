@@ -92,7 +92,7 @@ async def coro(ctx, **kwargs):
 def valid_xml(ctx, **kwargs):
     return response.Response(
         ctx, response_data=xml, headers={
-            "Content-Type": "application/xml",
+            "content-type": "application/xml",
         }
     )
 
@@ -100,7 +100,7 @@ def valid_xml(ctx, **kwargs):
 def invalid_xml(ctx, **kwargs):
     return response.Response(
         ctx, response_data=json.dumps(xml), headers={
-            "Content-Type": "application/xml",
+            "content-type": "application/xml",
         }
     )
 
