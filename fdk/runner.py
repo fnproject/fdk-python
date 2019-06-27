@@ -21,7 +21,6 @@ import iso8601
 import types
 
 from fdk import context
-from fdk import constants
 from fdk import customer_code
 from fdk import errors
 from fdk import log
@@ -91,11 +90,6 @@ async def handle_request(handler_code, format_def, **kwargs):
 
         headers = ctx.GetResponseHeaders()
         log.log("response headers obtained")
-        response_content_type = headers.get(
-            constants.CONTENT_TYPE, "text/plain"
-        )
-        headers[constants.CONTENT_TYPE] = response_content_type
-
         return response.Response(
             ctx, response_data=response_data,
             headers=headers, status_code=200)
