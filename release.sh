@@ -22,12 +22,12 @@ echo "New version: $new_version"
 
 echo "VERSION = '${new_version}'" > fdk/version.py
 
-PBR_VERSION=${new_version} python setup.py sdist bdist_wheel
-twine upload -u ${FN_PYPI_USER} -p ${FN_PYPI_PSWD} dist/fdk-${new_version}*
-
 tag="$new_version"
 git add -u
 git commit -m "FDK Python: $new_version release [skip ci]"
 git tag -f -a $tag -m "version $new_version"
 git push
 git push origin $tag
+
+PBR_VERSION=${new_version} python setup.py sdist bdist_wheel
+twine upload -u ${FN_PYPI_USER} -p ${FN_PYPI_PSWD} dist/fdk-${new_version}*
