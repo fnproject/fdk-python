@@ -20,7 +20,7 @@ new_version=$(docker run --rm marcelocorreia/semver semver -c -i patch ${current
 echo "Current version: $current_version"
 echo "New version: $new_version"
 
-sed -i '' -e 's/'"$current_version"'/'"$new_version"'/g' fdk/version.py
+echo "VERSION = '${new_version}'" > fdk/version.py
 
 PBR_VERSION=${new_version} python setup.py sdist bdist_wheel
 twine upload -u ${FN_PYPI_USER} -p ${FN_PYPI_PSWD} dist/fdk-${new_version}*
