@@ -51,7 +51,6 @@ jobs:
               printenv DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
               ./build-images.sh 3.6
               ./build-images.sh 3.7.1
-              # todo: figure out why circle unable to push images
               ./release.sh
               ./release_images.sh
             fi
