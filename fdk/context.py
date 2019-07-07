@@ -106,10 +106,10 @@ class InvokeContext(object):
         return self.__response_headers
 
     def RequestURL(self):
-        return self.__invoke_context._request_url
+        return self._request_url
 
     def Method(self):
-        return self.__invoke_context._method
+        return self._method
 
     def __is_gateway(self):
         return (constants.FN_INTENT in self.__headers and

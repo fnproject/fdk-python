@@ -193,3 +193,42 @@ def test_log_frame_header(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "\nfoo=12345\n" in captured.out
     assert "\nfoo=12345\n" in captured.err
+
+
+@pytest.mark.asyncio
+async def test_request_url_and_method_no_gateway():
+    url_path = "/call"
+    method = "POST"
+    call = await fixtures.setup_fn_call(
+        funcs.access_request_url,
+        request_url=url_path,
+        method=method,
+    )
+    content, status, headers = await call
+
+    assert "response-request-url" in headers
+    assert "request-method" in headers
+
+    assert url_path == headers.get("response-request-url")
+    assert method == headers.get("request-method")
+
+
+@pytest.mark.asyncio
+async def test_request_url_and_method_with_gateway():
+    url_path = "/t/app/path"
+    method = "GET"
+    call = await fixtures.setup_fn_call(
+        funcs.access_request_url,
+        request_url=url_path,
+        method=method,
+        gateway=True
+    )
+    content, status, headers = await call
+
+    assert "response-request-url" not in headers
+    assert "request-method" not in headers
+    assert "fn-http-h-response-request-url" in headers
+    assert "fn-http-h-request-method" in headers
+
+    assert url_path == headers.get("fn-http-h-response-request-url")
+    assert method == headers.get("fn-http-h-request-method")
