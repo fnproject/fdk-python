@@ -114,9 +114,8 @@ def verify_request_headers(ctx, **kwargs):
 
 
 def access_request_url(ctx, **kwargs):
-    hs = ctx.Headers()
     method = ctx.Method()
-    request_url = hs.get("Fn-Http-Request-Url")
+    request_url = ctx.RequestURL()
     return response.Response(
         ctx, response_data="OK", headers={
             "Response-Request-URL": request_url,

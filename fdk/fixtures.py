@@ -53,12 +53,15 @@ def setup_headers(deadline=None, headers=None,
         new_headers = hs.encap_headers(headers)
         new_headers.update({
             constants.FN_INTENT: constants.INTENT_HTTP_REQUEST,
-            constants.FN_HTTP_REQUEST_URL: request_url,
-            constants.FN_HTTP_METHOD: method,
         })
     elif headers is not None:
         for k, v in headers.items():
             new_headers.update({k: v})
+
+    new_headers.update({
+        constants.FN_HTTP_REQUEST_URL: request_url,
+        constants.FN_HTTP_METHOD: method,
+    })
 
     if deadline is None:
         now = dt.datetime.now(dt.timezone.utc).astimezone()
