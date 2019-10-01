@@ -14,7 +14,6 @@
 
 from fdk import context
 from fdk import constants
-from fdk import version
 
 
 class Response(object):
@@ -39,7 +38,7 @@ class Response(object):
         self.response_data = response_data if response_data else ""
         if headers is None:
             headers = {}
-        headers.update({constants.FN_FDK_VERSION: version.VERSION})
+        headers.update({constants.FN_FDK_VERSION: constants.VERSION_HEADER_VALUE})
         ctx.SetResponseHeaders(headers, status_code)
         self.ctx = ctx
 
