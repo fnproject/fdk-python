@@ -46,6 +46,7 @@ FN_DEFAULT_RESPONSE_CODE = 200
 
 VERSION_HEADER_VALUE = "fdk-python/" + version.VERSION
 
+
 # todo: python 3.8 is on its way, make more flexible
 def is_py37():
     py_version = sys.version_info

@@ -34,7 +34,8 @@ async def test_override_content_type():
     assert headers.get("content-type") == "application/json"
     # we've had issues with 'Content-Type: None' slipping in
     assert headers.get("Content-Type") is None
-    assert headers.get(constants.FN_FDK_VERSION) == constants.VERSION_HEADER_VALUE
+    assert headers.get(
+        constants.FN_FDK_VERSION) == constants.VERSION_HEADER_VALUE
 
 
 @pytest.mark.asyncio
