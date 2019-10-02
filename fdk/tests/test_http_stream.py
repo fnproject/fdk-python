@@ -19,7 +19,6 @@ import pytest
 from fdk import constants
 from fdk import event_handler
 from fdk import fixtures
-from fdk import version
 
 from fdk.tests import funcs
 
@@ -35,7 +34,8 @@ async def test_override_content_type():
     assert headers.get("content-type") == "application/json"
     # we've had issues with 'Content-Type: None' slipping in
     assert headers.get("Content-Type") is None
-    assert version.VERSION == headers.get(constants.FN_FDK_VERSION)
+    assert headers.get(
+        constants.FN_FDK_VERSION) == constants.VERSION_HEADER_VALUE
 
 
 @pytest.mark.asyncio

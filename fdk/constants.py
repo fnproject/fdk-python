@@ -13,6 +13,7 @@
 #    under the License.
 
 import sys
+from fdk import version
 
 ASYNC_IO_READ_BUFFER = 65536
 DEFAULT_DEADLINE = 30
@@ -42,6 +43,8 @@ CONTENT_LENGTH = "content-length"
 
 FN_ENFORCED_RESPONSE_CODES = [200, 502, 504]
 FN_DEFAULT_RESPONSE_CODE = 200
+
+VERSION_HEADER_VALUE = "fdk-python/" + version.VERSION
 
 
 # todo: python 3.8 is on its way, make more flexible
