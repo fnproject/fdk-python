@@ -40,6 +40,8 @@ jobs:
       - checkout
       - restore_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
           command: |
             sudo pip install twine
