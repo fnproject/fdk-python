@@ -11,7 +11,7 @@ jobs:
       - restore_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - setup_remote_docker:
-          docker_layer_caching: true
+          docker_layer_caching: false
       - run:
           command: |
             python3 -m venv venv
@@ -41,7 +41,7 @@ jobs:
       - restore_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - setup_remote_docker:
-          docker_layer_caching: true
+          docker_layer_caching: false
       - run:
           command: |
             sudo pip install twine
@@ -65,7 +65,7 @@ jobs:
     working_directory: ~/fdk-python
     steps:
       - setup_remote_docker:
-          docker_layer_caching: true
+          docker_layer_caching: false
       - checkout
       - run:
           name: Python 3.6 build
@@ -84,7 +84,7 @@ jobs:
     working_directory: ~/fdk-python
     steps:
       - setup_remote_docker:
-          docker_layer_caching: true
+          docker_layer_caching: false
       - checkout
       - run:
           name: Python 3.7.1 build
