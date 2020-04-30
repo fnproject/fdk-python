@@ -17,7 +17,6 @@ import json
 
 from fdk import response
 
-
 xml = """<!DOCTYPE mensaje SYSTEM "record.dtd">
 <record>
     <player_birthday>1979-09-23</player_birthday>
@@ -78,7 +77,6 @@ def none_func(ctx, data=None):
 
 
 def timed_sleepr(timeout):
-
     def sleeper(ctx, data=None):
         time.sleep(timeout)
 
@@ -122,3 +120,24 @@ def access_request_url(ctx, **kwargs):
             "Request-Method": method,
         }
     )
+
+
+captured_context = None
+
+
+def setup_context_capture():
+    global captured_context
+    captured_context = None
+
+
+def get_captured_context():
+    global captured_context
+    my_context = captured_context
+    captured_context = None
+    return my_context
+
+
+def capture_request_ctx(ctx, **kwargs):
+    global captured_context
+    captured_context = ctx
+    return response.Response(ctx, response_data="OK")

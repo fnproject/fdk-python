@@ -43,7 +43,6 @@ async def test_parse_request_without_data():
     call = await fixtures.setup_fn_call(funcs.dummy_func)
 
     content, status, headers = await call
-    print(headers)
     assert 200 == status
     assert "Hello World" == content
 
@@ -149,7 +148,6 @@ async def test_deadline():
 
 @pytest.mark.asyncio
 async def test_default_enforced_response_code():
-
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code404))
 
@@ -161,7 +159,6 @@ async def test_default_enforced_response_code():
 
 @pytest.mark.asyncio
 async def test_enforced_response_codes_502():
-
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code502))
 
@@ -173,7 +170,6 @@ async def test_enforced_response_codes_502():
 
 @pytest.mark.asyncio
 async def test_enforced_response_codes_504():
-
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code504))
 
@@ -196,39 +192,60 @@ def test_log_frame_header(monkeypatch, capsys):
 
 
 @pytest.mark.asyncio
-async def test_request_url_and_method_no_gateway():
-    url_path = "/call"
-    method = "POST"
-    call = await fixtures.setup_fn_call(
-        funcs.access_request_url,
-        request_url=url_path,
-        method=method,
+async def test_request_url_and_method_set_with_gateway():
+    headers = {
+        "fn-http-method": "PUT",
+        "fn-http-request-url": "/foo-bar?baz",
+        "fn-http-h-not-aheader": "nothttp"
+    }
+
+    funcs.setup_context_capture()
+
+    call = await fixtures.setup_fn_call_raw(
+        funcs.capture_request_ctx,
+        headers=headers
     )
     content, status, headers = await call
+    assert content == "OK"
 
-    assert "response-request-url" in headers
-    assert "request-method" in headers
+    ctx = funcs.get_captured_context()
 
-    assert url_path == headers.get("response-request-url")
-    assert method == headers.get("request-method")
+    assert ctx.RequestURL() == "/foo-bar?baz", "request URL mismatch, got %s" \
+                                               % ctx.RequestURL()
+    assert ctx.Method() == "PUT", "method mismatch got %s" % ctx.Method()
+    assert "fn-http-h-not-aheader" in ctx.Headers()
+    assert ctx.Headers()["fn-http-h-not-aheader"] == "nothttp"
 
 
 @pytest.mark.asyncio
-async def test_request_url_and_method_with_gateway():
-    url_path = "/t/app/path"
-    method = "GET"
-    call = await fixtures.setup_fn_call(
-        funcs.access_request_url,
-        request_url=url_path,
-        method=method,
-        gateway=True
+async def test_encap_request_headers_gateway():
+    headers = {
+        "fn-intent": "httprequest",
+        "fn-http-h-my-header": "foo",
+        "fn-http-h-funny-header": ["baz", "bob"],
+        "funny-header": "not-this-one",
+    }
+
+    funcs.setup_context_capture()
+    call = await fixtures.setup_fn_call_raw(
+        funcs.capture_request_ctx,
+        content=None,
+        headers=headers
     )
+
     content, status, headers = await call
 
-    assert "response-request-url" not in headers
-    assert "request-method" not in headers
-    assert "fn-http-h-response-request-url" in headers
-    assert "fn-http-h-request-method" in headers
+    assert content == 'OK'
 
-    assert url_path == headers.get("fn-http-h-response-request-url")
-    assert method == headers.get("fn-http-h-request-method")
+    input_ctx = funcs.get_captured_context()
+
+    headers = input_ctx.Headers()
+
+    assert "my-header" in headers
+    assert "funny-header" in headers
+
+    assert headers["my-header"] == "foo"
+    assert headers["funny-header"] == ["baz", "bob"]
+
+    assert input_ctx.HTTPHeaders() == {"my-header": "foo",
+                                       "funny-header": ["baz", "bob"]}

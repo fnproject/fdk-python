@@ -15,16 +15,44 @@
 from fdk import constants
 
 
-def decap_headers(hdsr):
+def decap_headers(hdsr, merge=True):
     ctx_headers = {}
     if hdsr is not None:
         for k, v in hdsr.items():
             k = k.lower()
             if k.startswith(constants.FN_HTTP_PREFIX):
-                ctx_headers[k.lstrip(constants.FN_HTTP_PREFIX)] = v
-            else:
-                ctx_headers[k] = v
+                push_header(ctx_headers, k[len(constants.FN_HTTP_PREFIX):], v)
+            elif merge:
+                # http headers override functions headers in context
+                # this is not ideal but it's the more correct view from the
+                # consumer perspective than random choice and for things
+                # like host headers
+                if k not in ctx_headers:
+                    ctx_headers[k] = v
     return ctx_headers
+
+
+def push_header(input_map, key, value):
+    if key not in input_map:
+        input_map[key] = value
+        return
+
+    current_val = input_map[key]
+
+    if isinstance(current_val, list):
+        if isinstance(value, list):  # both lists concat
+            input_map[key] = current_val + value
+        else:  # copy and append current value
+            new_val = current_val.copy()
+            new_val.append(value)
+            input_map[key] = new_val
+    else:
+        if isinstance(value, list):  # copy new list value and prepend current
+            new_value = value.copy()
+            new_value.insert(0, current_val)
+            input_map[key] = new_value
+        else:  # both non-lists create a new list
+            input_map[key] = [current_val, value]
 
 
 def encap_headers(headers, status=None):
@@ -32,12 +60,13 @@ def encap_headers(headers, status=None):
     if headers is not None:
         for k, v in headers.items():
             k = k.lower()
+            if k.startswith(constants.FN_HTTP_PREFIX):  # by default merge
+                push_header(new_headers, k, v)
             if (k == constants.CONTENT_TYPE or
-                    k == constants.FN_FDK_VERSION or
-                    k.startswith(constants.FN_HTTP_PREFIX)):
+                    k == constants.FN_FDK_VERSION):  # but don't merge these
                 new_headers[k] = v
             else:
-                new_headers[constants.FN_HTTP_PREFIX + k] = v
+                push_header(new_headers, constants.FN_HTTP_PREFIX + k, v)
 
     if status is not None:
         new_headers[constants.FN_HTTP_STATUS] = str(status)

@@ -57,6 +57,7 @@ class InvokeContext(object):
         self.__call_id = call_id
         self.__config = config if config else {}
         self.__headers = headers if headers else {}
+        self.__http_headers = {}
         self.__deadline = deadline
         self.__content_type = content_type
         self._request_url = request_url
@@ -66,8 +67,10 @@ class InvokeContext(object):
 
         log.log("request headers. gateway: {0} {1}"
                 .format(self.__is_gateway(), headers))
+
         if self.__is_gateway():
-            self.__headers = hs.decap_headers(self.__headers)
+            self.__headers = hs.decap_headers(headers, True)
+            self.__http_headers = hs.decap_headers(headers, False)
 
     def AppID(self):
         return self.__app_id
@@ -83,6 +86,9 @@ class InvokeContext(object):
 
     def Headers(self):
         return self.__headers
+
+    def HTTPHeaders(self):
+        return self.__http_headers
 
     def Format(self):
         return self.__fn_format
