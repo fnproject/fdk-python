@@ -1,11 +1,55 @@
 # Function development kit for Python
+The python FDK lets you write functions in python 3.6/3.7 
+
+## Simplest possible function 
+ 
+```python
+import io
+import logging
+
+from fdk import response
+
+def handler(ctx, data: io.BytesIO = None):
+    logging.getLogger().info("Got incoming request")
+    return response.Response(ctx, response_data="hello world")
+```
 
 
-While the FDK contract is HTTP, the intention is for that to be somewhat 
-abstracted from the user - they write some Function code , this library helps them do that.
+## Handling HTTP metadata in HTTP Functions 
+Functions can implement HTTP services when fronted by an HTTP Gateway
 
-## Handling JSON Functions
+When your function is behind an HTTP gateway you can access the inbound HTTP Request via :
 
+  - `ctx.HttpHeaders()` : a map of string -> value | list of values , unlike `ctx.Headers()` this only includes headers 
+        passed by the HTTP gateway (with no functions metadata).
+  - `ctx.RequestURL()` : the incoming request URL passed by the gateway 
+  - `ctx.Method()` : the HTTP method of the incoming request 
+   
+You can set outbound HTTP headers and the HTTP status of the request using `ctx.SetResponseHeaders` or the `Response`    
+  - e.g. `ctx.SetResponseHeaders({"Location","http://example.com/","My-Header2": ["v1","v2"]}, 302)` 
+  - or by passing these to the Response object : 
+```python
+        return new Response(ctx,
+                        headers={"Location","http://example.com/","My-Header2": ["v1","v2"]},
+                        response_data="Page moved",
+                        status_code=302)
+``` 
+
+e.g. to redirect users to a different page : 
+```python
+import io
+import logging
+
+from fdk import response
+
+def handler(ctx, data: io.BytesIO = None):
+    logging.getLogger().info("Got incoming request for URL %s with headers %s", ctx.RequestURL(), ctx.HTTPHeaders())
+    ctx.SetResponseHeaders({"Location": "http://www.example.com"}, 302)
+    return response.Response(ctx, response_data="Page moved from %s")
+```
+
+
+## Handling JSON in  Functions
 
 A main loop is supplied that can repeatedly call a user function with a series of requests.
 In order to utilise this, you can write your `func.py` as follows:
@@ -15,7 +59,6 @@ import json
 import io
 
 from fdk import response
-
 
 def handler(ctx, data: io.BytesIO=None):
     name = "World"
@@ -34,8 +77,8 @@ def handler(ctx, data: io.BytesIO=None):
 
 ```
 
-## Unittest your functions
 
+## Unit testing your functions
 
 Starting v0.0.33 FDK-Python provides a testing framework that allows performing unit tests of your function's code.
 The unit test framework is the [pytest](https://pytest.org/). Coding style remain the same, so, write your tests as you've got used to.

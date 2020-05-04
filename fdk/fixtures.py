@@ -24,7 +24,6 @@ async def process_response(fn_call_coro):
     response_data = resp.body()
     response_status = resp.status()
     response_headers = resp.context().GetResponseHeaders()
-    print(response_headers)
 
     return response_data, response_status, response_headers
 
@@ -83,10 +82,17 @@ async def setup_fn_call(
         method=method, request_url=request_url,
         gateway=gateway
     )
+    return await setup_fn_call_raw(handle_func, content, new_headers)
+
+
+async def setup_fn_call_raw(handle_func, content=None, headers=None):
+
+    if headers is None:
+        headers = {}
 
     # don't decap headers, so we can test them
     # (just like they come out of fdk)
     return process_response(runner.handle_request(
         code(handle_func), constants.HTTPSTREAM,
-        headers=new_headers, data=content,
+        headers=headers, data=content,
     ))
