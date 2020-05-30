@@ -50,10 +50,11 @@ class Python35plusDelayedImport(PythonDelayedImportAbstraction):
 
     def get_module(self):
         if not self.executed:
-            import imp
+            from importlib.machinery import SourceFileLoader
             fname, ext = os.path.splitext(
                 os.path.basename(self._mod_path))
-            self._func_module = imp.load_source(fname, self._mod_path)
+            self._func_module = SourceFileLoader(fname, self._mod_path)\
+                .load_module()
             self.executed = True
 
         return self._func_module
