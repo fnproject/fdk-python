@@ -77,6 +77,32 @@ def handler(ctx, data: io.BytesIO=None):
 
 ```
 
+## Writing binary data from functions 
+In order to write a binary response to your function pass a `bytes` object to the response_data
+
+```python
+import io 
+from PIL import Image, ImageDraw 
+from fdk import response 
+ 
+ 
+def handler(ctx, data: io.BytesIO=None): 
+    img = Image.new('RGB', (100, 30), color='red') 
+    d = ImageDraw.Draw(img) 
+    d.text((10, 10), "hello world", fill=(255, 255, 0)) 
+    # write png image to memory  
+    output =  io.BytesIO() 
+    img.save(output, format="PNG") 
+    # get the bytes of the image  
+    imgbytes = output.getvalue() 
+ 
+    return response.Response( 
+        ctx, response_data=imgbytes, 
+        headers={"Content-Type": "image/png"} 
+    )
+```
+
+
 
 ## Unit testing your functions
 

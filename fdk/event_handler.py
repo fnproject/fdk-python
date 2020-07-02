@@ -53,7 +53,7 @@ def event_handle(handle_code):
             headers=headers,
             status=status,
             content_type=headers.get(constants.CONTENT_TYPE),
-            body_bytes=func_response.body(),
+            body_bytes=func_response.body_bytes(),
         )
 
     return pure_handler

@@ -80,7 +80,7 @@ class AsyncHTTPServer(object):
             headers = res.headers
             status = res.status
             response = HTTPResponse(
-                body=body, status=status, headers=headers,
+                body_bytes=body, status=status, headers=headers,
             )
         except CancelledError:
             response = None
