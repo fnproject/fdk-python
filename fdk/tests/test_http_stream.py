@@ -249,3 +249,10 @@ async def test_encap_request_headers_gateway():
 
     assert input_ctx.HTTPHeaders() == {"my-header": "foo",
                                        "funny-header": ["baz", "bob"]}
+
+
+@pytest.mark.asyncio
+async def test_bytes_response():
+    call = await fixtures.setup_fn_call(funcs.binary_result)
+    content, status, headers = await call
+    assert content == bytes([1, 2, 3, 4, 5])

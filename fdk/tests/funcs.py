@@ -141,3 +141,7 @@ def capture_request_ctx(ctx, **kwargs):
     global captured_context
     captured_context = ctx
     return response.Response(ctx, response_data="OK")
+
+
+def binary_result(ctx, **kwargs):
+    return response.Response(ctx, response_data=bytes([1, 2, 3, 4, 5]))

@@ -14,14 +14,16 @@
 
 from fdk import context
 from fdk import constants
+from typing import Union
 
 
 class Response(object):
 
     def __init__(self, ctx: context.InvokeContext,
-                 response_data: str=None,
+                 response_data: Union[str, bytes]=None,
                  headers: dict=None,
-                 status_code: int=200):
+                 status_code: int=200,
+                 response_encoding: str="utf-8"):
         """
         Creates an FDK-readable response object
         :param ctx: invoke context
@@ -32,10 +34,14 @@ class Response(object):
         :type headers: dict
         :param status_code: response code
         :type status_code: int
+        :param response_encoding: response encoding for strings ("utf-8")
+        :type response_encoding: str
         """
         self.ctx = ctx
         self.status_code = status_code
         self.response_data = response_data if response_data else ""
+        self.response_encoding = response_encoding
+
         if headers is None:
             headers = {}
         headers.update({constants.FN_FDK_VERSION:
@@ -48,6 +54,13 @@ class Response(object):
 
     def body(self):
         return self.response_data
+
+    def body_bytes(self):
+        if isinstance(self.response_data, bytes) or \
+                isinstance(self.response_data, bytearray):
+            return self.response_data
+        else:
+            return str(self.response_data).encode(self.response_encoding)
 
     def context(self):
         return self.ctx
