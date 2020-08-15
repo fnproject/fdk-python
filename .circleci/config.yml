@@ -4,7 +4,7 @@ orbs:
 jobs:
   "test":
     docker:
-      - image: circleci/python:3.7.0
+      - image: circleci/python:3.8.5
     working_directory: ~/fdk-python
     steps:
       - checkout
@@ -31,10 +31,10 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            tox -epy3.7
+            tox -epy3.8
   "deploy":
     docker:
-      - image: circleci/python:3.7.0
+      - image: circleci/python:3.8.5
     working_directory: ~/fdk-python
     steps:
       - checkout
@@ -56,6 +56,7 @@ jobs:
 
               ./build-images.sh 3.6
               ./build-images.sh 3.7.1
+              ./build-images.sh 3.8.5
               ./release.sh
               ./release_images.sh
             fi
@@ -98,6 +99,25 @@ jobs:
           policy_bundle_file_path: .circleci/.anchore/policy_bundle.json
       - anchore/parse_reports
 
+  "python385_security_check":
+    executor: anchore/anchore_engine
+    working_directory: ~/fdk-python
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - checkout
+      - run:
+          name: Python 3.8.5 build
+          command: |
+            apk add bash
+            ./build-images.sh 3.8.5
+      - anchore/analyze_local_image:
+          image_name: "fnproject/python:3.8.5-dev fnproject/python:3.8.5"
+          timeout: '500'
+          policy_failure: true
+          policy_bundle_file_path: .circleci/.anchore/policy_bundle.json
+      - anchore/parse_reports
+
 workflows:
   version: 2
   build:
@@ -118,3 +138,4 @@ workflows:
     jobs:
       - "python36_security_check"
       - "python371_security_check"
+      - "python385_security_check"

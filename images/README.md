@@ -12,6 +12,11 @@ pushd build-stage/3.7.1; docker build -t fnproject/python:3.7.1-dev .; popd
 pushd runtime/3.7.1; docker build -t fnproject/python:3.7.1 .; popd
 ```
 
+```sh
+pushd build-stage/3.8.5; docker build -t fnproject/python:3.8.5-dev .; popd
+pushd runtime/3.8.5; docker build -t fnproject/python:3.8.5 .; popd
+```
+
 Then push:
 
 ```sh
@@ -22,4 +27,9 @@ docker push fnproject/python:3.6
 ```sh
 docker push fnproject/python:3.7.1-dev
 docker push fnproject/python:3.7.1
+```
+
+```sh
+docker push fnproject/python:3.8.5-dev
+docker push fnproject/python:3.8.5
 ```
