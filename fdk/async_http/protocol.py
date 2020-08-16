@@ -228,6 +228,15 @@ class HttpProtocol(asyncio.Protocol):
                 self._request_handler_task.cancel()
             self.write_error(ServiceUnavailable("Response Timeout"))
 
+    def keep_alive_time_left(self):
+        """
+        Return keep alive time remaining, zero if no response written yet.
+        """
+        if self._last_response_time and current_time:
+            time_elapsed = current_time - self._last_response_time
+            return self.keep_alive_timeout - time_elapsed
+        return 0
+
     def keep_alive_timeout_callback(self):
         """
         Check if elapsed time since last response exceeds our configured
@@ -236,9 +245,8 @@ class HttpProtocol(asyncio.Protocol):
 
         :return: None
         """
-        time_elapsed = current_time - self._last_response_time
-        if time_elapsed < self.keep_alive_timeout:
-            time_left = self.keep_alive_timeout - time_elapsed
+        time_left = self.keep_alive_time_left()
+        if time_left >= 0:
             self._keep_alive_timeout_handler = self.loop.call_later(
                 time_left, self.keep_alive_timeout_callback
             )
@@ -431,10 +439,10 @@ class HttpProtocol(asyncio.Protocol):
                 self.transport.close()
                 self.transport = None
             else:
+                self._last_response_time = current_time
                 self._keep_alive_timeout_handler = self.loop.call_later(
                     self.keep_alive_timeout, self.keep_alive_timeout_callback
                 )
-                self._last_response_time = current_time
                 self.cleanup()
 
     async def drain(self):
@@ -483,10 +491,10 @@ class HttpProtocol(asyncio.Protocol):
                 self.transport.close()
                 self.transport = None
             else:
+                self._last_response_time = current_time
                 self._keep_alive_timeout_handler = self.loop.call_later(
                     self.keep_alive_timeout, self.keep_alive_timeout_callback
                 )
-                self._last_response_time = current_time
                 self.cleanup()
 
     def write_error(self, exception):
