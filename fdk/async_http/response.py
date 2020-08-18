@@ -117,7 +117,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
         headers = self._parse_headers()
 
-        if self.status is 200:
+        if self.status == 200:
             status = b"OK"
         else:
             status = STATUS_CODES.get(self.status)
@@ -227,7 +227,7 @@ class HTTPResponse(BaseHTTPResponse):
 
         headers = self._parse_headers()
 
-        if self.status is 200:
+        if self.status == 200:
             status = b"OK"
         else:
             status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")

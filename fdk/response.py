@@ -20,10 +20,10 @@ from typing import Union
 class Response(object):
 
     def __init__(self, ctx: context.InvokeContext,
-                 response_data: Union[str, bytes]=None,
-                 headers: dict=None,
-                 status_code: int=200,
-                 response_encoding: str="utf-8"):
+                 response_data: Union[str, bytes] = None,
+                 headers: dict = None,
+                 status_code: int = 200,
+                 response_encoding: str = "utf-8"):
         """
         Creates an FDK-readable response object
         :param ctx: invoke context
