@@ -118,9 +118,9 @@ class InvokeContext(object):
         return self._method
 
     def __is_gateway(self):
-        return (constants.FN_INTENT in self.__headers and
-                self.__headers.get(constants.FN_INTENT) ==
-                constants.INTENT_HTTP_REQUEST)
+        return (constants.FN_INTENT in self.__headers
+                and self.__headers.get(constants.FN_INTENT)
+                == constants.INTENT_HTTP_REQUEST)
 
 
 def context_from_format(format_def: str, **kwargs) -> (

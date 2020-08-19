@@ -28,7 +28,7 @@ from fdk.async_http import router
 
 def start(handle_code: customer_code.Function,
           uds: str,
-          loop: asyncio.AbstractEventLoop=None):
+          loop: asyncio.AbstractEventLoop = None):
     """
     Unix domain socket HTTP server entry point
     :param handle_code: customer's code

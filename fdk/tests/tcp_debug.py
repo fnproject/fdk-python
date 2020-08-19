@@ -23,7 +23,7 @@ from fdk.async_http import app
 from fdk.async_http import router
 
 
-def handle(handle_code: customer_code.Function, port: int=5000):
+def handle(handle_code: customer_code.Function, port: int = 5000):
     """
     FDK entry point
     :param handle_code: customer's code
