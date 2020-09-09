@@ -74,7 +74,7 @@ class AsyncHTTPServer(object):
 
             request.uri_template = uri
             response = handler(request)
-            logger.info("got response from function")
+            logger.debug("got response from function")
             res = await response
             body = res.body
             headers = res.headers

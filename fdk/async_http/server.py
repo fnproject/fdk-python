@@ -203,7 +203,7 @@ def serve(
     def start():
         pid = os.getpid()
         try:
-            logger.info("Starting worker [%s]", pid)
+            logger.debug("Starting worker [%s]", pid)
             if constants.is_py37():
                 loop.run_until_complete(http_server.serve_forever())
             else:

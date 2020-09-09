@@ -18,9 +18,14 @@ import sys
 
 
 def __setup_logger():
-    logging.getLogger("asyncio").setLevel(logging.DEBUG)
+    fdk_debug = os.environ.get("FDK_DEBUG") in [
+        'true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']
+
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
     root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
+    if fdk_debug:
+        root.setLevel(logging.DEBUG)
+
     ch = logging.StreamHandler(sys.stderr)
     formatter = logging.Formatter(
         '%(asctime)s - '
@@ -30,7 +35,8 @@ def __setup_logger():
     )
     ch.setFormatter(formatter)
     root.addHandler(ch)
-    return root
+    logger = logging.getLogger("fdk")
+    return logger
 
 
 __log__ = __setup_logger()
@@ -41,7 +47,4 @@ def get_logger():
 
 
 def log(message):
-    fdk_debug = os.environ.get("FDK_DEBUG")
-    if fdk_debug in ['true', '1', 't', 'y', 'yes',
-                     'yeah', 'yup', 'certainly', 'uh-huh']:
-        __log__.info(message)
+    __log__.debug(message)
