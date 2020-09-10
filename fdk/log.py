@@ -15,6 +15,20 @@
 import logging
 import os
 import sys
+from contextvars import ContextVar
+
+
+__fn_request_id__ = ContextVar("fn_request_id", default=None)
+
+
+def set_request_id(rid):
+    __fn_request_id__.set(rid)
+
+
+class RequestFormatter(logging.Formatter):
+    def format(self, record):
+        record.fn_request_id = __fn_request_id__.get()
+        return super().format(record)
 
 
 def __setup_logger():
@@ -27,8 +41,8 @@ def __setup_logger():
         root.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler(sys.stderr)
-    formatter = logging.Formatter(
-        '%(asctime)s - '
+    formatter = RequestFormatter(
+        '%(fn_request_id)s - '
         '%(name)s - '
         '%(levelname)s - '
         '%(message)s'
@@ -48,3 +62,10 @@ def get_logger():
 
 def log(message):
     __log__.debug(message)
+
+
+__request_log__ = logging.getLogger('fn')
+
+
+def get_request_log():
+    return __request_log__
