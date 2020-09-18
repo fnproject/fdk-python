@@ -81,6 +81,7 @@ async def handle_request(handler_code, format_def, **kwargs):
     """
     log.log("in handle_request")
     ctx, body = context.context_from_format(format_def, **kwargs)
+    log.set_request_id(ctx.CallID())
     log.log("context provisioned")
     try:
         response_data = await with_deadline(ctx, handler_code, body)
@@ -96,5 +97,8 @@ async def handle_request(handler_code, format_def, **kwargs):
 
     except (Exception, TimeoutError) as ex:
         log.log("exception appeared: {0}".format(ex))
-        traceback.print_exc(file=sys.stderr)
+        (exctype, value, tb) = sys.exc_info()
+        tb_flat = ''.join(
+            s.replace('\n', '\\n') for s in traceback.format_tb(tb))
+        log.get_request_log().error('{}:{}'.format(value, tb_flat))
         return errors.DispatchException(ctx, 502, str(ex)).response()

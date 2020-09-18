@@ -18,6 +18,7 @@ import os
 import sys
 
 from fdk import constants
+from fdk import log
 
 from fdk.async_http import response
 
@@ -36,13 +37,13 @@ def event_handle(handle_code):
     """
     async def pure_handler(request):
         from fdk import runner
-        logger.info("in pure_handler")
+        log.log("in pure_handler")
         headers = dict(request.headers)
         log_frame_header(headers)
         func_response = await runner.handle_request(
             handle_code, constants.HTTPSTREAM,
             headers=headers, data=io.BytesIO(request.body))
-        logger.info("request execution completed")
+        log.log("request execution completed")
 
         headers = func_response.context().GetResponseHeaders()
         status = func_response.status()

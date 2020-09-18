@@ -29,11 +29,12 @@ You can set outbound HTTP headers and the HTTP status of the request using `ctx.
   - e.g. `ctx.SetResponseHeaders({"Location","http://example.com/","My-Header2": ["v1","v2"]}, 302)` 
   - or by passing these to the Response object : 
 ```python
-        return new Response(ctx,
-                        headers={"Location","http://example.com/","My-Header2": ["v1","v2"]},
-                        response_data="Page moved",
-                        status_code=302)
-``` 
+return new Response(
+    ctx,
+    headers={"Location","http://example.com/","My-Header2": ["v1","v2"]},
+    response_data="Page moved",
+    status_code=302)
+```
 
 e.g. to redirect users to a different page : 
 ```python
@@ -171,11 +172,11 @@ PASSED
 
 To add coverage first install one more package:
 ```bash
-    pip install pytest-cov
+pip install pytest-cov
 ```
 then run tests with coverage flag:
 ```bash
-    pytest -v -s --tb=long --cov=func func.py
+pytest -v -s --tb=long --cov=func func.py
 ```
 
 ```bash
@@ -208,15 +209,15 @@ func.py      19      1    95%
 
 Create a virtualenv:
 ```bash
-    python3 -m venv .venv
+python3 -m venv .venv
 ```
 Activate virtualenv:
 ```bash
-    source .venv/bin/activate
+source .venv/bin/activate
 ```
 All you have to do is:
 ```bash
-    pip install fdk
+pip install fdk
 ```
 Now you have a new tools added!
 
@@ -236,7 +237,7 @@ This is an entry point to a function, this tool you'd be using while working wit
 `fdk` is a Python CLI script that has the following signature:
 
 ```bash
-    fdk <path-to-a-function-module> [module-entrypoint]
+fdk <path-to-a-function-module> [module-entrypoint]
 ```
 
 where:
@@ -254,6 +255,20 @@ fdk func.py
 the CLI will look for `handler` Python function.
 In order to override `[module-entrypoint]` you need to specify your custom entry point.
 
+### Testing locally
+
+To run a function locally (outside Docker) you need to set `FN_FORMAT` and `FN_LISTENER`, like so:
+
+```bash
+env FDK_DEBUG=1 FN_FORMAT=http-stream FN_LISTENER=unix://tmp/func.sock fdk <path-to-a-function-module> [module-entrypoint]
+```
+
+You can then test with curl:
+
+```bash
+curl -v --unix-socket /tmp/func.sock -H "Fn-Call-Id: 0000000000000000" -H "Fn-Deadline: 2030-01-01T00:00:00.000Z" -XPOST http://function/call -d '{"name":"Tubbs"}'
+```
+
 ## CLI tool: `fdk-tcp-debug`
 
 The reason why this tool exists is to give a chance to developers to debug their function on their machines.
@@ -265,7 +280,7 @@ when this tool works on top of TCP socket, so, the difference is a transport, no
 `fdk-tcp-debug` is a Python CLI script that has the following signature:
 
 ```bash
-    fdk-tcp-debug <port> <path-to-a-function-module> [module-entrypoint]
+fdk-tcp-debug <port> <path-to-a-function-module> [module-entrypoint]
 ```
 
 The behaviour of this CLI is the same, but it will start an FDK on top of the TCP socket.
@@ -292,14 +307,14 @@ In order to test an FDK changes do the following:
 Test an FDK change with sample function using `fdk-tcp-debug`:
 
 ```bash
-    pip install -e .
-    FDK_DEBUG=1 fdk-tcp-debug 5001 samples/echo/func.py handler
+pip install -e .
+FDK_DEBUG=1 fdk-tcp-debug 5001 samples/echo/func.py handler
 ```
 
 Then just do:
 
 ```bash
-    curl -v -X POST localhost:5001 -d '{"name":"denis"}'
+curl -v -X POST localhost:5001 -d '{"name":"denis"}'
 ```
 
 ### Testing within a function
@@ -331,16 +346,16 @@ ENTRYPOINT ["/python/bin/fdk", "/function/func.py", "handler"]
 
 Build an FDK wheel:
 ```bash
-    pip install wheel
-    PBR_VERSION=test python setup.py bdist_wheel
+pip install wheel
+PBR_VERSION=test python setup.py bdist_wheel
 ```
 
 Move an FDK wheel (located at `dist/fdk-test-py3-none-any.whl`) into a function's folder.
 
 Do the deploy:
 ```bash
-    fn --versbose deploy --app testapp --local --no-bump
-    fn config fn testapp test-function FDK_DEBUG 1
+fn --versbose deploy --app testapp --local --no-bump
+fn config fn testapp test-function FDK_DEBUG 1
 ```
 
 And the last step - invoke it and see how it goes:
@@ -354,7 +369,7 @@ FDK is based on the asyncio event loop. Default event loop is not quite fast, bu
 In order to make an FDK to process IO operation at least 4 times faster you need to add another dependency to your function:
 
 ```text
-    uvloop
+uvloop
 ```
 
 [UVLoop](https://github.com/MagicStack/uvloop) is a CPython wrapper on top of cross-platform [libuv](https://github.com/libuv/libuv).
@@ -372,8 +387,8 @@ A new FDK is here which means there suppose to be a way to upgrade your code fro
 As you noticed - an entry point a function changed, i.e., func.py no longer considered as the main module (`__main__`) which means that the following section:
 
 ```python
-    if __name__ == "__main__":
-        fdk.handle(handler)
+if __name__ == "__main__":
+    fdk.handle(handler)
 ```
 
 has no effect any longer. Please note that FDK will fail-fast with an appropriate message if old-style FDK format used.
@@ -389,10 +404,10 @@ data = data.read()
 If you've been using json lib to turn an incoming data into a dictionary you need to replace: `json.loads` with `json.load`
 
 ```python
-    try:
-        dct = json.load(data)
-    except ValueError as ex:
-        # do here whatever is reasonable
+try:
+    dct = json.load(data)
+except ValueError as ex:
+    # do here whatever is reasonable
 ```
 
 ### Dockerfile
@@ -404,13 +419,13 @@ If you've been using custom multi-stage Dockerfile (derived from what Fn CLI gen
 the only thing that is necessary to change is an `ENTRYPOINT` from:
 
 ```text
-    ENTRYPOINT["python", "func.py"]
+ENTRYPOINT["python", "func.py"]
 ```
 
 to:
 
 ```text
-    ENTRYPOINT["/python/bin/fdk", "func.py", "handler"]
+ENTRYPOINT["/python/bin/fdk", "func.py", "handler"]
 ```
 
 If you've been using your own Dockerfile that wasn't derived from the Dockerfile 
