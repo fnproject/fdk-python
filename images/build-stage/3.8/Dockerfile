@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 #
 # Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
 #
@@ -15,15 +14,8 @@
 # limitations under the License.
 #
 
+FROM python:3.8-slim
 
-set -xe
-
-if [ -z "$1" ];then
-  echo "Please supply python version as argument to build image." >> /dev/stderr
-  exit 2
-fi
-
-pyversion=$1
-
-pushd images/build-stage/${pyversion} && docker build -t fnproject/python:${pyversion}-dev . && popd
-pushd images/runtime/${pyversion} && docker build -t fnproject/python:${pyversion} . && popd
+RUN apt-get update && apt-get upgrade -qy && \
+    apt-get install --no-install-recommends -qy build-essential gcc && \
+    apt-get clean
