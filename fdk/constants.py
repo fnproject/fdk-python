@@ -30,6 +30,11 @@ FN_APP_ID = "FN_APP_ID"
 FN_ID = "FN_FN_ID"
 FN_LOGFRAME_NAME = "FN_LOGFRAME_NAME"
 FN_LOGFRAME_HDR = "FN_LOGFRAME_HDR"
+FN_APP_NAME = "FN_APP_NAME"
+FN_NAME = "FN_FN_NAME"
+OCI_TRACE_COLLECTOR_URL = "OCI_TRACE_COLLECTOR_URL"
+OCI_TRACING_ENABLED = "OCI_TRACING_ENABLED"
+
 
 # headers are lower case TODO(denis): why?
 FN_INTENT = "fn-intent"
@@ -42,6 +47,11 @@ FN_CALL_ID = "fn-call-id"
 FN_HTTP_METHOD = "fn-http-method"
 CONTENT_TYPE = "content-type"
 CONTENT_LENGTH = "content-length"
+X_B3_TRACEID = "x-b3-traceid"
+X_B3_SPANID = "x-b3-spanid"
+X_B3_PARENTSPANID = "x-b3-parentspanid"
+X_B3_SAMPLED = "x-b3-sampled"
+X_B3_FLAGS = "x-b3-flags"
 
 FN_ENFORCED_RESPONSE_CODES = [200, 502, 504]
 FN_DEFAULT_RESPONSE_CODE = 200
