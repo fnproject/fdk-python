@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* - Added license files and other files to build wheel - Started tracking CHANGELOG.md in source
+
 0.1.23
 ------
 
