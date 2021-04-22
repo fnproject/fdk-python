@@ -180,6 +180,8 @@ class TracingContext(object):
         self.__fn_name = os.environ.get(constants.FN_NAME)
         self.__fn_id = os.environ.get(constants.FN_ID)
 
+        self.__zipkin_attrs = self.__create_zipkin_attrs(is_tracing_enabled)
+
     def is_tracing_enabled(self):
         return self.__is_tracing_enabled
 
@@ -201,8 +203,11 @@ class TracingContext(object):
     def flags(self):
         return self.__flags
 
-    # this is a helper method specific for py_zipkin
     def zipkin_attrs(self):
+        return self.__zipkin_attrs
+
+    # this is a helper method specific for py_zipkin
+    def __create_zipkin_attrs(self, is_tracing_enabled):
         ZipkinAttrs = namedtuple(
             "ZipkinAttrs",
             "trace_id, span_id, parent_span_id, is_sampled, flags"
@@ -216,7 +221,7 @@ class TracingContext(object):
 
         # As the fnLb sends the parent_span_id as the span_id
         # assign the parent span id as the span id.
-        if parent_span_id is None and span_id is not None:
+        if is_tracing_enabled:
             parent_span_id = span_id
             span_id = generate_id()
 
