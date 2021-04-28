@@ -99,9 +99,25 @@ def test_context_from_format_returns_correct_objects_when_tracing_enabled():
         data=mock_data
     )
 
-    actual_tracing_context = actual_invoke_context.TracingContext().__dict__
-    expected_tracing_context = mock_invoke_context.TracingContext().__dict__
-    assert actual_tracing_context == expected_tracing_context
+    actual = actual_invoke_context.TracingContext().__dict__
+    expected = mock_invoke_context.TracingContext().__dict__
+
+    attrs = "_TracingContext__zipkin_attrs"
+    filtered_actual = {
+        key: value for (key, value) in actual.items() if key != attrs
+    }
+    filtered_expected = {
+        key: value for (key, value) in expected.items() if key != attrs
+    }
+
+    assert filtered_actual == filtered_expected
+    assert actual[attrs].trace_id == expected[attrs].trace_id
+    assert actual[attrs].span_id != expected[attrs].span_id
+    assert actual[attrs].span_id != span_id
+    assert actual[attrs].parent_span_id == expected[attrs].parent_span_id
+    assert actual[attrs].is_sampled == expected[attrs].is_sampled
+    assert actual[attrs].flags == expected[attrs].flags
+
     assert data == mock_data
 
     os.environ.pop(constants.FN_APP_ID)
@@ -146,8 +162,8 @@ def test_zipkin_attrs():
     zipkin_attrs = mock_tracing_context.zipkin_attrs()
 
     assert zipkin_attrs.trace_id == trace_id
-    assert zipkin_attrs.span_id == span_id
-    assert zipkin_attrs.parent_span_id == parent_span_id
+    assert zipkin_attrs.span_id != span_id
+    assert zipkin_attrs.parent_span_id == span_id
     assert zipkin_attrs.is_sampled is True
     assert zipkin_attrs.flags == 0
 
