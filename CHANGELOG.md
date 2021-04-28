@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+* Fix to the zipkin\_attrs
+
+0.1.24
+------
+
+* FDK Python: 0.1.24 release [skip ci]
 * - Added license files and other files to build wheel - Started tracking CHANGELOG.md in source
 
 0.1.23
