@@ -17,9 +17,6 @@
 import io
 import sys
 import traceback
-import signal
-import datetime as dt
-import iso8601
 import types
 
 from fdk import context
@@ -43,29 +40,17 @@ async def with_deadline(ctx: context.InvokeContext,
     :return:
     """
 
-    def timeout_func(*_):
-        raise TimeoutError("function timed out")
-
-    now = dt.datetime.now(dt.timezone.utc).astimezone()
     # ctx.Deadline() would never be an empty value,
     # by default it will be 30 secs from now
-    deadline = ctx.Deadline()
-    alarm_after = iso8601.parse_date(deadline)
-    delta = alarm_after - now
-    signal.signal(signal.SIGALRM, timeout_func)
-    signal.alarm(int(delta.total_seconds()))
 
     try:
         handle_func = handler_code.handler()
         result = handle_func(ctx, data=data)
         if isinstance(result, types.CoroutineType):
-            signal.alarm(0)
             return await result
 
-        signal.alarm(0)
         return result
     except (Exception, TimeoutError) as ex:
-        signal.alarm(0)
         raise ex
 
 
@@ -90,14 +75,20 @@ async def handle_request(handler_code, format_def, **kwargs):
         log.log("function result obtained")
         if isinstance(response_data, response.Response):
             return response_data
-
         headers = ctx.GetResponseHeaders()
         log.log("response headers obtained")
         return response.Response(
             ctx, response_data=response_data,
             headers=headers, status_code=200)
 
-    except (Exception, TimeoutError) as ex:
+    except TimeoutError as ex:
+        log.log("Function timeout: {}".format(ex))
+        (exctype, value, tb) = sys.exc_info()
+        tb_flat = ''.join(
+            s.replace('\n', '\\n') for s in traceback.format_tb(tb))
+        log.get_request_log().error('{}:{}'.format(value, tb_flat))
+        return errors.DispatchException(ctx, 504, str(ex)).response()
+    except Exception as ex:
         log.log("exception appeared: {0}".format(ex))
         (exctype, value, tb) = sys.exc_info()
         tb_flat = ''.join(
