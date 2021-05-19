@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-import datetime as dt
 import json
 import pytest
 
@@ -132,20 +131,6 @@ async def test_coro_func():
 
     assert 200 == status
     assert 'hello from coro' == content
-
-
-@pytest.mark.asyncio
-async def test_deadline():
-    timeout = 5
-    now = dt.datetime.now(dt.timezone.utc).astimezone()
-    now += dt.timedelta(0, float(timeout))
-
-    call = await fixtures.setup_fn_call(
-        funcs.timed_sleepr(timeout + 1),
-        deadline=now.isoformat())
-    _, status, _ = await call
-
-    assert 502 == status
 
 
 @pytest.mark.asyncio
