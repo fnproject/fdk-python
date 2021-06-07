@@ -124,6 +124,5 @@ AUTHORS
 .pytest_cache/
 data/
 
-func.yaml
 func.yml
 test_function/

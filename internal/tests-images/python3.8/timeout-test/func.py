@@ -14,10 +14,16 @@
 # limitations under the License.
 #
 
-import setuptools
+import time
+import logging
+import io
 
-setuptools.setup(setup_requires=['pbr>=2.0.0'],
-                 pbr=True,
-                 packages=setuptools.find_packages(
-                     exclude=["internal", "internal.*"])
-                 )
+
+def handler(ctx, data: io.BytesIO = None):
+    # cause function invoke timeout
+    try:
+        time.sleep(6)
+    except Exception as ex:
+        logging.getLogger().info(
+            'Error while causing timeout ' + str(ex)
+        )

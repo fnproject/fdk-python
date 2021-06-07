@@ -14,10 +14,24 @@
 # limitations under the License.
 #
 
-import setuptools
+import io
+import json
+import logging
 
-setuptools.setup(setup_requires=['pbr>=2.0.0'],
-                 pbr=True,
-                 packages=setuptools.find_packages(
-                     exclude=["internal", "internal.*"])
-                 )
+from fdk import response
+
+
+def handler(ctx, data: io.BytesIO = None):
+    name = "World"
+    try:
+        body = json.loads(data.getvalue())
+        name = body.get("name")
+    except (Exception, ValueError) as ex:
+        logging.getLogger().info('error parsing json payload: ' + str(ex))
+
+    logging.getLogger().info("Inside Python Hello World function")
+    return response.Response(
+        ctx, response_data=json.dumps(
+            {"message": "Hello {0}".format(name)}, separators=(',', ':')),
+        headers={"Content-Type": "application/json"}
+    )

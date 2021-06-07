@@ -14,10 +14,8 @@
 # limitations under the License.
 #
 
-import setuptools
+FROM docker-remote.artifactory.oci.oraclecorp.com/python:3.8.5-slim-buster
 
-setuptools.setup(setup_requires=['pbr>=2.0.0'],
-                 pbr=True,
-                 packages=setuptools.find_packages(
-                     exclude=["internal", "internal.*"])
-                 )
+RUN apt-get update && apt-get upgrade -qy && \
+    apt-get install --no-install-recommends -qy build-essential gcc && \
+    apt-get clean

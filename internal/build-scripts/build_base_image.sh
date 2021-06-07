@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 # Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
 #
@@ -14,10 +15,16 @@
 # limitations under the License.
 #
 
-import setuptools
 
-setuptools.setup(setup_requires=['pbr>=2.0.0'],
-                 pbr=True,
-                 packages=setuptools.find_packages(
-                     exclude=["internal", "internal.*"])
-                 )
+set -xe
+
+if [ -z "$1" ];then
+  echo "Please supply python version as argument to build image." >> /dev/stderr
+  exit 2
+fi
+
+pyversion=$1
+
+# Build base fdk build and runtime image for a given python runtime version
+pushd internal/images/build-stage/${pyversion} && docker build -t fnproject/python:${pyversion}-dev . && popd
+pushd internal/images/runtime/${pyversion} && docker build -t fnproject/python:${pyversion} . && popd

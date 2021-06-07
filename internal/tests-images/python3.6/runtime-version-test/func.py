@@ -14,10 +14,22 @@
 # limitations under the License.
 #
 
-import setuptools
+import sys
+import logging
+import io
 
-setuptools.setup(setup_requires=['pbr>=2.0.0'],
-                 pbr=True,
-                 packages=setuptools.find_packages(
-                     exclude=["internal", "internal.*"])
-                 )
+
+def handler(ctx, data: io.BytesIO = None):
+    python_version = ""
+    try:
+        python_version = "python" + (str(sys.version_info.major)
+                                     + "."
+                                     + str(sys.version_info.minor)
+                                     + "."
+                                     + str(sys.version_info.micro)
+                                     )
+    except Exception as ex:
+        logging.getLogger().info(
+            'Error while determining python runtime version: ' + str(ex)
+        )
+    return python_version
