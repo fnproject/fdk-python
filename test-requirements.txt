@@ -1,0 +1,5 @@
+flake8>=3.8.0
+hacking==4.0.0
+pytest==5.4.3
+pytest-cov==2.9.0
+attrs==19.1.0
