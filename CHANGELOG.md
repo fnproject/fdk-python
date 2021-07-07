@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.1.28
+------
+
+* FDK Python: 0.1.28 release [skip ci]
+
 0.1.27
 ------
 
