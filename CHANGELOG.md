@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+0.1.26
+------
+
+* FDK Python: 0.1.26 release [skip ci]
 * Roneet| removed deadline unit testcase
 * Roneet| removed deadline unit testcase
 * Roneet | removed timeout handling code as its managed by runner layer
