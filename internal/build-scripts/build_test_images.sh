@@ -12,6 +12,7 @@ echo ${OCIR_PASSWORD} | docker login --username "${OCIR_USERNAME}" --password-st
   source internal/build-scripts/build_test_image.sh internal/tests-images/python3.8/hello-world-test 3.8
   source internal/build-scripts/build_test_image.sh internal/tests-images/python3.8/timeout-test 3.8
   source internal/build-scripts/build_test_image.sh internal/tests-images/python3.8/runtime-version-test 3.8
+  source internal/build-scripts/build_test_image.sh internal/tests-images/python3.8/oci-sdk-test 3.8
 
   #Build hello-world-fn test image with src dist file.
   source internal/build-scripts/build_test_image.sh internal/tests-images/python3.8/hello-world-test 3.8 ".tar.gz"
