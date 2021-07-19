@@ -1,1 +1,2 @@
+exclude ChangeLog
 recursive-exclude internal *

@@ -7,6 +7,8 @@ set -ex
   python --version
   pip3 install --upgrade pip
   pip3 install wheel
+  # use latest setuptools to include License-File Key in Metadata file inside wheel pkg.
+  pip3 install --upgrade setuptools
   PBR_VERSION=${BUILD_VERSION} python setup.py sdist bdist_wheel
   deactivate
   rm -rf .dist_pkg_venv
