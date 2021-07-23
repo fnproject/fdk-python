@@ -28,6 +28,5 @@ image="python"
 
 echo "Pushing release images for Python Runtime Version ${pyversion}"
 
-# TODO - Uncomment after all testing.
-# docker push ${user}/${image}:${pyversion}
-# docker push ${user}/${image}:${pyversion}-dev
+docker push ${user}/${image}:${pyversion}
+docker push ${user}/${image}:${pyversion}-dev

@@ -33,8 +33,7 @@ if [ "${RUN_TYPE}" = "release" ]; then
   pip3 install --upgrade pip
   pip3 install twine
   echo "Release version ${BUILD_VERSION}"
-  # TODO - Uncomment after all testing.
-  # twine upload -u "${FN_PYPI_USER}" -p "${FN_PYPI_PSWD}" dist/fdk-${BUILD_VERSION}*
+  twine upload -u "${FN_PYPI_USER}" -p "${FN_PYPI_PSWD}" dist/fdk-${BUILD_VERSION}*
   deactivate
   rm -rf .release_dist_pkg_venv
 fi

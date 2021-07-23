@@ -27,7 +27,10 @@ export RUN_TYPE
 
 # Release the artifacts
 if [ "${RUN_TYPE}" = "release" ]; then
-  echo "Deploy dist source and wheel files to PyPi"
+  echo "Deploy dist source and wheel files to Test PyPi"
+  source internal/release/release_dist_pkg_testpypi.sh
+
+  echo "Deploy dist source and wheel files to Prod PyPi"
   source internal/release/release_dist_pkg.sh
 
   echo "Deploying images to dockerhub."
