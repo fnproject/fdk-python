@@ -66,6 +66,7 @@ docs/_build/
 
 # PyBuilder
 target/
+.idea/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -124,6 +125,5 @@ AUTHORS
 .pytest_cache/
 data/
 
-func.yaml
 func.yml
 test_function/
