@@ -33,6 +33,20 @@ jobs:
             . venv/bin/activate
             tox -epy3.8
 
+  "deploy":
+    docker:
+      - image: circleci/python:3.8
+    working_directory: ~/fdk-python
+    steps:
+      - checkout
+      - restore_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          command: |
+            sudo pip install twine
+
   "python36_security_check":
     executor: anchore/anchore_engine
     working_directory: ~/fdk-python
