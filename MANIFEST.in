@@ -1,2 +1,3 @@
 exclude ChangeLog
+exclude github.whitelist
 recursive-exclude internal *
