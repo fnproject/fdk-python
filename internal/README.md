@@ -12,6 +12,7 @@ test images of functions and pushes them to OCIR.
 -   internal/tests-images - Contains source code of test functions for different python runtime versions.
 -   internal/cache_python_images - This script pulls python images from docker hub and caches them in artifactory
 -   internal/teamcity_build_python_env.sh - This script helps setup python environment in teamcity agent.
+-   internal/release - Contains scripts to support release of fdk dist package and docker artifacts to remote repositories.
 
 
 
