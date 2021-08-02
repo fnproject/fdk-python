@@ -65,7 +65,8 @@ def encap_headers(headers, status=None):
             if k.startswith(constants.FN_HTTP_PREFIX):  # by default merge
                 push_header(new_headers, k, v)
             if (k == constants.CONTENT_TYPE
-                    or k == constants.FN_FDK_VERSION):  # but don't merge these
+                    or k == constants.FN_FDK_VERSION
+                    or k == constants.FN_FDK_RUNTIME):  # but don't merge these
                 new_headers[k] = v
             else:
                 push_header(new_headers, constants.FN_HTTP_PREFIX + k, v)
