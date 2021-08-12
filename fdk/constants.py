@@ -42,6 +42,7 @@ FN_HTTP_PREFIX = "fn-http-h-"
 FN_HTTP_STATUS = "fn-http-status"
 FN_DEADLINE = "fn-deadline"
 FN_FDK_VERSION = "fn-fdk-version"
+FN_FDK_RUNTIME = "fn-fdk-runtime"
 FN_HTTP_REQUEST_URL = "fn-http-request-url"
 FN_CALL_ID = "fn-call-id"
 FN_HTTP_METHOD = "fn-http-method"
@@ -57,6 +58,9 @@ FN_ENFORCED_RESPONSE_CODES = [200, 502, 504]
 FN_DEFAULT_RESPONSE_CODE = 200
 
 VERSION_HEADER_VALUE = "fdk-python/" + version.VERSION
+RUNTIME_HEADER_VALUE = "python/{}.{}.{} {}".format(
+    sys.version_info.major, sys.version_info.minor, sys.version_info.micro,
+    sys.version_info.releaselevel)
 
 
 # todo: python 3.8 is on its way, make more flexible

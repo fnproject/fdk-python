@@ -47,7 +47,9 @@ class Response(object):
         if headers is None:
             headers = {}
         headers.update({constants.FN_FDK_VERSION:
-                        constants.VERSION_HEADER_VALUE})
+                        constants.VERSION_HEADER_VALUE,
+                        constants.FN_FDK_RUNTIME:
+                        constants.RUNTIME_HEADER_VALUE, })
         ctx.SetResponseHeaders(headers, status_code)
         self.ctx = ctx
 
