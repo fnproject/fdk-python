@@ -86,6 +86,14 @@ def test_content_type_version():
     assert encap == {"content-type": "text/plain", "fn-fdk-version": "1.2.3"}
 
 
+def test_content_runtime_version():
+    encap = headers.encap_headers({"content-type": "text/plain",
+                                   "fn-fdk-runtime": "python:3.8.8 final"})
+
+    assert encap == {"content-type": "text/plain",
+                     "fn-fdk-runtime": "python:3.8.8 final", }
+
+
 def test_decap_headers_merge():
     decap = headers.decap_headers({"fn-http-h-Foo-Header": "v1",
                                    "fn-http-h-merge-header": "v2",
