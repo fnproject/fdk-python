@@ -1,5 +1,4 @@
-# Function development kit for Python - test-auto-merge-from-incoming-5 
-
+# Function development kit for Python 
 The python FDK lets you write functions in python 3.6/3.7/3.8
 
 ## Simplest possible function 
