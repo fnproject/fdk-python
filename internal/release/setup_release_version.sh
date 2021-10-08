@@ -48,6 +48,9 @@ fi
 
 echo "VERSION = '${new_version}'" > fdk/version.py
 
+# Update CHANGELOG.MD with the new release version
+sed -i.bak -e '/=======/r'<(printf "\n%s\n------\n\n* FDK Python: %s version release\n" "$new_version" "$new_version") CHANGELOG.md
+
 tag="$new_version"
 git add -u
 git commit -m "FDK Python: $new_version version release"
