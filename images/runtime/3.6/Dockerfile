@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-FROM python:3.6-slim-stretch
+FROM oraclelinux:8-slim
 
-RUN apt-get update && apt-get upgrade -qy && apt-get clean
-RUN addgroup --system --gid 1000 --system fn && adduser --system --uid 1000 --ingroup fn fn
+RUN microdnf install -y python36 &&\
+    microdnf clean all
+RUN groupadd --system --gid 1000 fn && adduser --system --uid 1000 --gid fn fn
