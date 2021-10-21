@@ -6,7 +6,7 @@ COPY . /function
 WORKDIR /function
             RUN pip3 install --target /python/  --no-cache --no-cache-dir fdk-${PKG_VERSION}${PKG_EXTENSION} &&\
             pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.txt &&\
-            rm -fr ~/.cache/pip /tmp* fdk-${PKG_VERSION}${PKG_EXTENSION} requirements.txt func.yaml Dockerfile .venv &&\
+            rm -fr ~/.cache/pip /tmp* fdk-${PKG_VERSION}${PKG_EXTENSION} requirements.txt func.yaml Build_file .venv &&\
             chmod -R o+r /python
 RUN rm -fr /function/.pip_cache
 FROM fnproject/python:${PY_VERSION}
