@@ -14,13 +14,7 @@
 # limitations under the License.
 #
 
-FROM docker-remote.artifactory.oci.oraclecorp.com/oraclelinux:8-slim
+FROM docker-remote.artifactory.oci.oraclecorp.com/python:3.8-slim
 
-RUN microdnf install -y python38 &&\
-    microdnf install -y python38-pip &&\
-    microdnf clean all
-
-RUN groupadd --system --gid 1000 fn && adduser --system --uid 1000 --gid fn fn
-
-CMD ["python3"]
-
+RUN apt-get update && apt-get upgrade -qy && apt-get clean
+RUN addgroup --system --gid 1000 fn && adduser --system --uid 1000 --ingroup fn fn

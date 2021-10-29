@@ -13,11 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM docker-remote.artifactory.oci.oraclecorp.com/oraclelinux:8-slim
 
-RUN microdnf install -y python38 &&\
-    microdnf install -y python38-pip &&\
-    microdnf clean all
+FROM docker-remote.artifactory.oci.oraclecorp.com/python:3.8-slim
 
-CMD ["python3"]
-
+RUN apt-get update && apt-get upgrade -qy && \
+    apt-get install --no-install-recommends -qy build-essential gcc && \
+    apt-get clean
