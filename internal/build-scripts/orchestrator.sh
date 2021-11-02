@@ -24,13 +24,13 @@ export LOCAL
 )
 
 (
-  # Build RPM file
-  source internal/build-scripts/rpm/create_rpm.sh
+  # Build the test integration images
+  source internal/build-scripts/build_test_images.sh
 )
 
 (
-  # Build the test integration images
-  source internal/build-scripts/build_test_images.sh
+  # Build RPM file
+  source internal/build-scripts/rpm/create_rpm.sh
 )
 
 (

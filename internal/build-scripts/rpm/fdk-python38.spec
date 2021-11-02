@@ -58,18 +58,7 @@ provides: python3-%{rpmname} = %{version}-%{release}
 mkdir -p ./packages
 mkdir -p ./fdk_dependencies 
 
-cp %SOURCE1 ./fdk_dependencies
-cp %SOURCE2 ./fdk_dependencies
-cp %SOURCE3 ./fdk_dependencies
-cp %SOURCE4 ./fdk_dependencies
-cp %SOURCE5 ./fdk_dependencies
-cp %SOURCE6 ./fdk_dependencies
-cp %SOURCE7 ./fdk_dependencies
-cp %SOURCE8 ./fdk_dependencies
-cp %SOURCE9 ./fdk_dependencies
-cp %SOURCE10 ./fdk_dependencies
-cp %SOURCE11 ./fdk_dependencies
-cp %SOURCE12 ./fdk_dependencies
+cp %{_sourcedir}/* ./fdk_dependencies
 
 cp *whl ./fdk_dependencies
 

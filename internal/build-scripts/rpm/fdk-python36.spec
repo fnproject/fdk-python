@@ -64,28 +64,12 @@ provides: python3-%{rpmname} = %{version}-%{release}
 mkdir -p ./packages
 mkdir -p ./fdk_dependencies 
 
-cp %SOURCE1 ./fdk_dependencies
-cp %SOURCE2 ./fdk_dependencies
-cp %SOURCE3 ./fdk_dependencies
-cp %SOURCE4 ./fdk_dependencies
-cp %SOURCE5 ./fdk_dependencies
-cp %SOURCE6 ./fdk_dependencies
-cp %SOURCE7 ./fdk_dependencies
-cp %SOURCE8 ./fdk_dependencies
-cp %SOURCE9 ./fdk_dependencies
-cp %SOURCE10 ./fdk_dependencies
-cp %SOURCE11 ./fdk_dependencies
-cp %SOURCE12 ./fdk_dependencies
-cp %SOURCE13 ./fdk_dependencies
-cp %SOURCE14 ./fdk_dependencies
-cp %SOURCE15 ./fdk_dependencies
-cp %SOURCE16 ./fdk_dependencies
-cp %SOURCE17 ./fdk_dependencies
+cp %{_sourcedir}/* ./fdk_dependencies
 
 cp *whl ./fdk_dependencies
 
-
 %build
+
 /usr/bin/pip3 install --find-links ./fdk_dependencies --target ./packages --no-cache --no-cache-dir --no-index fdk-%{_rpm_version}%{PKG_EXTENSION} 
 
 initFile=./packages/fdk/__init__.py
