@@ -28,5 +28,5 @@ image="python"
 
 echo "Pushing release images for Python Runtime Version ${pyversion}"
 
-docker push ${user}/${image}:${pyversion}
-docker push ${user}/${image}:${pyversion}-dev
+docker push ${user}/${image}:${pyversion}-debian
+docker push ${user}/${image}:${pyversion}-debian-dev
