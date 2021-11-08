@@ -28,12 +28,12 @@ COPY ./internal/build-scripts/rpm/copy_rpm.sh /fdk-python
 
 RUN mkdir ./fdk_dependencies
 RUN pip3 download -d ./fdk_dependencies --no-cache --no-cache-dir -r requirements.txt
-COPY ./dist/*whl ./python/
+COPY ./dist/*whl ./fdk/
 
-COPY ./LICENSE ./python/
-COPY ./THIRD_PARTY_LICENSES.txt ./python/
+COPY ./LICENSE ./fdk/
+COPY ./THIRD_PARTY_LICENSES.txt ./fdk/
 
-RUN tar cvf fdk-$RPM_VERSION.tar.gz ./python
+RUN tar cvf fdk-$RPM_VERSION.tar.gz ./fdk
 
 RUN cp  fdk-$RPM_VERSION.tar.gz ~/rpmbuild/SOURCES
 RUN cp -r ./fdk_dependencies/* ~/rpmbuild/SOURCES 
