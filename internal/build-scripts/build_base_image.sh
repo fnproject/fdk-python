@@ -26,5 +26,5 @@ fi
 pyversion=$1
 
 # Build base fdk build and runtime image for a given python runtime version
-pushd internal/images/build-stage/${pyversion} && docker build -t fnproject/python:${pyversion}-debian-dev . && popd
-pushd internal/images/runtime/${pyversion} && docker build -t fnproject/python:${pyversion}-debian . && popd
+pushd internal/images/build-stage/${pyversion} && docker build -t fnproject/python:${pyversion}-dev . && popd
+pushd internal/images/runtime/${pyversion} && docker build -t fnproject/python:${pyversion} . && popd
