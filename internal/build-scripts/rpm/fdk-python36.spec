@@ -18,23 +18,23 @@ Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 SOURCE0: fdk-%{_rpm_version}.tar.gz
-SOURCE1: pytest-5.4.3-py3-none-any.whl
-SOURCE2: pbr-5.4.5-py2.py3-none-any.whl
-SOURCE3: iso8601-0.1.12-py3-none-any.whl
-SOURCE4: pytest-asyncio-0.12.0.tar.gz
-SOURCE5: contextvars-2.4.tar.gz
-SOURCE6: httptools-0.3.0-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl
-SOURCE7: zipp-3.6.0-py3-none-any.whl
-SOURCE8: wcwidth-0.2.5-py2.py3-none-any.whl
-SOURCE9: typing_extensions-3.10.0.2-py3-none-any.whl
-SOURCE10: pyparsing-2.4.7-py2.py3-none-any.whl
-SOURCE11: py-1.11.0-py2.py3-none-any.whl
-SOURCE12: pluggy-0.13.1-py2.py3-none-any.whl
-SOURCE13: packaging-21.2-py3-none-any.whl
-SOURCE14: more_itertools-8.10.0-py3-none-any.whl
-SOURCE15: importlib_metadata-4.8.1-py3-none-any.whl
-SOURCE16: immutables-0.16-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl
-SOURCE17: attrs-21.2.0-py2.py3-none-any.whl
+SOURCE1: pytest-%{_pytest_version}-py3-none-any.whl
+SOURCE2: pbr-%{_pbr_version}-py2.py3-none-any.whl
+SOURCE3: iso8601-%{_iso_version}-py3-none-any.whl
+SOURCE4: pytest-asyncio-%{_pytest_asyncio_version}.tar.gz
+SOURCE5: contextvars-%{_contextvars_version}.tar.gz
+SOURCE6: httptools-%{_httptools_version}-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+SOURCE7: zipp-%{_zipp_version}-py3-none-any.whl
+SOURCE8: wcwidth-%{_wcwidth_version}-py2.py3-none-any.whl
+SOURCE9: typing_extensions-%{_typing_extensions_version}-py3-none-any.whl
+SOURCE10: pyparsing-%{_pyparsing_version}-py2.py3-none-any.whl
+SOURCE11: py-%{_py_version}-py2.py3-none-any.whl
+SOURCE12: pluggy-%{_pluggy_version}-py2.py3-none-any.whl
+SOURCE13: packaging-%{_packaging_version}-py3-none-any.whl
+SOURCE14: more_itertools-%{_more_itertools_version}-py3-none-any.whl
+SOURCE15: importlib_metadata-%{_importlib_metadata_version}-py3-none-any.whl
+SOURCE16: immutables-%{_immutables_version}-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl
+SOURCE17: attrs-%{_attrs_version}-py2.py3-none-any.whl
 
 BuildArch: x86_64
 BuildRequires: python3 >= 3.6, python3 < 3.7

@@ -26,7 +26,7 @@ WORKDIR /fdk-python
 
 COPY ./requirements.txt /fdk-python 
 COPY ./internal/build-scripts/rpm/fdk-python36.spec  /fdk-python
-COPY ./internal/build-scripts/rpm/copy_rpm.sh /fdk-python 
+COPY ./internal/build-scripts/rpm/create_python36_rpm.sh /fdk-python 
 
 RUN mkdir ./fdk_dependencies
 RUN pip3 download -d ./fdk_dependencies --no-cache --no-cache-dir -r requirements.txt
@@ -40,4 +40,3 @@ RUN tar cvf fdk-$RPM_VERSION.tar.gz ./fdk
 RUN cp  fdk-$RPM_VERSION.tar.gz ~/rpmbuild/SOURCES
 RUN cp -r ./fdk_dependencies/* ~/rpmbuild/SOURCES 
 
-RUN rpmbuild --define "_rpm_version ${RPM_VERSION}"  -ba fdk-python36.spec 

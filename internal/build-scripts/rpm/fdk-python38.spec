@@ -18,18 +18,18 @@ Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 SOURCE0: fdk-%{_rpm_version}.tar.gz
-SOURCE1: pbr-5.4.5-py2.py3-none-any.whl
-SOURCE2: iso8601-0.1.12-py2.py3-none-any.whl
-SOURCE3: pytest-5.4.3-py3-none-any.whl
-SOURCE4: pytest-asyncio-0.12.0.tar.gz
-SOURCE5: httptools-0.3.0-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl
-SOURCE6: pluggy-0.13.1-py2.py3-none-any.whl
-SOURCE7: wcwidth-0.2.5-py2.py3-none-any.whl
-SOURCE8: py-1.11.0-py2.py3-none-any.whl
-SOURCE9: attrs-21.2.0-py2.py3-none-any.whl
-SOURCE10: more_itertools-8.10.0-py3-none-any.whl
-SOURCE11: packaging-21.2-py3-none-any.whl
-SOURCE12: pyparsing-2.4.7-py2.py3-none-any.whl
+SOURCE1: pbr-%{_pbr_version}-py2.py3-none-any.whl
+SOURCE2: iso8601-%{_iso_version}-py2.py3-none-any.whl
+SOURCE3: pytest-%{_pytest_version}-py3-none-any.whl
+SOURCE4: pytest-asyncio-%{_pytest_asyncio_version}.tar.gz
+SOURCE5: httptools-%{_httptools_version}-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+SOURCE6: pluggy-%{_pluggy_version}-py2.py3-none-any.whl
+SOURCE7: wcwidth-%{_wcwidth_version}-py2.py3-none-any.whl
+SOURCE8: py-%{_py_version}-py2.py3-none-any.whl
+SOURCE9: attrs-%{_attrs_version}-py2.py3-none-any.whl
+SOURCE10: more_itertools-%{_more_itertools_version}-py3-none-any.whl
+SOURCE11: packaging-%{_packaging_version}-py3-none-any.whl
+SOURCE12: pyparsing-%{_pyparsing_version}-py2.py3-none-any.whl
 
 BuildArch: x86_64
 Provides: python3-%{rpmname} = %{version}-%{release}
