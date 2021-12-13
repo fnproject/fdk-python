@@ -27,7 +27,7 @@ SOURCE6: httptools-%{_httptools_version}-cp36-cp36m-manylinux_2_5_x86_64.manylin
 SOURCE7: zipp-%{_zipp_version}-py3-none-any.whl
 SOURCE8: wcwidth-%{_wcwidth_version}-py2.py3-none-any.whl
 SOURCE9: typing_extensions-%{_typing_extensions_version}-py3-none-any.whl
-SOURCE10: pyparsing-%{_pyparsing_version}-py2.py3-none-any.whl
+SOURCE10: pyparsing-%{_pyparsing_version}-py3-none-any.whl
 SOURCE11: py-%{_py_version}-py2.py3-none-any.whl
 SOURCE12: pluggy-%{_pluggy_version}-py2.py3-none-any.whl
 SOURCE13: packaging-%{_packaging_version}-py3-none-any.whl

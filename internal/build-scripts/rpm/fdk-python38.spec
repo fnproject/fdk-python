@@ -29,7 +29,7 @@ SOURCE8: py-%{_py_version}-py2.py3-none-any.whl
 SOURCE9: attrs-%{_attrs_version}-py2.py3-none-any.whl
 SOURCE10: more_itertools-%{_more_itertools_version}-py3-none-any.whl
 SOURCE11: packaging-%{_packaging_version}-py3-none-any.whl
-SOURCE12: pyparsing-%{_pyparsing_version}-py2.py3-none-any.whl
+SOURCE12: pyparsing-%{_pyparsing_version}-py3-none-any.whl
 
 BuildArch: x86_64
 Provides: python3-%{rpmname} = %{version}-%{release}
