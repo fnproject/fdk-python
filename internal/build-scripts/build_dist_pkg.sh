@@ -2,7 +2,7 @@
 set -ex
 
 (
-  python3.8 -m venv .dist_pkg_venv && source .dist_pkg_venv/bin/activate
+  python3.9 -m venv .dist_pkg_venv && source .dist_pkg_venv/bin/activate
   echo "Python Version"
   python --version
   pip3 install --upgrade pip

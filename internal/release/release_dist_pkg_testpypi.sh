@@ -27,7 +27,7 @@ export RUN_TYPE
 # Release the dist source and wheel files to Test PyPi
 if [ "${RUN_TYPE}" = "release" ]; then
   echo "Deploy dist source and wheel files to Test PyPi"
-  python3.8 -m venv .release_pkg_testpypi_venv && source .release_pkg_testpypi_venv/bin/activate
+  python3.9 -m venv .release_pkg_testpypi_venv && source .release_pkg_testpypi_venv/bin/activate
   echo "Python Version"
   python --version
   pip3 install --upgrade pip

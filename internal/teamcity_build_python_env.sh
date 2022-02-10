@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 
-PYTHON_3_VERSION=${PYTHON_3_VERSION:-3.8.5}
+PYTHON_3_VERSION=${PYTHON_3_VERSION:-3.9.2}
 
 # This script is to setup python environment in teamcity agent for python fdk build pipeline.
 
@@ -17,7 +17,7 @@ make install
 popd
 popd
 
-# Set up python3 pyenv(default version - v3.8.5)
+# Set up python3 pyenv(default version - v3.9.2)
 echo "Setup python environment"
 curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
 
