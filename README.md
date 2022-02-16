@@ -1,5 +1,5 @@
 # Function development kit for Python
-The python FDK lets you write functions in python 3.6/3.7/3.8
+The python FDK lets you write functions in python 3.6/3.7/3.8/3.9
 
 ## Simplest possible function 
  
@@ -413,7 +413,7 @@ except ValueError as ex:
 ### Dockerfile
 If you've been using CLI to build function without modifying runtime in `func.yaml` to `docker` 
 instead of `python` then the only thing you need is to update the CLI to the latest version and 
-pin your Python runtime version to `python`, `python3.7`, or `python3.8`.
+pin your Python runtime version to `python`, `python3.7`, `python3.8`, or `python3.9`.
 
 If you've been using custom multi-stage Dockerfile (derived from what Fn CLI generates) 
 the only thing that is necessary to change is an `ENTRYPOINT` from:
