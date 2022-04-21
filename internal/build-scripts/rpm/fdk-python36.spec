@@ -33,7 +33,7 @@ SOURCE12: pluggy-%{_pluggy_version}-py2.py3-none-any.whl
 SOURCE13: packaging-%{_packaging_version}-py3-none-any.whl
 SOURCE14: more_itertools-%{_more_itertools_version}-py3-none-any.whl
 SOURCE15: importlib_metadata-%{_importlib_metadata_version}-py3-none-any.whl
-SOURCE16: immutables-%{_immutables_version}-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl
+SOURCE16: immutables-%{_immutables_version}-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 SOURCE17: attrs-%{_attrs_version}-py2.py3-none-any.whl
 
 BuildArch: x86_64
