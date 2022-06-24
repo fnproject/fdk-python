@@ -15,6 +15,7 @@
 #
 
 import asyncio
+import sys
 import traceback
 
 from httptools import HttpRequestParser
@@ -133,7 +134,10 @@ class HttpProtocol(asyncio.Protocol):
         self.request_class = request_class or Request
         self.is_request_stream = is_request_stream
         self._is_stream_handler = False
-        self._not_paused = asyncio.Event(loop=loop)
+        if sys.version_info >= (3, 10):
+            self._not_paused = asyncio.Event()
+        else:
+            self._not_paused = asyncio.Event(loop=loop)
         self._total_request_size = 0
         self._request_timeout_handler = None
         self._response_timeout_handler = None
