@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM docker-remote.artifactory.oci.oraclecorp.com/oraclelinux:8-slim
+FROM  --platform=$BUILDPLATFORM container-registry.oracle.com/os/oraclelinux:8-slim
 
 RUN microdnf install -y python39 && \
     microdnf install -y python39-pip  python39-wheel &&\

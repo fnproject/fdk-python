@@ -35,7 +35,7 @@ pkg_version=${BUILD_VERSION}
   version="$(awk '/^runtime:/ { print $2 }' func.yaml)"
   image_identifier="${version}-${BUILD_VERSION}"
 
-  docker build -t fnproject/${name}:${image_identifier} -f Build_file --build-arg PY_VERSION=${py_version} --build-arg PKG_VERSION=${pkg_version} --build-arg PKG_EXTENSION=${pkg_extension} .
+  docker build -t fnproject/${name}:${image_identifier} -f Build_file --build-arg PY_VERSION=${py_version} --build-arg PKG_VERSION=${pkg_version} --build-arg PKG_EXTENSION=${pkg_extension} --build-arg OCIR_REGION=${OCIR_REGION} --build-arg OCIR_LOC=${OCIR_LOC} --build-arg BUILD_VERSION=${BUILD_VERSION} .
   rm -rf fdk-${pkg_version}${pkg_extension}
   popd
 

@@ -6,11 +6,11 @@ PYTHON_3_VERSION=${PYTHON_3_VERSION:-3.9.2}
 # This script is to setup python environment in teamcity agent for python fdk build pipeline.
 
 # Install sqlite3 lib
-wget http://www.sqlite.org/sqlite-autoconf-3070603.tar.gz --no-check-certificate --directory-prefix="$HOME/.sqlite-download"
+wget https://www.sqlite.org/2022/sqlite-autoconf-3390300.tar.gz --no-check-certificate --directory-prefix="$HOME/.sqlite-download"
 
 pushd "$HOME/.sqlite-download"
-tar xvfz sqlite-autoconf-3070603.tar.gz
-pushd sqlite-autoconf-3070603
+tar xvfz sqlite-autoconf-3390300.tar.gz
+pushd sqlite-autoconf-3390300
 ./configure --prefix="$HOME/.local"
 make
 make install

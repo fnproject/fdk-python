@@ -25,6 +25,11 @@ fi
 
 pyversion=$1
 
+
+#Login to OCIR
+
+echo ${OCIR_PASSWORD} | docker login --username "${OCIR_USERNAME}" --password-stdin ${OCIR_REGION}
+
 # Build base fdk build and runtime image for a given python runtime version
-pushd internal/images/build-stage/${pyversion} && docker build -t fnproject/python:${pyversion}-dev . && popd
-pushd internal/images/runtime/${pyversion} && docker build -t fnproject/python:${pyversion} . && popd
+pushd internal/images/build-stage/${pyversion} && docker buildx build --push --platform linux/amd64,linux/arm64 -t "${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev" .  && popd
+pushd internal/images/runtime/${pyversion} && docker buildx build --push --platform linux/amd64,linux/arm64 -t "${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}" . && popd

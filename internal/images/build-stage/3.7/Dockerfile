@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM docker-remote.artifactory.oci.oraclecorp.com/python:3.7-slim
+FROM --platform=$BUILDPLATFORM docker-remote.artifactory.oci.oraclecorp.com/python:3.7-slim
 
 RUN apt-get update && apt-get upgrade -qy && \
     apt-get install --no-install-recommends -qy build-essential gcc && \

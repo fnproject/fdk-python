@@ -8,7 +8,6 @@ RUN pip3 install --upgrade pip && pip3 cache purge
 ARG RPM_VERSION=latest
 ENV RPM_VERSION=${RPM_VERSION:-v1.0.0}
 
-
 RUN microdnf -y install gzip \
     zip \
     tar \
