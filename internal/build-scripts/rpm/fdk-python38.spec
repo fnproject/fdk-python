@@ -22,7 +22,7 @@ SOURCE1: pbr-%{_pbr_version}-py2.py3-none-any.whl
 SOURCE2: iso8601-%{_iso_version}-py2.py3-none-any.whl
 SOURCE3: pytest-%{_pytest_version}-py3-none-any.whl
 SOURCE4: pytest-asyncio-%{_pytest_asyncio_version}.tar.gz
-SOURCE5: httptools-%{_httptools_version}-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+SOURCE5: httptools-%{_httptools_version}-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 SOURCE6: pluggy-%{_pluggy_version}-py2.py3-none-any.whl
 SOURCE7: wcwidth-%{_wcwidth_version}-py2.py3-none-any.whl
 SOURCE8: py-%{_py_version}-py2.py3-none-any.whl
