@@ -23,7 +23,7 @@ SOURCE2: pbr-%{_pbr_version}-py2.py3-none-any.whl
 SOURCE3: iso8601-%{_iso_version}-py3-none-any.whl
 SOURCE4: pytest-asyncio-%{_pytest_asyncio_version}.tar.gz
 SOURCE5: contextvars-%{_contextvars_version}.tar.gz
-SOURCE6: httptools-%{_httptools_version}-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+SOURCE6: httptools-%{_httptools_version}-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 SOURCE7: zipp-%{_zipp_version}-py3-none-any.whl
 SOURCE8: wcwidth-%{_wcwidth_version}-py2.py3-none-any.whl
 SOURCE9: typing_extensions-%{_typing_extensions_version}-py3-none-any.whl
