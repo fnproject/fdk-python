@@ -28,18 +28,5 @@ image="python"
 
 echo "Pushing release images for Python Runtime Version ${pyversion}"
 
-docker pull ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev
-docker pull ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}
-
-docker image tag ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev ${user}/${image}:${pyversion}-dev
-docker image tag ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION} ${user}/${image}:${pyversion}
-
-docker image push ${user}/${image}:${pyversion}-dev
-docker image push ${user}/${image}:${pyversion}
-
-#Steps to tag the image and push it to local repo in OCIR.
-#docker image tag ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev ${OCIR_REGION}/${OCIR_LOC}/${user}/${image}:${pyversion}-dev
-#docker image tag ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION} ${OCIR_REGION}/${OCIR_LOC}/${user}/${image}:${pyversion}
-
-#docker image push ${OCIR_REGION}/${OCIR_LOC}/${user}/${image}:${pyversion}-dev
-#docker image push ${OCIR_REGION}/${OCIR_LOC}/${user}/${image}:${pyversion}
+./regctl image copy ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev ${user}/${image}:${pyversion}-dev
+./regctl image copy ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION} ${user}/${image}:${pyversion}

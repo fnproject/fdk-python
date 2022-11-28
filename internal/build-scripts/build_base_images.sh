@@ -5,6 +5,7 @@ set -ex
 (
   #Create the builder instance
   docker buildx rm builderInstance || true
+  docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   docker buildx create --name builderInstance --driver docker-container --platform linux/amd64,linux/arm64
   docker buildx use builderInstance
 

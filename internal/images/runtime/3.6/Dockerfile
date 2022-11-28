@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM --platform=$BUILDPLATFORM container-registry.oracle.com/os/oraclelinux:8-slim
+FROM --platform=$TARGETPLATFORM container-registry.oracle.com/os/oraclelinux:8-slim
 
 RUN microdnf install -y python36 && \
     microdnf clean all

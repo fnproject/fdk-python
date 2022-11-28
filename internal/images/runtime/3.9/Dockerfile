@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM --platform=$BUILDPLATFORM container-registry.oracle.com/os/oraclelinux:8-slim
+FROM --platform=$TARGETPLATFORM container-registry.oracle.com/os/oraclelinux:8-slim
 
 RUN microdnf install -y python39 &&\
     microdnf install -y python39-pip python39-wheel &&\
