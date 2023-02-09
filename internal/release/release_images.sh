@@ -27,9 +27,10 @@ export RUN_TYPE
 # Deploying images to dockerhub
 if [ "${RUN_TYPE}" = "release" ]; then
   # Release base fdk build and runtime images
-  echo "Deploying fdk python build and runtime images to dockerhub."
+  echo "Deploying fdk python build and runtime images to artifactory and ocir."
   set +x
-  echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+  echo ${ARTIFACTORY_PASS} | docker login -u ${ARTIFACTORY_USER} --password-stdin odo-docker-signed-local.artifactory.oci.oraclecorp.com:443
+  echo ${OCIR_OFDM_PASSWORD} | docker login -u ${OCIR_OFDM_USERNAME} --password-stdin iad.ocir.io
 
   #Install regctl to copy Docker Fat Manifest across repositories
   curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
@@ -37,9 +38,9 @@ if [ "${RUN_TYPE}" = "release" ]; then
 
   set -x
   ./internal/release/release_image.sh 3.6
-  ./internal/release/release_image.sh 3.7
-  ./internal/release/release_image.sh 3.7.1
+  #./internal/release/release_image.sh 3.7
+  #./internal/release/release_image.sh 3.7.1
   ./internal/release/release_image.sh 3.8
-  ./internal/release/release_image.sh 3.8.5
+  #./internal/release/release_image.sh 3.8.5
   ./internal/release/release_image.sh 3.9
 fi

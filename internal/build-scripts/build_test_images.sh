@@ -23,10 +23,11 @@ echo ${OCIR_PASSWORD} | docker login --username "${OCIR_USERNAME}" --password-st
   source internal/build-scripts/build_test_image.sh internal/tests-images/python3.8/runtime-version-test 3.8
 )
 
+# Disabling 3.7 release as it is not supported by OL8
 # Python 3.7
-(
-  source internal/build-scripts/build_test_image.sh internal/tests-images/python3.7/runtime-version-test 3.7
-)
+#(
+#  source internal/build-scripts/build_test_image.sh internal/tests-images/python3.7/runtime-version-test 3.7
+#)
 
 # Python 3.6
 (
