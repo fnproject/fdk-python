@@ -26,12 +26,14 @@ pyversion=$1
 user="fnproject"
 image="python"
 OCIR_REPO=iad.ocir.io/oraclefunctionsdevelopm
-ARTIFACTORY_REPO=odo-docker-signed-local.artifactory.oci.oraclecorp.com:443
+#ARTIFACTORY_REPO=odo-docker-signed-local.artifactory.oci.oraclecorp.com:443
 
 echo "Pushing release images for Python Runtime Version ${pyversion}"
 
 ./regctl image copy ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev ${OCIR_REPO}/${user}/${image}:${pyversion}-dev
-./regctl image copy ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev ${ARTIFACTORY_REPO}/${user}/${image}:${pyversion}-dev
+#Disabling the Release to OCI Artifactory as Artifactory does not allow releasing an image with the same name and version.
+#./regctl image copy ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev ${ARTIFACTORY_REPO}/${user}/${image}:${pyversion}-dev
 
 ./regctl image copy ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION} ${OCIR_REPO}/${user}/${image}:${pyversion}
-./regctl image copy ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION} ${ARTIFACTORY_REPO}/${user}/${image}:${pyversion}
+#Disabling the Release to OCI Artifactory as Artifactory does not allow releasing an image with the same name and version.
+#./regctl image copy ${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION} ${ARTIFACTORY_REPO}/${user}/${image}:${pyversion}
