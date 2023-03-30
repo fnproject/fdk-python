@@ -19,10 +19,6 @@ set -ex
   ./internal/build-scripts/update-buildx.sh
 
   # Build base fdk build and runtime images
-  ./internal/build-scripts/build_base_image.sh 3.6
-  # As OL8 does not support 3.7.x
-  #./internal/build-scripts/build_base_image.sh 3.7
-  #./internal/build-scripts/build_base_image.sh 3.7.1
   ./internal/build-scripts/build_base_image.sh 3.8
   # Not explicitly releasing any patch versions
   #./internal/build-scripts/build_base_image.sh 3.8.5

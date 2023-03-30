@@ -1,5 +1,5 @@
 # Function development kit for Python
-The python FDK lets you write functions in python 3.6/3.7/3.8/3.9
+The python FDK lets you write functions in python 3.8/3.9
 
 ## Simplest possible function 
  
