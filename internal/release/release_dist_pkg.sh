@@ -31,6 +31,7 @@ if [ "${RUN_TYPE}" = "release" ]; then
   echo "Python Version"
   python --version
   pip3 install --upgrade pip
+  pip3 install urllib3==1.26.15
   pip3 install twine
   echo "Release version ${BUILD_VERSION}"
   twine upload -u "${FN_PYPI_USER}" -p "${FN_PYPI_PSWD}" dist/fdk-${BUILD_VERSION}*
