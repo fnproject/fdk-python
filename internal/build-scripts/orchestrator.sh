@@ -8,6 +8,9 @@ LOCAL=${LOCAL:-true}
 export BUILD_VERSION
 export LOCAL
 
+# Update buildx and prepare builderInstance
+./internal/build-scripts/init-buildx.sh
+
 (
   # Execute unit tests
   source internal/build-scripts/execute_unit_tests.sh
