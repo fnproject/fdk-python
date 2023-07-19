@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.1.59
+------
+
+* FDK Python: 0.1.59 version release
+
 0.1.58
 ------
 
