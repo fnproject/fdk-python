@@ -40,4 +40,5 @@ if [ "${RUN_TYPE}" = "release" ]; then
   ./internal/release/release_image.sh 3.8
   #./internal/release/release_image.sh 3.8.5
   ./internal/release/release_image.sh 3.9
+  ./internal/release/release_image.sh 3.11
 fi

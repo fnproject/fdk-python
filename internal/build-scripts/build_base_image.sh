@@ -25,6 +25,8 @@ fi
 
 pyversion=$1
 
+echo $pyversion
+
 # Build base fdk build and runtime image for a given python runtime version
 pushd internal/images/build-stage/${pyversion} && docker buildx build --push --platform linux/amd64,linux/arm64 -t "${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}-dev" .  && popd
 pushd internal/images/runtime/${pyversion} && docker buildx build --push --platform linux/amd64,linux/arm64 -t "${OCIR_REGION}/${OCIR_LOC}/pythonfdk:${pyversion}-${BUILD_VERSION}" . && popd

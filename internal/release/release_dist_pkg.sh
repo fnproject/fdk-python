@@ -27,7 +27,7 @@ export RUN_TYPE
 # Release the dist source and wheel files to Prod PyPi
 if [ "${RUN_TYPE}" = "release" ]; then
   echo "Deploy dist source and wheel files to Prod PyPi"
-  python3.9 -m venv .release_dist_pkg_venv && source .release_dist_pkg_venv/bin/activate
+  python3.11 -m venv .release_dist_pkg_venv && source .release_dist_pkg_venv/bin/activate
   echo "Python Version"
   python --version
   pip3 install --upgrade pip

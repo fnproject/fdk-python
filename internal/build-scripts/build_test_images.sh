@@ -7,7 +7,18 @@ echo ${OCIR_PASSWORD} | docker login --username "${OCIR_USERNAME}" --password-st
 
 # Build and push the test function images to OCIR for integration test framework.
 
-# Python 3.8
+# Python 3.11
+(
+  source internal/build-scripts/build_test_image.sh internal/tests-images/python3.11/hello-world-test 3.11
+  source internal/build-scripts/build_test_image.sh internal/tests-images/python3.11/timeout-test 3.11
+  source internal/build-scripts/build_test_image.sh internal/tests-images/python3.11/runtime-version-test 3.11
+  source internal/build-scripts/build_test_image.sh internal/tests-images/python3.11/oci-sdk-test 3.11
+
+  #Build hello-world-fn test image with src dist file.
+  source internal/build-scripts/build_test_image.sh internal/tests-images/python3.11/hello-world-test 3.11 ".tar.gz"
+)
+
+# Python 3.9
 (
   source internal/build-scripts/build_test_image.sh internal/tests-images/python3.9/hello-world-test 3.9
   source internal/build-scripts/build_test_image.sh internal/tests-images/python3.9/timeout-test 3.9

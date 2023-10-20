@@ -11,4 +11,5 @@ set -ex
   # Not explicitly releasing any patch versions
   #./internal/build-scripts/build_base_image.sh 3.8.5
   ./internal/build-scripts/build_base_image.sh 3.9
+  ./internal/build-scripts/build_base_image.sh 3.11
 )

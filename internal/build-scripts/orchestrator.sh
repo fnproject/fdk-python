@@ -13,12 +13,14 @@ export LOCAL
 
 (
   # Execute unit tests
-  source internal/build-scripts/execute_unit_tests.sh
+  docker build -t fdk_python_env_image -f ./internal/docker-files/Dockerfile_TC .
+  docker run --rm fdk_python_env_image ./internal/build-scripts/execute_unit_tests.sh
 )
 
 (
   # Build dist package containing src and wheel files
-  source internal/build-scripts/build_dist_pkg.sh
+  docker build -t fdk_python_build_image -f ./internal/docker-files/Dockerfile_dist_pkg .
+  docker run --rm -v $PWD:/build -w /build --env BUILD_VERSION=${BUILD_VERSION} fdk_python_build_image ./internal/build-scripts/build_dist_pkg.sh
 )
 
 (

@@ -5,7 +5,7 @@ set -eux
 # Teamcity uses a very old version of buildx which creates a bad request body. Pushing the images to OCIR gives a 400 bad request error. Hence, use this
 # script to upgrade the buildx version.
 
-version="v0.10.0"
+version="v0.11.2"
 mkdir -p ~/.docker/cli-plugins
 wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/${version}/buildx-${version}.linux-amd64
 

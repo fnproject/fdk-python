@@ -19,7 +19,6 @@ import logging
 
 from httptools import parse_url
 
-
 logger = logging.getLogger(__name__)
 
 
