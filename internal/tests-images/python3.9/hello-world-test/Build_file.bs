@@ -1,0 +1,22 @@
+ARG BUILD_IMAGE_VERSION
+ARG RUNTIME_IMAGE_VERSION
+
+FROM odo-docker-signed-local.artifactory.oci.oraclecorp.com/fdk-python:${BUILD_IMAGE_VERSION} as build-stage
+
+ARG FDK_VERSION
+ARG PKG_EXTENSION="-py3-none-any.whl"
+
+COPY . /function
+WORKDIR /function
+            RUN pip3 install --target /python/  --no-cache --no-cache-dir fdk-${FDK_VERSION}${PKG_EXTENSION} &&\
+            pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.txt &&\
+            rm -fr ~/.cache/pip /tmp* fdk-${FDK_VERSION}${PKG_EXTENSION} requirements.txt func.yaml Build_file .venv &&\
+            chmod -R o+r /python
+RUN rm -fr /function/.pip_cache
+FROM odo-docker-signed-local.artifactory.oci.oraclecorp.com/fdk-python:${RUNTIME_IMAGE_VERSION}
+WORKDIR /function
+COPY --from=build-stage /python /python
+COPY --from=build-stage /function /function
+RUN chmod -R o+r /function
+ENV PYTHONPATH=/function:/python
+ENTRYPOINT ["/python/bin/fdk", "/function/func.py", "handler"]

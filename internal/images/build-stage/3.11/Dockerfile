@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM  --platform=$TARGETPLATFORM container-registry.oracle.com/os/oraclelinux:8-slim
+FROM  --platform=$TARGETPLATFORM ocr-docker-remote.artifactory.oci.oraclecorp.com/os/oraclelinux:8-slim
 
 RUN microdnf install -y python3.11 && \
     microdnf install -y python3.11-pip  python3.11-wheel &&\
