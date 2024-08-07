@@ -1,5 +1,5 @@
 RAW_VERSION=$(shell grep -m1 -Eo "[0-9]+\.[0-9]+\.[0-9]+" fdk/version.py)
-FDK_VERSION=$(RAW_VERSION)$(if $(BLD_BRANCH_SUFFIX),.$(BLD_NUMBER)$(echo $BLD_BRANCH_SUFFIX | sed 's/\-/_/g'),)
+FDK_VERSION=$(RAW_VERSION)$(if $(BLD_BRANCH_SUFFIX),.$(BLD_NUMBER)$(shell echo $(BLD_BRANCH_SUFFIX) | tr - _),)
 
 .PHONY: set_fdk_version unit_test build_dist_package
 
