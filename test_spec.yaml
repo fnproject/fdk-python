@@ -1,0 +1,145 @@
+version: 1.0.1
+component: test
+
+failImmediatelyOnError: true
+
+timeoutInSeconds: 36000
+
+env:
+  vaultVariables:
+    FDK_CONFIG_PRIVATE_KEY: ocid1.vaultsecret.oc1.phx.amaaaaaaepf6idiag6rczemvmoik7pf7yy44sylin2okcskx6exxqw7lv2nq
+
+inputArtifacts:
+  - name: downloadDockerCredentialHelper
+    location: ${OCI_WORKSPACE_DIR}/input
+    url: https://pipelines.artifactory.us-phoenix-1.oci.oracleiaas.com/ocir-overlay-global-yum-local/docker-credential-ocir-996.1f4a1425ed3-1.noarch.rpm
+  - name: downloadRegctl
+    location: ${OCI_WORKSPACE_DIR}/input
+    url: https://pipelines.artifactory.us-phoenix-1.oci.oracleiaas.com/faas-release-generic-local/regctl/regctl-linux-arm64
+  - name: downloadTestHarness
+    location: ${OCI_WORKSPACE_DIR}/input
+    url: https://pipelines.artifactory.us-phoenix-1.oci.oracleiaas.com/faas-release-generic-local/fdk-integration-test/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz
+
+steps:
+  - type: shell
+    name: Setup Environment
+    command: |
+      set -ex
+      pushd ${OCI_WORKSPACE_DIR}/input
+      sudo yum localinstall -y docker-credential-ocir-996.1f4a1425ed3-1.noarch.rpm
+      sudo yum install -y jq jdk1.8
+      popd
+
+      sudo docker login -u BEARER_TOKEN -p $(echo "${FAAS_OCIR_REGION}" | docker-credential-ocir get | jq -r .Secret) "${FAAS_OCIR_REGION}"
+
+      cp ${OCI_WORKSPACE_DIR}/input/regctl-linux-arm64 ${OCI_WORKSPACE_DIR}/regctl
+      chmod 755 ${OCI_WORKSPACE_DIR}/regctl
+
+      ${OCI_WORKSPACE_DIR}/regctl registry login -u BEARER_TOKEN -p $(echo "${FAAS_OCIR_REGION}" | docker-credential-ocir get | jq -r .Secret) "${FAAS_OCIR_REGION}"
+
+  - type: shell
+    name: Copy base images to OCIR
+    command: |
+      set -ex
+      declare -a python_versions=('3.8' '3.9' '3.11')
+      declare -a suffixes=('' '-dev')
+      for python in "${python_versions[@]}"; do
+          for suffix in "${suffixes[@]}"; do
+              src="odo-docker-signed-local.pipelines.artifactory.us-phoenix-1.oci.oracleiaas.com/fdk-python:${python}-${FDK_VERSION}${suffix}"
+              dst="${FAAS_OCIR_REGION}/oraclefunctionsdevelopm/test-functions/pythonfdk:${python}-${FDK_VERSION}${suffix}"
+              ${OCI_WORKSPACE_DIR}/regctl image copy -v=DEBUG "$src" "$dst"
+          done
+      done
+
+  - type: shell
+    name: Copy test images to OCIR
+    command: |
+      set -ex
+      function copy_image() {
+          local image="$1"
+          local python_version="$2"
+          local src="odo-docker-signed-local.pipelines.artifactory.us-phoenix-1.oci.oracleiaas.com/faas-${image}:python-${python_version}-${FDK_VERSION}"
+          local dst="${FAAS_OCIR_REGION}/oraclefunctionsdevelopm/test-functions/${image}:python${python_version}-${FDK_VERSION}"
+          ${OCI_WORKSPACE_DIR}/regctl image copy -v=DEBUG "$src" "$dst"
+      }
+      
+      copy_image runtime-version-fn 3.8
+
+      copy_image hello-world-fn 3.9
+      copy_image hello-world-fn-src 3.9
+      copy_image oci-sdk-fn 3.9
+      copy_image runtime-version-fn 3.9
+      copy_image timeout-fn 3.9
+
+      copy_image hello-world-fn 3.11
+      copy_image hello-world-fn-src 3.11
+      copy_image oci-sdk-fn 3.11
+      copy_image runtime-version-fn 3.11
+      copy_image timeout-fn 3.11
+
+  - type: shell
+    name: Setup User
+    command: |
+      echo ${FDK_CONFIG_FILE_CONTENTS} | tr ' ' $'\n' | tee /tmp/config_fdk
+      echo "${FDK_CONFIG_PRIVATE_KEY}" > /tmp/oci_api_key_fdk.pem
+      ls -al /tmp/config_fdk /tmp/oci_api_key_fdk.pem
+
+  - type: shell
+    name: Run Integration Test Python 3.11
+    command: |
+      mkdir -p integration_test_python3.11
+      cd integration_test_python3.11
+      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+
+      CLASSPATH=$(echo *.jar | tr ' ' ':')
+      export AUTH_CONF_FILE_PATH=/tmp/config_fdk
+      export REGION=us-ashburn-1
+      export STAGE=teamcity
+      export MULTI_ARCH_ENABLED=True
+      export BUILD_VERSION=${FDK_VERSION}
+      export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
+      export OCIR_REGION="iad.ocir.io"
+
+      export FDK_RUNTIME=python3.11
+      export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
+      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
+
+  - type: shell
+    name: Run Integration Test Python 3.9
+    command: |
+      mkdir -p integration_test_python3.9
+      cd integration_test_python3.9
+      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+
+      CLASSPATH=$(echo *.jar | tr ' ' ':')
+      export AUTH_CONF_FILE_PATH=/tmp/config_fdk
+      export REGION=us-ashburn-1
+      export STAGE=teamcity
+      export MULTI_ARCH_ENABLED=True
+      export BUILD_VERSION=${FDK_VERSION}
+      export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
+      export OCIR_REGION="iad.ocir.io"
+
+      export FDK_RUNTIME=python3.9
+      export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
+      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
+  
+  - type: shell
+    name: Run Integration Test Python 3.8
+    command: |
+      mkdir -p integration_test_python3.8
+      cd integration_test_python3.8
+      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+
+      CLASSPATH=$(echo *.jar | tr ' ' ':')
+      export AUTH_CONF_FILE_PATH=/tmp/config_fdk
+      export REGION=us-ashburn-1
+      export STAGE=teamcity
+      export MULTI_ARCH_ENABLED=True
+      export BUILD_VERSION=${FDK_VERSION}
+      export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
+      export OCIR_REGION="iad.ocir.io"
+
+      export FDK_RUNTIME=python3.8
+      export test=RuntimeVersionIntegrationTest
+      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
