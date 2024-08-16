@@ -7,7 +7,7 @@ timeoutInSeconds: 36000
 
 env:
   vaultVariables:
-    FDK_CONFIG_PRIVATE_KEY: ocid1.vaultsecret.oc1.phx.amaaaaaaepf6idiag6rczemvmoik7pf7yy44sylin2okcskx6exxqw7lv2nq
+    FDK_CONFIG_PRIVATE_KEY: ocid1.vaultsecret.oc1.phx.amaaaaaaepf6idiavyptfi77vodnqoese5u5sa5jl52ksdraty7s4ch2vtnq
 
 inputArtifacts:
   - name: downloadDockerCredentialHelper

@@ -18,7 +18,8 @@ FROM --platform=$TARGETPLATFORM container-registry.oracle.com/os/oraclelinux:8-s
 
 RUN microdnf install -y python39 &&\
     microdnf install -y python39-pip python39-wheel &&\
-    microdnf upgrade python3-setuptools &&\
+    microdnf remove python3-setuptools &&\
+    python3 -m pip install setuptools>=70.0.0 &&\
     microdnf clean all
 
 RUN groupadd --system --gid 1000 fn && adduser --system --uid 1000 --gid fn fn
