@@ -80,66 +80,90 @@ steps:
   - type: shell
     name: Setup User
     command: |
-      echo ${FDK_CONFIG_FILE_CONTENTS} | tr ' ' $'\n' | tee /tmp/config_fdk
-      echo "${FDK_CONFIG_PRIVATE_KEY}" > /tmp/oci_api_key_fdk.pem
-      ls -al /tmp/config_fdk /tmp/oci_api_key_fdk.pem
+      if [[ "${RELEASE:-false}" == false ]]; then
+        echo ${FDK_CONFIG_FILE_CONTENTS} | tr ' ' $'\n' | tee /tmp/config_fdk
+        echo "${FDK_CONFIG_PRIVATE_KEY}" > /tmp/oci_api_key_fdk.pem
+        ls -al /tmp/config_fdk /tmp/oci_api_key_fdk.pem
+      fi
 
   - type: shell
     name: Run Integration Test Python 3.11
     command: |
-      mkdir -p integration_test_python3.11
-      cd integration_test_python3.11
-      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+      if [[ "${RELEASE:-false}" == false ]]; then
+        mkdir -p integration_test_python3.11
+        cd integration_test_python3.11
+        tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
 
-      CLASSPATH=$(echo *.jar | tr ' ' ':')
-      export AUTH_CONF_FILE_PATH=/tmp/config_fdk
-      export REGION=us-ashburn-1
-      export STAGE=teamcity
-      export MULTI_ARCH_ENABLED=True
-      export BUILD_VERSION=${FDK_VERSION}
-      export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
-      export OCIR_REGION="iad.ocir.io"
+        CLASSPATH=$(echo *.jar | tr ' ' ':')
+        export AUTH_CONF_FILE_PATH=/tmp/config_fdk
+        export REGION=us-ashburn-1
+        export STAGE=teamcity
+        export MULTI_ARCH_ENABLED=True
+        export BUILD_VERSION=${FDK_VERSION}
+        export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
+        export OCIR_REGION="iad.ocir.io"
 
-      export FDK_RUNTIME=python3.11
-      export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
-      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
+        export FDK_RUNTIME=python3.11
+        export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
+        java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
+      fi
 
   - type: shell
     name: Run Integration Test Python 3.9
     command: |
-      mkdir -p integration_test_python3.9
-      cd integration_test_python3.9
-      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+      if [[ "${RELEASE:-false}" == false ]]; then
+        mkdir -p integration_test_python3.9
+        cd integration_test_python3.9
+        tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
 
-      CLASSPATH=$(echo *.jar | tr ' ' ':')
-      export AUTH_CONF_FILE_PATH=/tmp/config_fdk
-      export REGION=us-ashburn-1
-      export STAGE=teamcity
-      export MULTI_ARCH_ENABLED=True
-      export BUILD_VERSION=${FDK_VERSION}
-      export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
-      export OCIR_REGION="iad.ocir.io"
+        CLASSPATH=$(echo *.jar | tr ' ' ':')
+        export AUTH_CONF_FILE_PATH=/tmp/config_fdk
+        export REGION=us-ashburn-1
+        export STAGE=teamcity
+        export MULTI_ARCH_ENABLED=True
+        export BUILD_VERSION=${FDK_VERSION}
+        export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
+        export OCIR_REGION="iad.ocir.io"
 
-      export FDK_RUNTIME=python3.9
-      export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
-      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
+        export FDK_RUNTIME=python3.9
+        export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
+        java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
+      fi
   
   - type: shell
     name: Run Integration Test Python 3.8
     command: |
-      mkdir -p integration_test_python3.8
-      cd integration_test_python3.8
-      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+      if [[ "${RELEASE:-false}" == false ]]; then
+        mkdir -p integration_test_python3.8
+        cd integration_test_python3.8
+        tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
 
-      CLASSPATH=$(echo *.jar | tr ' ' ':')
-      export AUTH_CONF_FILE_PATH=/tmp/config_fdk
-      export REGION=us-ashburn-1
-      export STAGE=teamcity
-      export MULTI_ARCH_ENABLED=True
-      export BUILD_VERSION=${FDK_VERSION}
-      export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
-      export OCIR_REGION="iad.ocir.io"
+        CLASSPATH=$(echo *.jar | tr ' ' ':')
+        export AUTH_CONF_FILE_PATH=/tmp/config_fdk
+        export REGION=us-ashburn-1
+        export STAGE=teamcity
+        export MULTI_ARCH_ENABLED=True
+        export BUILD_VERSION=${FDK_VERSION}
+        export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
+        export OCIR_REGION="iad.ocir.io"
 
-      export FDK_RUNTIME=python3.8
-      export test=RuntimeVersionIntegrationTest
-      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
+        export FDK_RUNTIME=python3.8
+        export test=RuntimeVersionIntegrationTest
+        java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
+      fi
+
+  - type: shell
+    name: Publish images to public OCIR (Release Only)
+    command: |
+      set -ex
+      if [[ "${RELEASE:-false}" == true ]]; then
+        declare -a python_versions=('3.8' '3.9' '3.11')
+        declare -a suffixes=('' '-dev')
+        for python in "${python_versions[@]}"; do
+            for suffix in "${suffixes[@]}"; do
+                src="${FAAS_OCIR_REGION}/oraclefunctionsdevelopm/test-functions/pythonfdk:${python}-${FDK_VERSION}${suffix}"
+                src="${FAAS_OCIR_REGION}/oraclefunctionsdevelopm/fnproject/python:${python}${suffix}"
+                ${OCI_WORKSPACE_DIR}/regctl image copy -v=DEBUG "$src" "$dst"
+            done
+        done
+      fi

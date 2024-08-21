@@ -1,0 +1,82 @@
+version: 0.1
+component: general-purpose
+timeoutInSeconds: 28800
+failImmediatelyOnError: true
+
+env:
+  vaultVariables:
+    FN_PYPI_API_TOKEN: ocid1.vaultsecret.oc1.phx.amaaaaaaepf6idianhtclyzbby4rtj3rdyvndacul4x6hx757dhsfaewieea
+  variables:
+    BITBUCKET_SSH_KEY_SECRET_ID: "ocid1.vaultsecret.oc1.phx.amaaaaaaepf6idia7fcgxpui5sts57lg6ltrfq2b2arrlaebtptvc6a4tfpa"
+    BITBUCKET_CLONE_TARGET: ssh://git@bitbucket.oci.oraclecorp.com:7999/faas/fdk-python.git
+    GIT_USER_NAME: CI
+    GIT_USER_EMAIL: ci@fnproject.com
+
+steps:
+  - type: Command
+    name: Publish Packages
+    failImmediatelyOnError: true
+    command: |
+      set -ex
+      source oit_http_proxy
+      oit_http_proxy activate
+      oit_yum_proxy activate
+      yum install python3.11 python3.11-pip
+      python3 -m pip install --upgrade pip
+      python3 -m pip install urllib3==1.26.15
+      python3 -m pip install twine
+      
+      curl https://artifactory.oci.oraclecorp.com/faas-release-generic-local/fdk-python/fdk-${FDK_VERSION}-py3-non-any.whl -o fdk-${FDK_VERSION}-py3-non-any.whl
+      curl https://artifactory.oci.oraclecorp.com/faas-release-generic-local/fdk-python/fdk-${FDK_VERSION}.tar.gz -o fdk-${FDK_VERSION}.tar.gz
+      twine upload -u "__token__" -p "${FN_PYPI_API_TOKEN}" fdk-${FDK_VERSION}*
+
+  - type: Command
+    name: Publish to internal github
+    failImmediatelyOnError: true
+    command: |
+      set -ex
+      source oit_http_proxy
+      oit_http_proxy activate
+      oit_yum_proxy activate
+      yum install python3.11 python3.11-pip
+
+      # Install github-tools
+      curl https://artifactory.oci.oraclecorp.com/faas-release-generic-local/github-tools/github-tools.tar.gz -o github-tools.tar.gz
+      tar zxvf github-tools.tar.gz
+      pushd github-tools
+      python3 -m pip install -e .
+      popd
+
+      RELEASE_TEMP_DIR=$(pwd)/release_$(date +%Y-%m-%d-%H-%M-%S)
+
+      # Clone bitbucket repo and ensure master is checked out
+      bitbucket login --access-key-secret-id ${BITBUCKET_SSH_KEY_SECRET_ID}
+      mkdir -p bitbucket
+      cd bitbucket
+      git clone ${BITBUCKET_CLONE_TARGET} .
+      git fetch
+      git checkout master
+      git reset --hard origin/master
+
+      # Perform a filtered copy into a temporary directory
+      github copy . ${RELEASE_TEMP_DIR} --dry-run=false >>output.txt 2>&1
+
+      # Create a new branch for the PR
+      MERGE_TO_GITHUB_BRANCH_NAME=merge_to_github$(date +%Y-%m-%d-%H-%M-%S)
+      git checkout -b ${MERGE_TO_GITHUB_BRANCH_NAME}
+      git reset --hard origin/github
+
+      # Replace the branch contents with the filtered copy (except the git directory)
+      ls -A1 | grep -v ".git$" | xargs rm -rf
+      cp -r $RELEASE_TEMP_DIR/. .
+
+      # Create a commit and merge to github branch
+      git config user.email "${GIT_USER_EMAIL}"
+      git config user.name "${GIT_USER_NAME}"
+
+      git add --all .
+      git commit -m "Releasing version ${FDK_VERSION}"
+
+      git checkout github
+      git merge ${MERGE_TO_GITHUB_BRANCH_NAME}
+      git push origin github

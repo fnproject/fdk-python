@@ -1,0 +1,79 @@
+version: 0.1
+component: general-purpose
+timeoutInSeconds: 28800
+failImmediatelyOnError: true
+
+env:
+  variables:
+    BITBUCKET_SSH_KEY_SECRET_ID: "ocid1.vaultsecret.oc1.phx.amaaaaaaepf6idia7fcgxpui5sts57lg6ltrfq2b2arrlaebtptvc6a4tfpa"
+    BITBUCKET_CLONE_TARGET: ssh://git@bitbucket.oci.oraclecorp.com:7999/faas/fdk-python.git
+    GITHUB_HTTP: https://github.com/fnproject/fdk-python.git
+    GIT_USER_NAME: CI
+    GIT_USER_EMAIL: ci@fnproject.com
+
+steps:
+  - type: Command
+    name: Reset Bitbicket Github to Public Github
+    failImmediatelyOnError: true
+    command: |
+        set -ex
+        source oit_http_proxy
+        oit_http_proxy activate
+
+        # Clone bitbucket repo
+        bitbucket login --access-key-secret-id ${BITBUCKET_SSH_KEY_SECRET_ID}
+        mkdir -p bitbucket
+        pushd bitbucket
+        git clone ${BITBUCKET_CLONE_TARGET} .
+        popd
+
+        # Clone public github repo
+        mkdir github
+        pushd github
+        git clone ${GITHUB_HTTP} .
+        git fetch
+        git checkout master
+        git reset --hard origin/master
+        popd
+        
+        # Update bitbucket repository to use 'github' branch
+        # Don't worry about git history, it will be overwritten below
+        pushd bitbucket
+        git fetch
+        git checkout github
+
+        # set Github workspace as a remote repository
+        git remote add publicgithub ../github
+        git fetch publicgithub
+
+        # force update Bitbucket 'github' to Github 'master'
+        git reset --hard publicgithub/master
+
+        # confirm which branch we are on and print out last few commits as a sanity check
+        git branch 
+        git log -n 3
+
+        # push to Bitbucket 'github' branch
+        git push origin github --force
+  
+  - type: Command
+    name: Update Release Version and Git Tag
+    failImmediatelyOnError: true
+    command: |
+        set -ex
+        
+        rm -rf bitbucket github
+
+        # Clone bitbucket repo
+        bitbucket login --access-key-secret-id ${BITBUCKET_SSH_KEY_SECRET_ID}
+        mkdir -p bitbucket
+        pushd bitbucket
+        git clone ${BITBUCKET_CLONE_TARGET} .
+        git fetch
+        git checkout master
+        git reset --hard master
+        
+        git config user.email "${GIT_USER_EMAIL}"
+        git config user.name "${GIT_USER_NAME}"
+
+        ./internal/release/setup_release_version.sh
