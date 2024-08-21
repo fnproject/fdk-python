@@ -34,7 +34,7 @@ build_dist_package:
 	# use latest setuptools to include License-File Key in Metadata file inside wheel pkg.
 	pip3 install setuptools>=65.7.0
 	PBR_VERSION=$(FDK_VERSION) python3 setup.py sdist bdist_wheel
-	[[ -n $(BLD_BRANCH_SUFFIX) ]] && mv dist/fdk-*.tar.gz dist/fdk-$(FDK_VERSION).tar.gz
+	mv dist/fdk-*.tar.gz dist/fdk-$(FDK_VERSION).tar.gz || true
 	rm -rf .dist_pkg_venv
 
 set_image_version:
