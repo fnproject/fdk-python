@@ -1,5 +1,9 @@
 RAW_VERSION=$(shell grep -m1 -Eo "[0-9]+\.[0-9]+\.[0-9]+" fdk/version.py)
+ifeq ($(RELEASE), true)
+FDK_VERSION=$(RAW_VERSION)
+else
 FDK_VERSION=$(RAW_VERSION).$(BLD_NUMBER)$(shell echo $(BLD_BRANCH_SUFFIX) | tr - _)
+endif
 
 .PHONY: set_fdk_version unit_test build_dist_package
 
@@ -30,7 +34,7 @@ build_dist_package:
 	# use latest setuptools to include License-File Key in Metadata file inside wheel pkg.
 	pip3 install setuptools>=65.7.0
 	PBR_VERSION=$(FDK_VERSION) python3 setup.py sdist bdist_wheel
-	mv dist/fdk-*.tar.gz dist/fdk-$(FDK_VERSION).tar.gz
+	[[ $(RAW_VERSION) != $(FDK_VERSION) ]] && mv dist/fdk-*.tar.gz dist/fdk-$(FDK_VERSION).tar.gz
 	rm -rf .dist_pkg_venv
 
 set_image_version:
