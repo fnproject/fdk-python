@@ -1,6 +1,86 @@
 CHANGES
 =======
 
+0.1.77
+------
+
+* FDK Python: 0.1.77 version release
+
+0.1.76
+------
+
+* FDK Python: 0.1.76 version release
+
+0.1.75
+------
+
+* FDK Python: 0.1.75 version release
+
+0.1.74
+------
+
+* FDK Python: 0.1.74 version release
+
+0.1.73
+------
+
+* FDK Python: 0.1.73 version release
+
+0.1.72
+------
+
+* FDK Python: 0.1.72 version release
+
+0.1.71
+------
+
+* FDK Python: 0.1.71 version release
+
+0.1.70
+------
+
+* FDK Python: 0.1.70 version release
+
+0.1.69
+------
+
+* FDK Python: 0.1.69 version release
+
+0.1.68
+------
+
+* FDK Python: 0.1.68 version release
+
+0.1.67
+------
+
+* FDK Python: 0.1.67 version release
+
+0.1.66
+------
+
+* FDK Python: 0.1.66 version release
+
+0.1.65
+------
+
+* FDK Python: 0.1.65 version release
+
+0.1.64
+------
+
+* FDK Python: 0.1.64 version release
+
+0.1.63
+------
+
+* FDK Python: 0.1.63 version release
+
+0.1.62
+------
+
+* FDK Python: 0.1.62 version release
+
 0.1.61
 ------
 
