@@ -6,8 +6,12 @@ failImmediatelyOnError: true
 timeoutInSeconds: 36000
 
 env:
-  vaultVariables:
-    FDK_CONFIG_PRIVATE_KEY: ocid1.vaultsecret.oc1.phx.amaaaaaaepf6idiavyptfi77vodnqoese5u5sa5jl52ksdraty7s4ch2vtnq
+  variables:
+      REGION: us-ashburn-1
+      STAGE: pipeline
+      MULTI_ARCH_ENABLED: True
+      OCIR_LOC: "oraclefunctionsdevelopm/test-functions"
+      OCIR_REGION: "iad.ocir.io"
 
 inputArtifacts:
   - name: downloadDockerCredentialHelper
@@ -78,79 +82,47 @@ steps:
       copy_image timeout-fn 3.11
 
   - type: shell
-    name: Setup User
-    command: |
-      if [[ "${RELEASE:-false}" == false ]]; then
-        echo ${FDK_CONFIG_FILE_CONTENTS} | tr ' ' $'\n' | tee /tmp/config_fdk
-        echo "${FDK_CONFIG_PRIVATE_KEY}" > /tmp/oci_api_key_fdk.pem
-        ls -al /tmp/config_fdk /tmp/oci_api_key_fdk.pem
-      fi
-
-  - type: shell
     name: Run Integration Test Python 3.11
     command: |
-      if [[ "${RELEASE:-false}" == false ]]; then
-        mkdir -p integration_test_python3.11
-        cd integration_test_python3.11
-        tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+      mkdir -p integration_test_python3.11
+      cd integration_test_python3.11
+      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
 
-        CLASSPATH=$(echo *.jar | tr ' ' ':')
-        export AUTH_CONF_FILE_PATH=/tmp/config_fdk
-        export REGION=us-ashburn-1
-        export STAGE=teamcity
-        export MULTI_ARCH_ENABLED=True
-        export BUILD_VERSION=${FDK_VERSION}
-        export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
-        export OCIR_REGION="iad.ocir.io"
+      CLASSPATH=$(echo *.jar | tr ' ' ':')
+      export REGION=us-ashburn-1
+      export STAGE=teamcity
+      export MULTI_ARCH_ENABLED=True
+      export BUILD_VERSION=${FDK_VERSION}
+      export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
+      export OCIR_REGION="iad.ocir.io"
 
-        export FDK_RUNTIME=python3.11
-        export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
-        java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
-      fi
+      export FDK_RUNTIME=python3.11
+      export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
+      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
 
   - type: shell
     name: Run Integration Test Python 3.9
     command: |
-      if [[ "${RELEASE:-false}" == false ]]; then
-        mkdir -p integration_test_python3.9
-        cd integration_test_python3.9
-        tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+      mkdir -p integration_test_python3.9
+      cd integration_test_python3.9
+      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
 
-        CLASSPATH=$(echo *.jar | tr ' ' ':')
-        export AUTH_CONF_FILE_PATH=/tmp/config_fdk
-        export REGION=us-ashburn-1
-        export STAGE=teamcity
-        export MULTI_ARCH_ENABLED=True
-        export BUILD_VERSION=${FDK_VERSION}
-        export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
-        export OCIR_REGION="iad.ocir.io"
-
-        export FDK_RUNTIME=python3.9
-        export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
-        java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
-      fi
+      CLASSPATH=$(echo *.jar | tr ' ' ':')
+      export FDK_RUNTIME=python3.9
+      export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
+      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
   
   - type: shell
     name: Run Integration Test Python 3.8
     command: |
-      if [[ "${RELEASE:-false}" == false ]]; then
-        mkdir -p integration_test_python3.8
-        cd integration_test_python3.8
-        tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
+      mkdir -p integration_test_python3.8
+      cd integration_test_python3.8
+      tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
 
-        CLASSPATH=$(echo *.jar | tr ' ' ':')
-        export AUTH_CONF_FILE_PATH=/tmp/config_fdk
-        export REGION=us-ashburn-1
-        export STAGE=teamcity
-        export MULTI_ARCH_ENABLED=True
-        export BUILD_VERSION=${FDK_VERSION}
-        export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
-        export OCIR_REGION="iad.ocir.io"
-
-        export FDK_RUNTIME=python3.8
-        export test=RuntimeVersionIntegrationTest
-        java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
-      fi
+      CLASSPATH=$(echo *.jar | tr ' ' ':')
+      export FDK_RUNTIME=python3.8
+      export test=RuntimeVersionIntegrationTest
+      java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
 
   - type: shell
     name: Publish images to public OCIR (Release Only)
