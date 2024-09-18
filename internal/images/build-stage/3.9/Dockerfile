@@ -16,8 +16,9 @@
 FROM  --platform=$TARGETPLATFORM ocr-docker-remote.artifactory.oci.oraclecorp.com/os/oraclelinux:8-slim
 
 RUN microdnf install -y python39 && \
-    microdnf install -y python39-pip  python39-wheel &&\
+    microdnf install -y python39-pip &&\
     microdnf upgrade python3-setuptools &&\
+    python3 -m pip install --upgrade wheel>=0.38.1 &&\
     microdnf clean all
 
 CMD ["python3"]
