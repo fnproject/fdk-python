@@ -89,13 +89,6 @@ steps:
       tar zxvf ${OCI_WORKSPACE_DIR}/input/fdk-integration-test-${FDK_INTEGRATION_TEST_VERSION}.tar.gz .
 
       CLASSPATH=$(echo *.jar | tr ' ' ':')
-      export REGION=us-ashburn-1
-      export STAGE=teamcity
-      export MULTI_ARCH_ENABLED=True
-      export BUILD_VERSION=${FDK_VERSION}
-      export OCIR_LOC="oraclefunctionsdevelopm/test-functions"
-      export OCIR_REGION="iad.ocir.io"
-
       export FDK_RUNTIME=python3.11
       export test=FunctionsIntegrationTest,RuntimeVersionIntegrationTest,PythonFunctionsIntegrationTest,OciSdkUsageIntegrationTest
       java -jar junit-platform-console-standalone.jar -cp "$CLASSPATH" --scan-class-path
