@@ -26,9 +26,9 @@ steps:
       python3 -m pip install urllib3==1.26.15
       python3 -m pip install twine
       
-      curl https://artifactory.oci.oraclecorp.com/faas-release-generic-local/fdk-python/fdk-${FDK_VERSION}-py3-non-any.whl -o fdk-${FDK_VERSION}-py3-non-any.whl
+      curl https://artifactory.oci.oraclecorp.com/faas-release-generic-local/fdk-python/fdk-${FDK_VERSION}-py3-none-any.whl -o fdk-${FDK_VERSION}-py3-none-any.whl
       curl https://artifactory.oci.oraclecorp.com/faas-release-generic-local/fdk-python/fdk-${FDK_VERSION}.tar.gz -o fdk-${FDK_VERSION}.tar.gz
-      twine upload -u "__token__" -p "${FN_PYPI_API_TOKEN}" fdk-${FDK_VERSION}*
+      twine upload -u "__token__" -p "${FN_PYPI_API_TOKEN}" fdk-${FDK_VERSION}-py3-none-any.whl fdk-${FDK_VERSION}.tar.gz
 
   - type: Command
     name: Publish to internal github
