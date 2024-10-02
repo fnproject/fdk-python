@@ -41,3 +41,4 @@ git config user.email ${GIT_USER_EMAIL}
 git config user.name ${GIT_USER_NAME}
 git merge --ff bitbucket/${PUBLISH_BRANCH}
 git push
+git push origin --tags
