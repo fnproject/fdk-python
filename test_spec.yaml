@@ -127,7 +127,7 @@ steps:
         for python in "${python_versions[@]}"; do
             for suffix in "${suffixes[@]}"; do
                 src="${FAAS_OCIR_REGION}/oraclefunctionsdevelopm/test-functions/pythonfdk:${python}-${FDK_VERSION}${suffix}"
-                src="${FAAS_OCIR_REGION}/oraclefunctionsdevelopm/fnproject/python:${python}${suffix}"
+                dst="${FAAS_OCIR_REGION}/oraclefunctionsdevelopm/fnproject/python:${python}${suffix}"
                 ${OCI_WORKSPACE_DIR}/regctl image copy -v=DEBUG "$src" "$dst"
             done
         done
