@@ -41,6 +41,17 @@ def __setup_logger():
     
     root = logging.getLogger()
     logger = logging.getLogger("fdk")
+
+    ch = logging.StreamHandler(sys.stderr)
+    formatter = RequestFormatter(
+        '%(fn_request_id)s - '
+        '%(name)s - '
+        '%(levelname)s - '
+        '%(message)s'
+    )
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
     if fdk_debug:
         root.setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
