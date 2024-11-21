@@ -1,2 +1,2 @@
 # Add any dependencies for the test function except fdk
-oci==3.50.1
+oci==2.139.0
