@@ -30,8 +30,9 @@ steps:
     command: |
       set -ex
       pushd ${OCI_WORKSPACE_DIR}/input
-      sudo yum localinstall -y docker-credential-ocir-996.1f4a1425ed3-1.noarch.rpm
-      sudo yum install -y jq jdk1.8
+      sudo rpm-ostree cleanup --pending
+      sudo rpm-ostree install -y docker-credential-ocir-996.1f4a1425ed3-1.noarch.rpm
+      sudo rpm-ostree apply-live --allow-replacement
       popd
 
       sudo docker login -u BEARER_TOKEN -p $(echo "${FAAS_OCIR_REGION}" | docker-credential-ocir get | jq -r .Secret) "${FAAS_OCIR_REGION}"
