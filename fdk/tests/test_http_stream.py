@@ -15,8 +15,7 @@
 #
 
 import json
-import pytest
-
+import asyncio
 from fdk import constants
 from fdk import event_handler
 from fdk import fixtures
@@ -24,11 +23,11 @@ from fdk import fixtures
 from fdk.tests import funcs
 
 
-@pytest.mark.asyncio
-async def test_override_content_type():
-    call = await fixtures.setup_fn_call(
-        funcs.content_type)
-    content, status, headers = await call
+def test_override_content_type():
+    call = asyncio.run(fixtures.setup_fn_call(
+        funcs.content_type))
+
+    content, status, headers = asyncio.run(call)
 
     assert 200 == status
     assert "OK" == content
@@ -39,49 +38,45 @@ async def test_override_content_type():
         constants.FN_FDK_VERSION) == constants.VERSION_HEADER_VALUE
 
 
-@pytest.mark.asyncio
-async def test_parse_request_without_data():
-    call = await fixtures.setup_fn_call(funcs.dummy_func)
+def test_parse_request_without_data():
+    call = asyncio.run(fixtures.setup_fn_call(funcs.dummy_func))
 
-    content, status, headers = await call
+    content, status, headers = asyncio.run(call)
     assert 200 == status
     assert "Hello World" == content
 
 
-@pytest.mark.asyncio
-async def test_parse_request_with_data():
+def test_parse_request_with_data():
     input_content = json.dumps(
         {"name": "John"}).encode("utf-8")
-    call = await fixtures.setup_fn_call(
-        funcs.dummy_func, content=input_content)
-    content, status, headers = await call
+    call = asyncio.run(fixtures.setup_fn_call(
+        funcs.dummy_func, content=input_content))
+    content, status, headers = asyncio.run(call)
 
     assert 200 == status
     assert "Hello John" == content
 
 
-@pytest.mark.asyncio
-async def test_custom_response_object():
+def test_custom_response_object():
     input_content = json.dumps(
         {"name": "John"}).encode("utf-8")
-    call = await fixtures.setup_fn_call(
-        funcs.custom_response, input_content)
-    content, status, headers = await call
+    call = asyncio.run(fixtures.setup_fn_call(
+        funcs.custom_response, input_content))
+    content, status, headers = asyncio.run(call)
 
     assert 201 == status
 
 
-@pytest.mark.asyncio
-async def test_encap_headers_gw():
-    call = await fixtures.setup_fn_call(
+def test_encap_headers_gw():
+    call = asyncio.run(fixtures.setup_fn_call(
         funcs.encaped_header,
         headers={
             "custom-header-maybe": "yo",
             "content-type": "application/yo"
         },
         gateway=True,
-    )
-    content, status, headers = await call
+    ))
+    content, status, headers = asyncio.run(call)
 
     # make sure that content type is not encaped, and custom header is
     # when coming out of the fdk
@@ -90,16 +85,15 @@ async def test_encap_headers_gw():
     assert "yo" in headers.get("fn-http-h-custom-header-maybe")
 
 
-@pytest.mark.asyncio
-async def test_encap_headers():
-    call = await fixtures.setup_fn_call(
+def test_encap_headers():
+    call = asyncio.run(fixtures.setup_fn_call(
         funcs.encaped_header,
         headers={
             "custom-header-maybe": "yo",
             "content-type": "application/yo"
         }
-    )
-    content, status, headers = await call
+    ))
+    content, status, headers = asyncio.run(call)
 
     # make sure that custom header is not encaped out of fdk
     assert 200 == status
@@ -107,60 +101,54 @@ async def test_encap_headers():
     assert "yo" in headers.get("custom-header-maybe")
 
 
-@pytest.mark.asyncio
-async def test_errored_func():
-    call = await fixtures.setup_fn_call(funcs.expectioner)
-    content, status, headers = await call
+def test_errored_func():
+    call = asyncio.run(fixtures.setup_fn_call(funcs.expectioner))
+    content, status, headers = asyncio.run(call)
 
     assert 502 == status
 
 
-@pytest.mark.asyncio
-async def test_none_func():
-    call = await fixtures.setup_fn_call(funcs.none_func)
-    content, status, headers = await call
+def test_none_func():
+    call = asyncio.run(fixtures.setup_fn_call(funcs.none_func))
+    content, status, headers = asyncio.run(call)
 
     assert 0 == len(content)
     assert 200 == status
 
 
-@pytest.mark.asyncio
-async def test_coro_func():
-    call = await fixtures.setup_fn_call(funcs.coro)
-    content, status, headers = await call
+def test_coro_func():
+    call = asyncio.run(fixtures.setup_fn_call(funcs.coro))
+    content, status, headers = asyncio.run(call)
 
     assert 200 == status
     assert 'hello from coro' == content
 
 
-@pytest.mark.asyncio
-async def test_default_enforced_response_code():
+def test_default_enforced_response_code():
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code404))
 
-    http_resp = await event_coro(fixtures.fake_request(gateway=True))
+    http_resp = asyncio.run(event_coro(fixtures.fake_request(gateway=True)))
 
     assert http_resp.status == 200
     assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "404"
 
 
-@pytest.mark.asyncio
-async def test_enforced_response_codes_502():
+def test_enforced_response_codes_502():
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code502))
 
-    http_resp = await event_coro(fixtures.fake_request(gateway=True))
+    http_resp = asyncio.run(event_coro(fixtures.fake_request(gateway=True)))
 
     assert http_resp.status == 502
     assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "502"
 
 
-@pytest.mark.asyncio
-async def test_enforced_response_codes_504():
+def test_enforced_response_codes_504():
     event_coro = event_handler.event_handle(
         fixtures.code(funcs.code504))
 
-    http_resp = await event_coro(fixtures.fake_request(gateway=True))
+    http_resp = asyncio.run(event_coro(fixtures.fake_request(gateway=True)))
 
     assert http_resp.status == 504
     assert http_resp.headers.get(constants.FN_HTTP_STATUS) == "504"
@@ -178,8 +166,7 @@ def test_log_frame_header(monkeypatch, capsys):
     assert "\nfoo=12345\n" in captured.err
 
 
-@pytest.mark.asyncio
-async def test_request_url_and_method_set_with_gateway():
+def test_request_url_and_method_set_with_gateway():
     headers = {
         "fn-http-method": "PUT",
         "fn-http-request-url": "/foo-bar?baz",
@@ -188,11 +175,11 @@ async def test_request_url_and_method_set_with_gateway():
 
     funcs.setup_context_capture()
 
-    call = await fixtures.setup_fn_call_raw(
+    call = asyncio.run(fixtures.setup_fn_call_raw(
         funcs.capture_request_ctx,
         headers=headers
-    )
-    content, status, headers = await call
+    ))
+    content, status, headers = asyncio.run(call)
     assert content == "OK"
 
     ctx = funcs.get_captured_context()
@@ -204,8 +191,7 @@ async def test_request_url_and_method_set_with_gateway():
     assert ctx.Headers()["fn-http-h-not-aheader"] == "nothttp"
 
 
-@pytest.mark.asyncio
-async def test_encap_request_headers_gateway():
+def test_encap_request_headers_gateway():
     headers = {
         "fn-intent": "httprequest",
         "fn-http-h-my-header": "foo",
@@ -214,13 +200,13 @@ async def test_encap_request_headers_gateway():
     }
 
     funcs.setup_context_capture()
-    call = await fixtures.setup_fn_call_raw(
+    call = asyncio.run(fixtures.setup_fn_call_raw(
         funcs.capture_request_ctx,
         content=None,
         headers=headers
-    )
+    ))
 
-    content, status, headers = await call
+    content, status, headers = asyncio.run(call)
 
     assert content == 'OK'
 
@@ -238,8 +224,7 @@ async def test_encap_request_headers_gateway():
                                        "funny-header": ["baz", "bob"]}
 
 
-@pytest.mark.asyncio
-async def test_bytes_response():
-    call = await fixtures.setup_fn_call(funcs.binary_result)
-    content, status, headers = await call
+def test_bytes_response():
+    call = asyncio.run(fixtures.setup_fn_call(funcs.binary_result))
+    content, status, headers = asyncio.run(call)
     assert content == bytes([1, 2, 3, 4, 5])
