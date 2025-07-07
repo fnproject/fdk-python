@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,12 +28,12 @@ def main():
         sys.exit("at least func module must be specified")
 
     if not os.path.exists(sys.argv[2]):
-        sys.exit("Module: {0} doesn't exist".format(sys.argv[1]))
+        sys.exit("Module: {0} doesn't exist".format(sys.argv[2]))
 
     if len(sys.argv) > 3:
         handler = customer_code.Function(
             sys.argv[2], entrypoint=sys.argv[3])
     else:
-        handler = customer_code.Function(sys.argv[1])
+        handler = customer_code.Function(sys.argv[2])
 
     tcp_debug.handle(handler, port=int(sys.argv[1]))
