@@ -122,6 +122,7 @@ releasenotes/build
 *.csv
 venv
 .venv
+.oca/
 ChangeLog
 AUTHORS
 .pytest_cache/
