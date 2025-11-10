@@ -88,10 +88,10 @@ def test_content_type_version():
 
 def test_content_runtime_version():
     encap = headers.encap_headers({"content-type": "text/plain",
-                                   "fn-fdk-runtime": "python:3.8.8 final"})
+                                   "fn-fdk-runtime": "python:3.11.1 final"})
 
     assert encap == {"content-type": "text/plain",
-                     "fn-fdk-runtime": "python:3.8.8 final", }
+                     "fn-fdk-runtime": "python:3.11.1 final", }
 
 
 def test_decap_headers_merge():

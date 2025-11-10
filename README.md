@@ -1,5 +1,5 @@
 # Function development kit for Python
-The python FDK lets you write functions in python 3.8/3.9/3.11
+The python FDK lets you write functions in python 3.11/3.12
 
 ## Simplest possible function 
  
@@ -321,12 +321,12 @@ curl -v -X POST localhost:5001 -d '{"name":"denis"}'
 
 First of all create a test function:
 ```bash
-fn init --runtime python3.8 test-function
+fn init --runtime python3.11 test-function
 ```
 
 Create a Dockerfile in a function's folder:
 ```dockerfile
-FROM fnproject/python:3.8-dev as build-stage
+FROM fnproject/python:3.11-dev as build-stage
 
 ADD . /function
 WORKDIR /function
@@ -335,7 +335,7 @@ RUN pip3 install --target /python/  --no-cache --no-cache-dir fdk-test-py3-none-
 
 RUN rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv
 
-FROM fnproject/python:3.8
+FROM fnproject/python:3.11
 
 COPY --from=build-stage /function /function
 COPY --from=build-stage /python /python
@@ -413,7 +413,7 @@ except ValueError as ex:
 ### Dockerfile
 If you've been using CLI to build function without modifying runtime in `func.yaml` to `docker` 
 instead of `python` then the only thing you need is to update the CLI to the latest version and 
-pin your Python runtime version to `python`, `python3.7`, `python3.8`, or `python3.9`, or `python3.11` .
+pin your Python runtime version to `python`, `python3.11` or `python3.12`.
 
 If you've been using custom multi-stage Dockerfile (derived from what Fn CLI generates) 
 the only thing that is necessary to change is an `ENTRYPOINT` from:
