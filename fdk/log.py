@@ -38,8 +38,9 @@ def __setup_logger():
         'true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']
 
     logging.getLogger("asyncio").setLevel(logging.WARNING)
+    
     root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
+    logger = logging.getLogger("fdk")
 
     ch = logging.StreamHandler(sys.stderr)
     formatter = RequestFormatter(
@@ -49,9 +50,10 @@ def __setup_logger():
         '%(message)s'
     )
     ch.setFormatter(formatter)
-    root.addHandler(ch)
-    logger = logging.getLogger("fdk")
+    logger.addHandler(ch)
+
     if fdk_debug:
+        root.setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.WARNING)
