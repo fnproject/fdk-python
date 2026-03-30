@@ -78,7 +78,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
         :param data: bytes-ish data to be written.
         """
-        if type(data) != bytes:
+        if type(data) is not bytes:
             data = self._encode_body(data)
 
         self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
