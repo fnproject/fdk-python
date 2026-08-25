@@ -14,30 +14,40 @@
 # limitations under the License.
 #
 
+import asyncio
+
 from fdk.async_http import protocol
 
 
-def http_protocol(**kwargs):
+def http_protocol(loop, **kwargs):
     return protocol.HttpProtocol(
-        loop=None, request_handler=None, error_handler=None,
+        loop=loop, request_handler=None, error_handler=None,
         **kwargs)
 
 
 def test_keep_alive_time_left_before_time_is_set():
-    p = http_protocol()
+    loop = asyncio.new_event_loop()
+    p = http_protocol(loop)
 
-    protocol.current_time = None
-    p._last_request_time = None
+    try:
+        protocol.current_time = None
+        p._last_request_time = None
 
-    time_left = p.keep_alive_time_left()
-    assert 0 == time_left
+        time_left = p.keep_alive_time_left()
+        assert 0 == time_left
+    finally:
+        loop.close()
 
 
 def test_keep_alive_time_left_after_time_is_set():
-    p = http_protocol(keep_alive_timeout=15)
+    loop = asyncio.new_event_loop()
+    p = http_protocol(loop, keep_alive_timeout=15)
 
-    protocol.current_time = 96
-    p._last_response_time = 64
+    try:
+        protocol.current_time = 96
+        p._last_response_time = 64
 
-    time_left = p.keep_alive_time_left()
-    assert 15 - 32 == time_left
+        time_left = p.keep_alive_time_left()
+        assert 15 - 32 == time_left
+    finally:
+        loop.close()
