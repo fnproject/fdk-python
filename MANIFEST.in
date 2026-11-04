@@ -1,4 +1,4 @@
-global-include requirements.txt test-requirements.txt
+global-include requirements.txt build-requirements.txt test-requirements.txt
 exclude ChangeLog
 exclude github.whitelist
 exclude *.bak

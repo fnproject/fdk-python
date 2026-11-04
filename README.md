@@ -107,6 +107,9 @@ def handler(ctx, data: io.BytesIO=None):
 
 ## Unit testing your functions
 
+Install `pytest` and `pytest-asyncio` in your development environment to use the
+testing helpers. They are test dependencies, not dependencies of the FDK runtime.
+
 Starting v0.0.33 FDK-Python provides a testing framework that allows performing unit tests of your function's code.
 The unit test framework is the [pytest](https://pytest.org/). Coding style remain the same, so, write your tests as you've got used to.
 Here's the example of the test suite:
@@ -290,6 +293,11 @@ Now you can test your functions not only with the unit tests but also see how it
 
 
 ## Developing and testing an FDK
+
+`requirements.txt` contains function runtime dependencies. Packaging tools are
+listed in `build-requirements.txt`, and test tools in `test-requirements.txt`.
+The Python 3.9 runtime image does not include pip or setuptools; install function
+dependencies in the `3.9-dev` build stage and copy them into the runtime image.
 
 If you decided to develop an FDK please do the following:
 
